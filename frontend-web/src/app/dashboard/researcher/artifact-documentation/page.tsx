@@ -1,222 +1,184 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
-import Input from '../../../../components/ui/Input';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 
-interface Artifact {
+interface ArtifactDocument {
   id: string;
-  catalog_number: string;
-  name: string;
-  type: 'ceramic' | 'lithic' | 'bone' | 'metal' | 'textile' | 'wood' | 'other';
-  category: string;
+  artifactName: string;
+  catalogNumber: string;
+  type: 'lithic' | 'ceramic' | 'bone' | 'metal' | 'other';
   material: string;
   dimensions: {
-    length?: number;
-    width?: number;
-    height?: number;
-    thickness?: number;
-    diameter?: number;
+    length: number;
+    width: number;
+    height: number;
   };
-  weight?: number;
-  condition: 'excellent' | 'good' | 'fair' | 'poor' | 'fragmentary';
-  discovery_location: {
-    latitude: number;
-    longitude: number;
-    depth?: number;
-    context?: string;
-  };
-  discovery_date: string;
+  weight: number;
+  condition: 'excellent' | 'good' | 'fair' | 'poor';
   description: string;
-  function_hypothesis?: string;
-  cultural_period?: string;
+  technicalDrawing: string;
   photos: string[];
-  drawings: string[];
-  notes: string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+  site: string;
+  context: string;
+  date: string;
+  documenter: string;
+  status: 'draft' | 'review' | 'approved';
 }
 
 const ArtifactDocumentationPage: React.FC = () => {
-  const { user } = useAuth();
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
-  const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
-  const [isAddingArtifact, setIsAddingArtifact] = useState(false);
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newArtifact, setNewArtifact] = useState({
-    name: '',
-    type: 'ceramic' as const,
-    category: '',
+  const [documents, setDocuments] = useState<ArtifactDocument[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<ArtifactDocument | null>(null);
+  const [showAddDocument, setShowAddDocument] = useState(false);
+  const [newDocument, setNewDocument] = useState({
+    artifactName: '',
+    catalogNumber: '',
+    type: 'lithic' as const,
     material: '',
+    dimensions: { length: 0, width: 0, height: 0 },
+    weight: 0,
     condition: 'good' as const,
     description: '',
-    function_hypothesis: '',
-    cultural_period: '',
-    notes: '',
-    dimensions: { length: 0, width: 0, height: 0, thickness: 0, diameter: 0 },
-    weight: 0
+    technicalDrawing: '',
+    site: '',
+    context: '',
+    documenter: ''
   });
 
+  // Datos simulados con ejemplos pampeanos
   useEffect(() => {
-    // Simular datos de artefactos
-    setArtifacts([
+    setDocuments([
       {
         id: '1',
-        catalog_number: 'ART-001',
-        name: 'Vasija Cerámica Decorada',
-        type: 'ceramic',
-        category: 'Vasija',
-        material: 'Cerámica',
-        dimensions: { length: 15, width: 12, height: 8, thickness: 0.5 },
-        weight: 250,
-        condition: 'good',
-        discovery_location: {
-          latitude: 19.6915,
-          longitude: -98.8441,
-          depth: 0.5,
-          context: 'Cuadrícula A1, Nivel 2'
-        },
-        discovery_date: '2024-01-15',
-        description: 'Vasija globular con decoración incisa en el cuello',
-        function_hypothesis: 'Almacenamiento de líquidos',
-        cultural_period: 'Clásico Tardío',
-        photos: ['photo1.jpg', 'photo2.jpg'],
-        drawings: ['drawing1.jpg'],
-        notes: 'Fragmento de vasija con decoración geométrica',
-        created_by: 'researcher1',
-        created_at: '2024-01-15T10:00:00Z',
-        updated_at: '2024-01-15T10:00:00Z'
+        artifactName: 'Punta de Proyectil Cola de Pescado',
+        catalogNumber: 'LLB-001',
+        type: 'lithic',
+        material: 'Sílice',
+        dimensions: { length: 4.5, width: 2.1, height: 0.8 },
+        weight: 12.5,
+        condition: 'excellent',
+        description: 'Punta de proyectil tipo Cola de Pescado, retoque bifacial, base cóncava, filo convexo',
+        technicalDrawing: 'dibujo_llb_001.svg',
+        photos: ['foto_llb_001_1.jpg', 'foto_llb_001_2.jpg'],
+        site: 'Laguna La Brava',
+        context: 'Superficie, sector norte',
+        date: '2025-07-22',
+        documenter: 'Dr. Pérez',
+        status: 'approved'
       },
       {
         id: '2',
-        catalog_number: 'ART-002',
-        name: 'Punta de Proyectil',
-        type: 'lithic',
-        category: 'Herramienta',
-        material: 'Obsidiana',
-        dimensions: { length: 4, width: 2, height: 0.5 },
-        weight: 15,
-        condition: 'excellent',
-        discovery_location: {
-          latitude: 19.6914,
-          longitude: -98.8442,
-          depth: 0.3,
-          context: 'Cuadrícula B1, Superficie'
-        },
-        discovery_date: '2024-01-14',
-        description: 'Punta de proyectil bifacial con retoque fino',
-        function_hypothesis: 'Caza o guerra',
-        cultural_period: 'Preclásico',
-        photos: ['photo3.jpg'],
-        drawings: ['drawing2.jpg'],
-        notes: 'Punta completa, excelente conservación',
-        created_by: 'researcher1',
-        created_at: '2024-01-14T10:00:00Z',
-        updated_at: '2024-01-14T10:00:00Z'
+        artifactName: 'Fragmento de Vasija Cerámica',
+        catalogNumber: 'AS-002',
+        type: 'ceramic',
+        material: 'Arcilla',
+        dimensions: { length: 8.2, width: 6.5, height: 1.2 },
+        weight: 45.8,
+        condition: 'good',
+        description: 'Fragmento de vasija con decoración incisa, borde redondeado',
+        technicalDrawing: 'dibujo_as_002.svg',
+        photos: ['foto_as_002_1.jpg'],
+        site: 'Arroyo Seco',
+        context: 'Excavación, nivel 2',
+        date: '2025-07-21',
+        documenter: 'Dr. Pérez',
+        status: 'review'
       },
       {
         id: '3',
-        catalog_number: 'ART-003',
-        name: 'Fragmento de Hueso Trabajado',
+        artifactName: 'Raspador Lítico',
+        catalogNumber: 'MH-003',
+        type: 'lithic',
+        material: 'Cuarzo',
+        dimensions: { length: 3.8, width: 2.9, height: 1.1 },
+        weight: 8.3,
+        condition: 'good',
+        description: 'Raspador lítico con retoque unifacial, filo activo',
+        technicalDrawing: 'dibujo_mh_003.svg',
+        photos: ['foto_mh_003_1.jpg', 'foto_mh_003_2.jpg'],
+        site: 'Monte Hermoso',
+        context: 'Superficie, sector este',
+        date: '2025-07-20',
+        documenter: 'Dr. Pérez',
+        status: 'draft'
+      },
+      {
+        id: '4',
+        artifactName: 'Hueso Trabajado',
+        catalogNumber: 'LLB-004',
         type: 'bone',
-        category: 'Adorno',
-        material: 'Hueso',
-        dimensions: { length: 8, width: 2, height: 1 },
-        weight: 25,
+        material: 'Hueso de Guanaco',
+        dimensions: { length: 12.5, width: 2.8, height: 1.5 },
+        weight: 23.1,
         condition: 'fair',
-        discovery_location: {
-          latitude: 19.6913,
-          longitude: -98.8443,
-          depth: 0.8,
-          context: 'Cuadrícula C1, Nivel 3'
-        },
-        discovery_date: '2024-01-13',
-        description: 'Fragmento de hueso con perforaciones decorativas',
-        function_hypothesis: 'Adorno personal',
-        cultural_period: 'Clásico',
-        photos: ['photo4.jpg'],
-        drawings: ['drawing3.jpg'],
-        notes: 'Posible parte de un collar o pulsera',
-        created_by: 'researcher1',
-        created_at: '2024-01-13T10:00:00Z',
-        updated_at: '2024-01-13T10:00:00Z'
+        description: 'Fragmento de hueso de guanaco con marcas de corte y pulido',
+        technicalDrawing: 'dibujo_llb_004.svg',
+        photos: ['foto_llb_004_1.jpg'],
+        site: 'Laguna La Brava',
+        context: 'Excavación, nivel 1',
+        date: '2025-07-19',
+        documenter: 'Dr. Pérez',
+        status: 'approved'
       }
     ]);
   }, []);
 
-  const handleAddArtifact = () => {
-    if (!newArtifact.name || !newArtifact.material) return;
-
-    const artifact: Artifact = {
+  const handleAddDocument = () => {
+    const document: ArtifactDocument = {
       id: Date.now().toString(),
-      catalog_number: `ART-${String(artifacts.length + 1).padStart(3, '0')}`,
-      name: newArtifact.name,
-      type: newArtifact.type,
-      category: newArtifact.category,
-      material: newArtifact.material,
-      dimensions: newArtifact.dimensions,
-      weight: newArtifact.weight,
-      condition: newArtifact.condition,
-      discovery_location: {
-        latitude: 19.6915 + (Math.random() - 0.5) * 0.001,
-        longitude: -98.8441 + (Math.random() - 0.5) * 0.001,
-        depth: Math.random() * 2,
-        context: 'Cuadrícula A1'
-      },
-      discovery_date: new Date().toISOString().split('T')[0],
-      description: newArtifact.description,
-      function_hypothesis: newArtifact.function_hypothesis,
-      cultural_period: newArtifact.cultural_period,
+      artifactName: newDocument.artifactName,
+      catalogNumber: newDocument.catalogNumber,
+      type: newDocument.type,
+      material: newDocument.material,
+      dimensions: newDocument.dimensions,
+      weight: newDocument.weight,
+      condition: newDocument.condition,
+      description: newDocument.description,
+      technicalDrawing: newDocument.technicalDrawing,
       photos: [],
-      drawings: [],
-      notes: newArtifact.notes,
-      created_by: user?.id || 'researcher1',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      site: newDocument.site,
+      context: newDocument.context,
+      date: new Date().toISOString().split('T')[0],
+      documenter: newDocument.documenter,
+      status: 'draft'
     };
-
-    setArtifacts([...artifacts, artifact]);
-    setNewArtifact({
-      name: '',
-      type: 'ceramic',
-      category: '',
+    setDocuments([...documents, document]);
+    setNewDocument({
+      artifactName: '',
+      catalogNumber: '',
+      type: 'lithic',
       material: '',
+      dimensions: { length: 0, width: 0, height: 0 },
+      weight: 0,
       condition: 'good',
       description: '',
-      function_hypothesis: '',
-      cultural_period: '',
-      notes: '',
-      dimensions: { length: 0, width: 0, height: 0, thickness: 0, diameter: 0 },
-      weight: 0
+      technicalDrawing: '',
+      site: '',
+      context: '',
+      documenter: ''
     });
-    setIsAddingArtifact(false);
+    setShowAddDocument(false);
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case 'lithic': return '🪨';
       case 'ceramic': return '🏺';
-      case 'lithic': return '🗿';
       case 'bone': return '🦴';
       case 'metal': return '⚔️';
-      case 'textile': return '🧵';
-      case 'wood': return '🪵';
+      case 'other': return '🔍';
       default: return '🔍';
     }
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'ceramic': return 'Cerámica';
-      case 'lithic': return 'Lítico';
-      case 'bone': return 'Hueso';
-      case 'metal': return 'Metal';
-      case 'textile': return 'Textil';
-      case 'wood': return 'Madera';
-      default: return 'Otro';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'review': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -226,647 +188,410 @@ const ArtifactDocumentationPage: React.FC = () => {
       case 'good': return 'bg-blue-100 text-blue-800';
       case 'fair': return 'bg-yellow-100 text-yellow-800';
       case 'poor': return 'bg-red-100 text-red-800';
-      case 'fragmentary': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getConditionLabel = (condition: string) => {
-    switch (condition) {
-      case 'excellent': return 'Excelente';
-      case 'good': return 'Buena';
-      case 'fair': return 'Regular';
-      case 'poor': return 'Mala';
-      case 'fragmentary': return 'Fragmentario';
-      default: return 'Desconocida';
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'lithic': return 'bg-orange-100 text-orange-800';
+      case 'ceramic': return 'bg-red-100 text-red-800';
+      case 'bone': return 'bg-yellow-100 text-yellow-800';
+      case 'metal': return 'bg-purple-100 text-purple-800';
+      case 'other': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredArtifacts = artifacts
-    .filter(artifact => filter === 'all' || artifact.type === filter)
-    .filter(artifact => 
-      artifact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      artifact.catalog_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      artifact.material.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">📝 Documentación de Artefactos</h1>
+        <Button onClick={() => setShowAddDocument(true)}>
+          ➕ Nueva Ficha
+        </Button>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{documents.length}</div>
+            <div className="text-sm text-gray-600">Total Fichas</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-orange-600">
+              {documents.filter(d => d.type === 'lithic').length}
+            </div>
+            <div className="text-sm text-gray-600">Artefactos Líticos</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-2xl font-bold text-red-600">
+            {documents.filter(d => d.type === 'ceramic').length}
+          </div>
+          <div className="text-sm text-gray-600">Cerámica</div>
+        </Card>
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {documents.filter(d => d.status === 'approved').length}
+            </div>
+            <div className="text-sm text-gray-600">Aprobadas</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Lista de Documentos */}
+      <Card>
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4">📋 Fichas Técnicas de Artefactos</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Artefacto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sitio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dimensiones
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {documents.map((document) => (
+                  <tr key={document.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">{getTypeIcon(document.type)}</span>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(document.type)}`}>
+                          {document.type === 'lithic' ? 'Lítico' :
+                           document.type === 'ceramic' ? 'Cerámica' :
+                           document.type === 'bone' ? 'Hueso' :
+                           document.type === 'metal' ? 'Metal' : 'Otro'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{document.artifactName}</div>
+                      <div className="text-sm text-gray-500">{document.catalogNumber}</div>
+                      <div className="text-xs text-gray-400">{document.description.substring(0, 50)}...</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{document.site}</div>
+                      <div className="text-xs text-gray-500">{document.context}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {document.dimensions.length}×{document.dimensions.width}×{document.dimensions.height} cm
+                      </div>
+                      <div className="text-xs text-gray-500">{document.weight} g</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(document.condition)}`}>
+                        {document.condition === 'excellent' ? 'Excelente' :
+                         document.condition === 'good' ? 'Bueno' :
+                         document.condition === 'fair' ? 'Regular' : 'Pobre'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(document.status)}`}>
+                        {document.status === 'draft' ? 'Borrador' :
+                         document.status === 'review' ? 'En Revisión' : 'Aprobado'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedDocument(document)}>
+                          👁️ Ver
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          ✏️ Editar
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Card>
+
+      {/* Modal para agregar documento */}
+      {showAddDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">➕ Nueva Ficha Técnica</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Documentación de Artefactos
-                </h1>
-                <p className="mt-2 text-gray-600">
-                  Catalogar y registrar artefactos arqueológicos
-                </p>
+                <label className="block text-sm font-medium text-gray-700">Nombre del Artefacto</label>
+                <Input
+                  value={newDocument.artifactName}
+                  onChange={(e) => setNewDocument({...newDocument, artifactName: e.target.value})}
+                  placeholder="Ej: Punta de Proyectil Cola de Pescado"
+                />
               </div>
-              <Button 
-                variant="primary"
-                onClick={() => setIsAddingArtifact(true)}
-              >
-                + Nuevo Artefacto
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Número de Catálogo</label>
+                <Input
+                  value={newDocument.catalogNumber}
+                  onChange={(e) => setNewDocument({...newDocument, catalogNumber: e.target.value})}
+                  placeholder="Ej: LLB-001"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <select
+                  value={newDocument.type}
+                  onChange={(e) => setNewDocument({...newDocument, type: e.target.value as any})}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                >
+                  <option value="lithic">🪨 Artefacto Lítico</option>
+                  <option value="ceramic">🏺 Cerámica</option>
+                  <option value="bone">🦴 Hueso</option>
+                  <option value="metal">⚔️ Metal</option>
+                  <option value="other">🔍 Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Material</label>
+                <Input
+                  value={newDocument.material}
+                  onChange={(e) => setNewDocument({...newDocument, material: e.target.value})}
+                  placeholder="Ej: Sílice, Arcilla, Hueso"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Largo (cm)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newDocument.dimensions.length}
+                  onChange={(e) => setNewDocument({
+                    ...newDocument, 
+                    dimensions: {...newDocument.dimensions, length: parseFloat(e.target.value)}
+                  })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Ancho (cm)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newDocument.dimensions.width}
+                  onChange={(e) => setNewDocument({
+                    ...newDocument, 
+                    dimensions: {...newDocument.dimensions, width: parseFloat(e.target.value)}
+                  })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Alto (cm)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newDocument.dimensions.height}
+                  onChange={(e) => setNewDocument({
+                    ...newDocument, 
+                    dimensions: {...newDocument.dimensions, height: parseFloat(e.target.value)}
+                  })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Peso (g)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newDocument.weight}
+                  onChange={(e) => setNewDocument({...newDocument, weight: parseFloat(e.target.value)})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Estado de Conservación</label>
+                <select
+                  value={newDocument.condition}
+                  onChange={(e) => setNewDocument({...newDocument, condition: e.target.value as any})}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                >
+                  <option value="excellent">Excelente</option>
+                  <option value="good">Bueno</option>
+                  <option value="fair">Regular</option>
+                  <option value="poor">Pobre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Sitio</label>
+                <Input
+                  value={newDocument.site}
+                  onChange={(e) => setNewDocument({...newDocument, site: e.target.value})}
+                  placeholder="Ej: Laguna La Brava"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contexto</label>
+                <Input
+                  value={newDocument.context}
+                  onChange={(e) => setNewDocument({...newDocument, context: e.target.value})}
+                  placeholder="Ej: Superficie, sector norte"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Descripción Técnica</label>
+                <textarea
+                  value={newDocument.description}
+                  onChange={(e) => setNewDocument({...newDocument, description: e.target.value})}
+                  placeholder="Descripción técnica detallada del artefacto"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAddDocument(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAddDocument}>
+                Crear Ficha
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🏺</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Cerámica</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {artifacts.filter(a => a.type === 'ceramic').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🗿</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Lítico</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {artifacts.filter(a => a.type === 'lithic').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🦴</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Hueso</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {artifacts.filter(a => a.type === 'bone').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">⚔️</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Metal</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {artifacts.filter(a => a.type === 'metal').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Buscar Artefactos
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Buscar por nombre, catálogo o material..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+      {/* Modal para ver documento */}
+      {selectedDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">📝 Ficha Técnica Completa</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Filtrar por Tipo
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                  >
-                    <option value="all">Todos los Tipos</option>
-                    <option value="ceramic">🏺 Cerámica</option>
-                    <option value="lithic">🗿 Lítico</option>
-                    <option value="bone">🦴 Hueso</option>
-                    <option value="metal">⚔️ Metal</option>
-                    <option value="textile">🧵 Textil</option>
-                    <option value="wood">🪵 Madera</option>
-                    <option value="other">🔍 Otro</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Artifacts List */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Artefactos Catalogados</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArtifacts.map((artifact) => (
-              <Card key={artifact.id}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">{getTypeIcon(artifact.type)}</span>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {artifact.catalog_number}
-                        </h3>
-                        <p className="text-sm text-gray-600">{artifact.name}</p>
-                      </div>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConditionColor(artifact.condition)}`}>
-                      {getConditionLabel(artifact.condition)}
+                  <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{getTypeIcon(selectedDocument.type)}</span>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(selectedDocument.type)}`}>
+                      {selectedDocument.type === 'lithic' ? 'Artefacto Lítico' :
+                       selectedDocument.type === 'ceramic' ? 'Cerámica' :
+                       selectedDocument.type === 'bone' ? 'Hueso' :
+                       selectedDocument.type === 'metal' ? 'Metal' : 'Otro'}
                     </span>
                   </div>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Tipo:</span>
-                      <span className="font-medium">{getTypeLabel(artifact.type)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Material:</span>
-                      <span className="font-medium">{artifact.material}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Categoría:</span>
-                      <span className="font-medium">{artifact.category}</span>
-                    </div>
-                    {artifact.weight && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Peso:</span>
-                        <span className="font-medium">{artifact.weight}g</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Fotos:</span>
-                      <span className="font-medium">{artifact.photos.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Dibujos:</span>
-                      <span className="font-medium">{artifact.drawings.length}</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artifact.description}</p>
-                  
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setSelectedArtifact(artifact)}
-                    >
-                      Ver Detalles
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => window.location.href = `/dashboard/researcher/artifact-documentation/${artifact.id}`}
-                    >
-                      Editar
-                    </Button>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.artifactName}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Número de Catálogo</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.catalogNumber}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Material</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.material}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sitio</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.site}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Contexto</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.context}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Dimensiones</label>
+                  <p className="text-sm text-gray-900">
+                    {selectedDocument.dimensions.length} × {selectedDocument.dimensions.width} × {selectedDocument.dimensions.height} cm
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Peso</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.weight} g</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Estado</label>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(selectedDocument.condition)}`}>
+                    {selectedDocument.condition === 'excellent' ? 'Excelente' :
+                     selectedDocument.condition === 'good' ? 'Bueno' :
+                     selectedDocument.condition === 'fair' ? 'Regular' : 'Pobre'}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedDocument.status)}`}>
+                    {selectedDocument.status === 'draft' ? 'Borrador' :
+                     selectedDocument.status === 'review' ? 'En Revisión' : 'Aprobado'}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Fecha</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.date}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Documentador</label>
+                  <p className="text-sm text-gray-900">{selectedDocument.documenter}</p>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Descripción Técnica</label>
+                <p className="text-sm text-gray-900">{selectedDocument.description}</p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Dibujo Técnico</label>
+                <div className="mt-2 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <span className="text-4xl">📐</span>
+                    <p className="text-sm text-gray-600 mt-2">{selectedDocument.technicalDrawing}</p>
                   </div>
                 </div>
-              </Card>
-            ))}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Fotografías</label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {selectedDocument.photos.map((photo, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                      <div className="text-center">
+                        <span className="text-2xl">📷</span>
+                        <p className="text-xs text-gray-600 mt-1">{photo}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline">
+                📐 Agregar Dibujo
+              </Button>
+              <Button variant="outline">
+                📷 Agregar Foto
+              </Button>
+              <Button variant="outline" onClick={() => setSelectedDocument(null)}>
+                Cerrar
+              </Button>
+            </div>
           </div>
         </div>
-
-        {/* Add New Artifact Modal */}
-        {isAddingArtifact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Artefacto</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre del Artefacto
-                    </label>
-                    <Input
-                      type="text"
-                      value={newArtifact.name}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, name: e.target.value })}
-                      placeholder="Ej: Vasija Cerámica Decorada"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newArtifact.type}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, type: e.target.value as any })}
-                    >
-                      <option value="ceramic">🏺 Cerámica</option>
-                      <option value="lithic">🗿 Lítico</option>
-                      <option value="bone">🦴 Hueso</option>
-                      <option value="metal">⚔️ Metal</option>
-                      <option value="textile">🧵 Textil</option>
-                      <option value="wood">🪵 Madera</option>
-                      <option value="other">🔍 Otro</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Categoría
-                    </label>
-                    <Input
-                      type="text"
-                      value={newArtifact.category}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, category: e.target.value })}
-                      placeholder="Ej: Vasija, Herramienta, Adorno..."
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Material
-                    </label>
-                    <Input
-                      type="text"
-                      value={newArtifact.material}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, material: e.target.value })}
-                      placeholder="Ej: Cerámica, Obsidiana, Hueso..."
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Estado de Conservación
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newArtifact.condition}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, condition: e.target.value as any })}
-                    >
-                      <option value="excellent">Excelente</option>
-                      <option value="good">Buena</option>
-                      <option value="fair">Regular</option>
-                      <option value="poor">Mala</option>
-                      <option value="fragmentary">Fragmentario</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Peso (gramos)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.weight}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, weight: Number(e.target.value) })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={newArtifact.description}
-                    onChange={(e) => setNewArtifact({ ...newArtifact, description: e.target.value })}
-                    placeholder="Descripción detallada del artefacto..."
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hipótesis de Función
-                    </label>
-                    <Input
-                      type="text"
-                      value={newArtifact.function_hypothesis}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, function_hypothesis: e.target.value })}
-                      placeholder="Ej: Almacenamiento, Caza, Adorno..."
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Período Cultural
-                    </label>
-                    <Input
-                      type="text"
-                      value={newArtifact.cultural_period}
-                      onChange={(e) => setNewArtifact({ ...newArtifact, cultural_period: e.target.value })}
-                      placeholder="Ej: Clásico, Preclásico..."
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-5 gap-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Largo (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.dimensions.length}
-                      onChange={(e) => setNewArtifact({ 
-                        ...newArtifact, 
-                        dimensions: { ...newArtifact.dimensions, length: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ancho (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.dimensions.width}
-                      onChange={(e) => setNewArtifact({ 
-                        ...newArtifact, 
-                        dimensions: { ...newArtifact.dimensions, width: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Alto (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.dimensions.height}
-                      onChange={(e) => setNewArtifact({ 
-                        ...newArtifact, 
-                        dimensions: { ...newArtifact.dimensions, height: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Grosor (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.dimensions.thickness}
-                      onChange={(e) => setNewArtifact({ 
-                        ...newArtifact, 
-                        dimensions: { ...newArtifact.dimensions, thickness: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Diámetro (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newArtifact.dimensions.diameter}
-                      onChange={(e) => setNewArtifact({ 
-                        ...newArtifact, 
-                        dimensions: { ...newArtifact.dimensions, diameter: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notas Adicionales
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={newArtifact.notes}
-                    onChange={(e) => setNewArtifact({ ...newArtifact, notes: e.target.value })}
-                    placeholder="Observaciones adicionales..."
-                  />
-                </div>
-                
-                <div className="flex space-x-3 mt-6">
-                  <Button 
-                    variant="primary"
-                    onClick={handleAddArtifact}
-                    disabled={!newArtifact.name || !newArtifact.material}
-                  >
-                    Agregar Artefacto
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setIsAddingArtifact(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Selected Artifact Details */}
-        {selectedArtifact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-3xl mr-4">{getTypeIcon(selectedArtifact.type)}</span>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {selectedArtifact.catalog_number}
-                      </h3>
-                      <p className="text-sm text-gray-600">{selectedArtifact.name}</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedArtifact(null)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Información General</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Tipo:</span>
-                        <span>{getTypeLabel(selectedArtifact.type)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Categoría:</span>
-                        <span>{selectedArtifact.category}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Material:</span>
-                        <span>{selectedArtifact.material}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Estado:</span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(selectedArtifact.condition)}`}>
-                          {getConditionLabel(selectedArtifact.condition)}
-                        </span>
-                      </div>
-                      {selectedArtifact.weight && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Peso:</span>
-                          <span>{selectedArtifact.weight}g</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Contexto de Hallazgo</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Fecha:</span>
-                        <span>{selectedArtifact.discovery_date}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Profundidad:</span>
-                        <span>{selectedArtifact.discovery_location.depth}m</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Contexto:</span>
-                        <span>{selectedArtifact.discovery_location.context}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Fotos:</span>
-                        <span>{selectedArtifact.photos.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Dibujos:</span>
-                        <span>{selectedArtifact.drawings.length}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {selectedArtifact.dimensions.length && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Dimensiones</h4>
-                    <div className="grid grid-cols-5 gap-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Largo:</span>
-                        <span>{selectedArtifact.dimensions.length} cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Ancho:</span>
-                        <span>{selectedArtifact.dimensions.width} cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Alto:</span>
-                        <span>{selectedArtifact.dimensions.height} cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Grosor:</span>
-                        <span>{selectedArtifact.dimensions.thickness} cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Diámetro:</span>
-                        <span>{selectedArtifact.dimensions.diameter} cm</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="mt-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
-                  <p className="text-sm text-gray-600">{selectedArtifact.description}</p>
-                </div>
-                
-                {selectedArtifact.function_hypothesis && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Hipótesis de Función</h4>
-                    <p className="text-sm text-gray-600">{selectedArtifact.function_hypothesis}</p>
-                  </div>
-                )}
-                
-                {selectedArtifact.cultural_period && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Período Cultural</h4>
-                    <p className="text-sm text-gray-600">{selectedArtifact.cultural_period}</p>
-                  </div>
-                )}
-                
-                {selectedArtifact.notes && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Notas</h4>
-                    <p className="text-sm text-gray-600">{selectedArtifact.notes}</p>
-                  </div>
-                )}
-                
-                <div className="flex space-x-3 mt-6">
-                  <Button 
-                    variant="primary"
-                    onClick={() => window.location.href = `/dashboard/researcher/artifact-documentation/${selectedArtifact.id}`}
-                  >
-                    Editar Artefacto
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setSelectedArtifact(null)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

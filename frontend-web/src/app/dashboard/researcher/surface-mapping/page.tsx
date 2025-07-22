@@ -1,150 +1,119 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
-import Input from '../../../../components/ui/Input';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 
 interface SurfaceFinding {
   id: string;
-  type: 'ceramic' | 'lithic' | 'bone' | 'metal' | 'other';
-  coordinates: {
-    latitude: number;
-    longitude: number;
-  };
-  description: string;
-  condition: 'excellent' | 'good' | 'fair' | 'poor';
-  size: {
-    length?: number;
-    width?: number;
-    height?: number;
-  };
+  name: string;
+  type: 'lithic' | 'ceramic' | 'bone' | 'shell' | 'other';
   material: string;
-  date_found: string;
-  photos: string[];
-  notes: string;
-  catalog_number?: string;
+  coordinates: [number, number];
+  condition: 'excellent' | 'good' | 'fair' | 'poor';
+  description: string;
+  date: string;
+  site: string;
+  collector: string;
+  photoUrl?: string;
 }
 
 const SurfaceMappingPage: React.FC = () => {
-  const { user } = useAuth();
   const [findings, setFindings] = useState<SurfaceFinding[]>([]);
   const [selectedFinding, setSelectedFinding] = useState<SurfaceFinding | null>(null);
-  const [isAddingFinding, setIsAddingFinding] = useState(false);
-  const [filter, setFilter] = useState('all');
+  const [showAddFinding, setShowAddFinding] = useState(false);
   const [newFinding, setNewFinding] = useState({
-    type: 'ceramic' as const,
-    description: '',
-    condition: 'good' as const,
+    name: '',
+    type: 'lithic' as const,
     material: '',
-    notes: '',
-    size: { length: 0, width: 0, height: 0 }
+    coordinates: [0, 0] as [number, number],
+    condition: 'good' as const,
+    description: '',
+    site: '',
+    collector: ''
   });
 
+  // Datos simulados con ejemplos pampeanos
   useEffect(() => {
-    // Simular datos de hallazgos en superficie
     setFindings([
       {
         id: '1',
-        type: 'ceramic',
-        coordinates: {
-          latitude: 19.6915,
-          longitude: -98.8441
-        },
-        description: 'Fragmento de vasija con decoración incisa',
-        condition: 'good',
-        size: { length: 8, width: 6, height: 2 },
-        material: 'Cerámica',
-        date_found: '2024-01-15',
-        photos: ['photo1.jpg', 'photo2.jpg'],
-        notes: 'Encontrado en sector norte, cerca del muro',
-        catalog_number: 'CER-001'
+        name: 'Punta de Proyectil Cola de Pescado',
+        type: 'lithic',
+        material: 'Sílice',
+        coordinates: [-38.1234, -61.5678],
+        condition: 'excellent',
+        description: 'Punta de proyectil tipo Cola de Pescado, retoque bifacial, base cóncava',
+        date: '2025-07-22',
+        site: 'Laguna La Brava',
+        collector: 'Dr. Pérez'
       },
       {
         id: '2',
-        type: 'lithic',
-        coordinates: {
-          latitude: 19.6914,
-          longitude: -98.8442
-        },
-        description: 'Punta de proyectil de obsidiana',
-        condition: 'excellent',
-        size: { length: 4, width: 2, height: 1 },
-        material: 'Obsidiana',
-        date_found: '2024-01-14',
-        photos: ['photo3.jpg'],
-        notes: 'Punta completa, excelente conservación',
-        catalog_number: 'LIT-001'
+        name: 'Fragmento de Cerámica',
+        type: 'ceramic',
+        material: 'Arcilla',
+        coordinates: [-38.2345, -61.6789],
+        condition: 'good',
+        description: 'Fragmento de cerámica con decoración incisa',
+        date: '2025-07-21',
+        site: 'Arroyo Seco',
+        collector: 'Dr. Pérez'
       },
       {
         id: '3',
+        name: 'Hueso de Guanaco',
         type: 'bone',
-        coordinates: {
-          latitude: 19.6913,
-          longitude: -98.8443
-        },
-        description: 'Fragmento de hueso trabajado',
-        condition: 'fair',
-        size: { length: 12, width: 3, height: 2 },
         material: 'Hueso',
-        date_found: '2024-01-13',
-        photos: ['photo4.jpg'],
-        notes: 'Posible herramienta o adorno',
-        catalog_number: 'BON-001'
+        coordinates: [-38.3456, -61.7890],
+        condition: 'fair',
+        description: 'Fragmento de hueso de guanaco con marcas de corte',
+        date: '2025-07-20',
+        site: 'Monte Hermoso',
+        collector: 'Dr. Pérez'
+      },
+      {
+        id: '4',
+        name: 'Raspador Lítico',
+        type: 'lithic',
+        material: 'Cuarzo',
+        coordinates: [-38.4567, -61.8901],
+        condition: 'good',
+        description: 'Raspador lítico con retoque unifacial',
+        date: '2025-07-19',
+        site: 'Laguna La Brava',
+        collector: 'Dr. Pérez'
       }
     ]);
   }, []);
 
   const handleAddFinding = () => {
-    if (!newFinding.description || !newFinding.material) return;
-
     const finding: SurfaceFinding = {
       id: Date.now().toString(),
+      name: newFinding.name,
       type: newFinding.type,
-      coordinates: {
-        latitude: 19.6915 + (Math.random() - 0.5) * 0.001,
-        longitude: -98.8441 + (Math.random() - 0.5) * 0.001
-      },
-      description: newFinding.description,
-      condition: newFinding.condition,
-      size: newFinding.size,
       material: newFinding.material,
-      date_found: new Date().toISOString().split('T')[0],
-      photos: [],
-      notes: newFinding.notes,
-      catalog_number: `${newFinding.type.toUpperCase()}-${String(findings.length + 1).padStart(3, '0')}`
+      coordinates: newFinding.coordinates,
+      condition: newFinding.condition,
+      description: newFinding.description,
+      site: newFinding.site,
+      collector: newFinding.collector,
+      date: new Date().toISOString().split('T')[0]
     };
-
     setFindings([...findings, finding]);
-    setNewFinding({
-      type: 'ceramic',
-      description: '',
-      condition: 'good',
-      material: '',
-      notes: '',
-      size: { length: 0, width: 0, height: 0 }
-    });
-    setIsAddingFinding(false);
+    setNewFinding({ name: '', type: 'lithic', material: '', coordinates: [0, 0], condition: 'good', description: '', site: '', collector: '' });
+    setShowAddFinding(false);
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case 'lithic': return '🪨';
       case 'ceramic': return '🏺';
-      case 'lithic': return '🗿';
       case 'bone': return '🦴';
-      case 'metal': return '⚔️';
+      case 'shell': return '🐚';
+      case 'other': return '🔍';
       default: return '🔍';
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'ceramic': return 'Cerámica';
-      case 'lithic': return 'Lítico';
-      case 'bone': return 'Hueso';
-      case 'metal': return 'Metal';
-      default: return 'Otro';
     }
   };
 
@@ -158,505 +127,311 @@ const SurfaceMappingPage: React.FC = () => {
     }
   };
 
-  const getConditionLabel = (condition: string) => {
-    switch (condition) {
-      case 'excellent': return 'Excelente';
-      case 'good': return 'Buena';
-      case 'fair': return 'Regular';
-      case 'poor': return 'Mala';
-      default: return 'Desconocida';
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'lithic': return 'bg-orange-100 text-orange-800';
+      case 'ceramic': return 'bg-red-100 text-red-800';
+      case 'bone': return 'bg-yellow-100 text-yellow-800';
+      case 'shell': return 'bg-blue-100 text-blue-800';
+      case 'other': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredFindings = filter === 'all' 
-    ? findings 
-    : findings.filter(finding => finding.type === filter);
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">🌍 Mapeo de Superficie</h1>
+        <Button onClick={() => setShowAddFinding(true)}>
+          ➕ Agregar Hallazgo
+        </Button>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{findings.length}</div>
+            <div className="text-sm text-gray-600">Total Hallazgos</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-orange-600">
+              {findings.filter(f => f.type === 'lithic').length}
+            </div>
+            <div className="text-sm text-gray-600">Artefactos Líticos</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {findings.filter(f => f.type === 'ceramic').length}
+            </div>
+            <div className="text-sm text-gray-600">Cerámica</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-600">
+              {findings.filter(f => f.type === 'bone').length}
+            </div>
+            <div className="text-sm text-gray-600">Restos Óseos</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Lista de Hallazgos */}
+      <Card>
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4">📋 Registro de Hallazgos en Superficie</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Hallazgo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sitio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Material
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {findings.map((finding) => (
+                  <tr key={finding.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">{getTypeIcon(finding.type)}</span>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(finding.type)}`}>
+                          {finding.type === 'lithic' ? 'Lítico' :
+                           finding.type === 'ceramic' ? 'Cerámica' :
+                           finding.type === 'bone' ? 'Hueso' :
+                           finding.type === 'shell' ? 'Concha' : 'Otro'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{finding.name}</div>
+                      <div className="text-sm text-gray-500">{finding.description.substring(0, 50)}...</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{finding.site}</div>
+                      <div className="text-xs text-gray-500">
+                        {finding.coordinates[0].toFixed(4)}, {finding.coordinates[1].toFixed(4)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{finding.material}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(finding.condition)}`}>
+                        {finding.condition === 'excellent' ? 'Excelente' :
+                         finding.condition === 'good' ? 'Bueno' :
+                         finding.condition === 'fair' ? 'Regular' : 'Pobre'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {finding.date}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedFinding(finding)}>
+                        👁️ Ver
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Card>
+
+      {/* Modal para agregar hallazgo */}
+      {showAddFinding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">➕ Agregar Nuevo Hallazgo</h3>
+            <div className="space-y-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Mapeo de Superficie
-                </h1>
-                <p className="mt-2 text-gray-600">
-                  Documentar y catalogar hallazgos en superficie
-                </p>
+                <label className="block text-sm font-medium text-gray-700">Nombre del Hallazgo</label>
+                <Input
+                  value={newFinding.name}
+                  onChange={(e) => setNewFinding({...newFinding, name: e.target.value})}
+                  placeholder="Ej: Punta de Proyectil Cola de Pescado"
+                />
               </div>
-              <Button 
-                variant="primary"
-                onClick={() => setIsAddingFinding(true)}
-              >
-                + Nuevo Hallazgo
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <select
+                  value={newFinding.type}
+                  onChange={(e) => setNewFinding({...newFinding, type: e.target.value as any})}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                >
+                  <option value="lithic">🪨 Artefacto Lítico</option>
+                  <option value="ceramic">🏺 Cerámica</option>
+                  <option value="bone">🦴 Hueso</option>
+                  <option value="shell">🐚 Concha</option>
+                  <option value="other">🔍 Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Material</label>
+                <Input
+                  value={newFinding.material}
+                  onChange={(e) => setNewFinding({...newFinding, material: e.target.value})}
+                  placeholder="Ej: Sílice, Arcilla, Hueso"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Latitud</label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={newFinding.coordinates[0]}
+                    onChange={(e) => setNewFinding({...newFinding, coordinates: [parseFloat(e.target.value), newFinding.coordinates[1]]})}
+                    placeholder="-38.1234"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Longitud</label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={newFinding.coordinates[1]}
+                    onChange={(e) => setNewFinding({...newFinding, coordinates: [newFinding.coordinates[0], parseFloat(e.target.value)]})}
+                    placeholder="-61.5678"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Estado de Conservación</label>
+                <select
+                  value={newFinding.condition}
+                  onChange={(e) => setNewFinding({...newFinding, condition: e.target.value as any})}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                >
+                  <option value="excellent">Excelente</option>
+                  <option value="good">Bueno</option>
+                  <option value="fair">Regular</option>
+                  <option value="poor">Pobre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Sitio</label>
+                <Input
+                  value={newFinding.site}
+                  onChange={(e) => setNewFinding({...newFinding, site: e.target.value})}
+                  placeholder="Ej: Laguna La Brava"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea
+                  value={newFinding.description}
+                  onChange={(e) => setNewFinding({...newFinding, description: e.target.value})}
+                  placeholder="Descripción detallada del hallazgo"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAddFinding(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAddFinding}>
+                Agregar
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🏺</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Cerámica</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {findings.filter(f => f.type === 'ceramic').length}
-                  </p>
+      {/* Modal para ver hallazgo */}
+      {selectedFinding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">🌍 Detalles del Hallazgo</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl">{getTypeIcon(selectedFinding.type)}</span>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(selectedFinding.type)}`}>
+                    {selectedFinding.type === 'lithic' ? 'Artefacto Lítico' :
+                     selectedFinding.type === 'ceramic' ? 'Cerámica' :
+                     selectedFinding.type === 'bone' ? 'Hueso' :
+                     selectedFinding.type === 'shell' ? 'Concha' : 'Otro'}
+                  </span>
                 </div>
               </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🗿</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Lítico</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {findings.filter(f => f.type === 'lithic').length}
-                  </p>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                <p className="text-sm text-gray-900">{selectedFinding.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Sitio</label>
+                <p className="text-sm text-gray-900">{selectedFinding.site}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Coordenadas</label>
+                <p className="text-sm text-gray-900">
+                  {selectedFinding.coordinates[0].toFixed(6)}, {selectedFinding.coordinates[1].toFixed(6)}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Material</label>
+                <p className="text-sm text-gray-900">{selectedFinding.material}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Estado</label>
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(selectedFinding.condition)}`}>
+                  {selectedFinding.condition === 'excellent' ? 'Excelente' :
+                   selectedFinding.condition === 'good' ? 'Bueno' :
+                   selectedFinding.condition === 'fair' ? 'Regular' : 'Pobre'}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <p className="text-sm text-gray-900">{selectedFinding.description}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Fecha</label>
+                <p className="text-sm text-gray-900">{selectedFinding.date}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Recolector</label>
+                <p className="text-sm text-gray-900">{selectedFinding.collector}</p>
               </div>
             </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🦴</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Hueso</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {findings.filter(f => f.type === 'bone').length}
-                  </p>
-                </div>
-              </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline">
+                📷 Agregar Foto
+              </Button>
+              <Button variant="outline" onClick={() => setSelectedFinding(null)}>
+                Cerrar
+              </Button>
             </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">⚔️</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Metal</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {findings.filter(f => f.type === 'metal').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8">
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  variant={filter === 'all' ? 'primary' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilter('all')}
-                >
-                  Todos ({findings.length})
-                </Button>
-                <Button 
-                  variant={filter === 'ceramic' ? 'primary' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilter('ceramic')}
-                >
-                  🏺 Cerámica ({findings.filter(f => f.type === 'ceramic').length})
-                </Button>
-                <Button 
-                  variant={filter === 'lithic' ? 'primary' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilter('lithic')}
-                >
-                  🗿 Lítico ({findings.filter(f => f.type === 'lithic').length})
-                </Button>
-                <Button 
-                  variant={filter === 'bone' ? 'primary' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilter('bone')}
-                >
-                  🦴 Hueso ({findings.filter(f => f.type === 'bone').length})
-                </Button>
-                <Button 
-                  variant={filter === 'metal' ? 'primary' : 'outline'} 
-                  size="sm"
-                  onClick={() => setFilter('metal')}
-                >
-                  ⚔️ Metal ({findings.filter(f => f.type === 'metal').length})
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Findings List */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Hallazgos en Superficie</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFindings.map((finding) => (
-              <Card key={finding.id}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">{getTypeIcon(finding.type)}</span>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {finding.catalog_number}
-                        </h3>
-                        <p className="text-sm text-gray-600">{getTypeLabel(finding.type)}</p>
-                      </div>
-                    </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConditionColor(finding.condition)}`}>
-                      {getConditionLabel(finding.condition)}
-                    </span>
-                  </div>
-                  
-                  <p className="text-sm text-gray-700 mb-4">{finding.description}</p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Material:</span>
-                      <span className="font-medium">{finding.material}</span>
-                    </div>
-                    {finding.size.length && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Tamaño:</span>
-                        <span className="font-medium">
-                          {finding.size.length}×{finding.size.width}×{finding.size.height} cm
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Fecha:</span>
-                      <span className="font-medium">{finding.date_found}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Fotos:</span>
-                      <span className="font-medium">{finding.photos.length}</span>
-                    </div>
-                  </div>
-                  
-                  {finding.notes && (
-                    <p className="text-sm text-gray-600 mb-4">{finding.notes}</p>
-                  )}
-                  
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setSelectedFinding(finding)}
-                    >
-                      Ver Detalles
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => window.location.href = `/dashboard/researcher/surface-mapping/${finding.id}`}
-                    >
-                      Editar
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
           </div>
         </div>
-
-        {/* Add New Finding Modal */}
-        {isAddingFinding && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Nuevo Hallazgo en Superficie</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo de Hallazgo
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newFinding.type}
-                      onChange={(e) => setNewFinding({ ...newFinding, type: e.target.value as any })}
-                    >
-                      <option value="ceramic">🏺 Cerámica</option>
-                      <option value="lithic">🗿 Lítico</option>
-                      <option value="bone">🦴 Hueso</option>
-                      <option value="metal">⚔️ Metal</option>
-                      <option value="other">🔍 Otro</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Estado de Conservación
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newFinding.condition}
-                      onChange={(e) => setNewFinding({ ...newFinding, condition: e.target.value as any })}
-                    >
-                      <option value="excellent">Excelente</option>
-                      <option value="good">Buena</option>
-                      <option value="fair">Regular</option>
-                      <option value="poor">Mala</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={newFinding.description}
-                    onChange={(e) => setNewFinding({ ...newFinding, description: e.target.value })}
-                    placeholder="Descripción detallada del hallazgo..."
-                  />
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Material
-                  </label>
-                  <Input
-                    type="text"
-                    value={newFinding.material}
-                    onChange={(e) => setNewFinding({ ...newFinding, material: e.target.value })}
-                    placeholder="Ej: Cerámica, Obsidiana, Hueso..."
-                  />
-                </div>
-                
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Largo (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newFinding.size.length}
-                      onChange={(e) => setNewFinding({ 
-                        ...newFinding, 
-                        size: { ...newFinding.size, length: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ancho (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newFinding.size.width}
-                      onChange={(e) => setNewFinding({ 
-                        ...newFinding, 
-                        size: { ...newFinding.size, width: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Alto (cm)
-                    </label>
-                    <Input
-                      type="number"
-                      value={newFinding.size.height}
-                      onChange={(e) => setNewFinding({ 
-                        ...newFinding, 
-                        size: { ...newFinding.size, height: Number(e.target.value) }
-                      })}
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notas Adicionales
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={newFinding.notes}
-                    onChange={(e) => setNewFinding({ ...newFinding, notes: e.target.value })}
-                    placeholder="Observaciones adicionales..."
-                  />
-                </div>
-                
-                <div className="flex space-x-3 mt-6">
-                  <Button 
-                    variant="primary"
-                    onClick={handleAddFinding}
-                    disabled={!newFinding.description || !newFinding.material}
-                  >
-                    Agregar Hallazgo
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setIsAddingFinding(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Selected Finding Details */}
-        {selectedFinding && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-3xl mr-4">{getTypeIcon(selectedFinding.type)}</span>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {selectedFinding.catalog_number}
-                      </h3>
-                      <p className="text-sm text-gray-600">{getTypeLabel(selectedFinding.type)}</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedFinding(null)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Información General</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Estado:</span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(selectedFinding.condition)}`}>
-                          {getConditionLabel(selectedFinding.condition)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Material:</span>
-                        <span>{selectedFinding.material}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Fecha:</span>
-                        <span>{selectedFinding.date_found}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Fotos:</span>
-                        <span>{selectedFinding.photos.length}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Coordenadas GPS</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Latitud:</span>
-                        <span>{selectedFinding.coordinates.latitude}°</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Longitud:</span>
-                        <span>{selectedFinding.coordinates.longitude}°</span>
-                      </div>
-                    </div>
-                    
-                    {selectedFinding.size.length && (
-                      <div className="mt-4">
-                        <h4 className="font-medium text-gray-900 mb-2">Dimensiones</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Largo:</span>
-                            <span>{selectedFinding.size.length} cm</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Ancho:</span>
-                            <span>{selectedFinding.size.width} cm</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Alto:</span>
-                            <span>{selectedFinding.size.height} cm</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Descripción</h4>
-                  <p className="text-sm text-gray-600">{selectedFinding.description}</p>
-                </div>
-                
-                {selectedFinding.notes && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Notas</h4>
-                    <p className="text-sm text-gray-600">{selectedFinding.notes}</p>
-                  </div>
-                )}
-                
-                <div className="flex space-x-3 mt-6">
-                  <Button 
-                    variant="primary"
-                    onClick={() => window.location.href = `/dashboard/researcher/surface-mapping/${selectedFinding.id}`}
-                  >
-                    Editar Hallazgo
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setSelectedFinding(null)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };
