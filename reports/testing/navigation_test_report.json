@@ -1,0 +1,71 @@
+{
+  "timestamp": "2025-07-21T00:35:01.159Z",
+  "summary": {
+    "totalErrors": 7,
+    "totalMissingPages": 0,
+    "totalMissingButtons": 0
+  },
+  "errors": [
+    {
+      "timestamp": "2025-07-21T00:34:54.185Z",
+      "message": "Error al probar páginas públicas",
+      "details": {
+        "error": "this.page.waitForTimeout is not a function"
+      },
+      "url": "http://localhost:3000/"
+    },
+    {
+      "timestamp": "2025-07-21T00:34:55.810Z",
+      "message": "Error en login de guest",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "timestamp": "2025-07-21T00:34:56.910Z",
+      "message": "Error en login de student",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "timestamp": "2025-07-21T00:34:57.986Z",
+      "message": "Error en login de researcher",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "timestamp": "2025-07-21T00:34:59.034Z",
+      "message": "Error en login de director",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "timestamp": "2025-07-21T00:35:00.153Z",
+      "message": "Error en login de institution",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    },
+    {
+      "timestamp": "2025-07-21T00:35:01.159Z",
+      "message": "Error en login de admin",
+      "details": {
+        "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[type=\"submit\"], button:contains(\"Iniciar Sesión\"), button:contains(\"Login\")' is not a valid selector."
+      },
+      "url": "http://localhost:3000/login"
+    }
+  ],
+  "missingPages": [],
+  "missingButtons": [],
+  "recommendations": [
+    "Revisar y corregir los errores identificados"
+  ]
+}

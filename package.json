@@ -1,0 +1,42 @@
+{
+  "name": "suite_arqueologica",
+  "version": "1.0.0",
+  "description": "Plataforma digital integral para la gestión de proyectos arqueológicos",
+  "private": true,
+  "workspaces": [
+    "frontend-web",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:backend\"",
+    "dev:web": "cd frontend-web && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:web && npm run build:backend",
+    "build:web": "cd frontend-web && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "test": "npm run test:web && npm run test:backend",
+    "test:web": "cd frontend-web && npm test",
+    "test:backend": "cd backend && npm test",
+    "lint": "npm run lint:web && npm run lint:backend",
+    "lint:web": "cd frontend-web && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "install:all": "npm install && npm run install:web && npm run install:backend",
+    "install:web": "cd frontend-web && npm install",
+    "install:backend": "cd backend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "supabase": "^2.31.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.14.0"
+  }
+}

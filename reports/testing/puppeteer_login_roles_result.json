@@ -1,0 +1,498 @@
+[
+  {
+    "role": "ADMIN",
+    "success": false,
+    "errors": [
+      "Logout no redirigió al login."
+    ],
+    "buttons": [
+      {
+        "text": "Cerrar Sesión",
+        "disabled": false
+      },
+      {
+        "text": "Ver usuarios",
+        "disabled": false
+      },
+      {
+        "text": "Gestionar suscripciones",
+        "disabled": false
+      },
+      {
+        "text": "Ver reportes",
+        "disabled": false
+      },
+      {
+        "text": "Exportar datos",
+        "disabled": false
+      },
+      {
+        "text": "Configuración",
+        "disabled": false
+      },
+      {
+        "text": "Políticas",
+        "disabled": false
+      },
+      {
+        "text": "Ver instituciones",
+        "disabled": false
+      },
+      {
+        "text": "Aprobar solicitudes",
+        "disabled": false
+      },
+      {
+        "text": "Crear backup",
+        "disabled": false
+      },
+      {
+        "text": "Logs de seguridad",
+        "disabled": false
+      },
+      {
+        "text": "Ver tickets",
+        "disabled": false
+      },
+      {
+        "text": "Documentación",
+        "disabled": false
+      },
+      {
+        "text": "🏛️ Sitios Arqueológicos",
+        "disabled": false
+      },
+      {
+        "text": "🏺 Objetos",
+        "disabled": false
+      },
+      {
+        "text": "⛏️ Excavaciones",
+        "disabled": false
+      },
+      {
+        "text": "💳 Planes y Suscripciones",
+        "disabled": false
+      }
+    ]
+  },
+  {
+    "role": "RESEARCHER",
+    "success": false,
+    "errors": [
+      "No se mostró el mensaje de error esperado.",
+      "Texto encontrado en la página: Dashboard de Investigador\n\nBienvenido, dr.perez. Herramientas de campo y documentación arqueológica.\n\n⛏️\n\nExcavaciones Activas\n\n3\n\n🏺\n\nArtefactos Documentados\n\n127\n\n📏\n\nMediciones Realizadas\n\n45\n\n📷\n\n"
+    ],
+    "buttons": []
+  },
+  {
+    "role": "STUDENT",
+    "success": false,
+    "errors": [
+      "Logout no redirigió al login."
+    ],
+    "buttons": [
+      {
+        "text": "Cerrar Sesión",
+        "disabled": false
+      },
+      {
+        "text": "📝 Nueva Nota de Campo",
+        "disabled": false
+      },
+      {
+        "text": "📚 Ver Tutoriales",
+        "disabled": false
+      },
+      {
+        "text": "✅ Mis Tareas",
+        "disabled": false
+      },
+      {
+        "text": "🌐 Datos Públicos",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Ver Tareas",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Comenzar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Comenzar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Comenzar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Completa",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Completa",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Continuar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Certificado",
+        "disabled": false
+      },
+      {
+        "text": "Continuar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Certificado",
+        "disabled": false
+      },
+      {
+        "text": "Continuar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Certificado",
+        "disabled": false
+      },
+      {
+        "text": "Técnicas de Campo",
+        "disabled": false
+      },
+      {
+        "text": "Documentación",
+        "disabled": false
+      },
+      {
+        "text": "Laboratorio",
+        "disabled": false
+      },
+      {
+        "text": "Manual de Campo",
+        "disabled": false
+      },
+      {
+        "text": "Protocolos",
+        "disabled": false
+      },
+      {
+        "text": "Glosario",
+        "disabled": false
+      },
+      {
+        "text": "Datos Públicos",
+        "disabled": false
+      },
+      {
+        "text": "Biblioteca Digital",
+        "disabled": false
+      },
+      {
+        "text": "Contacto Supervisor",
+        "disabled": false
+      }
+    ]
+  },
+  {
+    "role": "DIRECTOR",
+    "success": false,
+    "errors": [
+      "Logout no redirigió al login."
+    ],
+    "buttons": [
+      {
+        "text": "Cerrar Sesión",
+        "disabled": false
+      },
+      {
+        "text": "🆕 Nuevo Proyecto",
+        "disabled": false
+      },
+      {
+        "text": "👥 Gestionar Usuarios",
+        "disabled": false
+      },
+      {
+        "text": "✅ Aprobaciones (3)",
+        "disabled": false
+      },
+      {
+        "text": "📊 Generar Reportes",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Aprobar",
+        "disabled": false
+      },
+      {
+        "text": "Rechazar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Aprobar",
+        "disabled": false
+      },
+      {
+        "text": "Rechazar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Aprobar",
+        "disabled": false
+      },
+      {
+        "text": "Rechazar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Desactivar",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Desactivar",
+        "disabled": false
+      },
+      {
+        "text": "Editar",
+        "disabled": false
+      },
+      {
+        "text": "Desactivar",
+        "disabled": false
+      },
+      {
+        "text": "Plantillas de Fichas",
+        "disabled": false
+      },
+      {
+        "text": "Formatos de Reporte",
+        "disabled": false
+      },
+      {
+        "text": "Configuración de Proyectos",
+        "disabled": false
+      },
+      {
+        "text": "Crear Backup",
+        "disabled": false
+      },
+      {
+        "text": "Logs de Acceso",
+        "disabled": false
+      },
+      {
+        "text": "Políticas de Seguridad",
+        "disabled": false
+      },
+      {
+        "text": "Reporte Mensual",
+        "disabled": false
+      },
+      {
+        "text": "Estadísticas de Uso",
+        "disabled": false
+      },
+      {
+        "text": "Auditoría",
+        "disabled": false
+      }
+    ]
+  },
+  {
+    "role": "INSTITUTION",
+    "success": false,
+    "errors": [
+      "Logout no redirigió al login."
+    ],
+    "buttons": [
+      {
+        "text": "Cerrar Sesión",
+        "disabled": false
+      },
+      {
+        "text": "📊 Generar Reporte",
+        "disabled": false
+      },
+      {
+        "text": "👥 Gestionar Investigadores",
+        "disabled": false
+      },
+      {
+        "text": "🏛️ Ver Proyectos",
+        "disabled": false
+      },
+      {
+        "text": "🤝 Colaboraciones",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Reporte",
+        "disabled": false
+      },
+      {
+        "text": "Ver Perfil",
+        "disabled": false
+      },
+      {
+        "text": "Proyectos",
+        "disabled": false
+      },
+      {
+        "text": "Ver Perfil",
+        "disabled": false
+      },
+      {
+        "text": "Proyectos",
+        "disabled": false
+      },
+      {
+        "text": "Ver Perfil",
+        "disabled": false
+      },
+      {
+        "text": "Proyectos",
+        "disabled": false
+      },
+      {
+        "text": "Ver Reporte",
+        "disabled": false
+      },
+      {
+        "text": "Descargar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Reporte",
+        "disabled": false
+      },
+      {
+        "text": "Descargar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Reporte",
+        "disabled": false
+      },
+      {
+        "text": "Descargar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Contactar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Contactar",
+        "disabled": false
+      },
+      {
+        "text": "Ver Detalles",
+        "disabled": false
+      },
+      {
+        "text": "Contactar",
+        "disabled": false
+      }
+    ]
+  },
+  {
+    "role": "GUEST",
+    "success": true,
+    "errors": [],
+    "buttons": [
+      {
+        "text": "Iniciar sesión",
+        "disabled": false
+      },
+      {
+        "text": "Registrarse",
+        "disabled": false
+      },
+      {
+        "text": "Comenzar ahora",
+        "disabled": false
+      },
+      {
+        "text": "Ver demo",
+        "disabled": false
+      }
+    ]
+  }
+]
