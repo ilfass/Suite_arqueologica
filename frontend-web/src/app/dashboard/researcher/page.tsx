@@ -25,53 +25,74 @@ const ResearcherDashboard: React.FC = () => {
       color: 'bg-green-500'
     },
     {
-      id: 'samples',
-      name: 'Gestión de Muestras',
-      icon: '🧪',
-      description: 'Registro y análisis de muestras arqueológicas',
-      color: 'bg-yellow-500'
+      id: 'fieldwork',
+      name: 'Trabajo de Campo',
+      icon: '⛏️',
+      description: 'Gestión de prospecciones y excavaciones',
+      color: 'bg-orange-500'
+    },
+    {
+      id: 'laboratory',
+      name: 'Laboratorio',
+      icon: '🔬',
+      description: 'Gestión de muestras y análisis',
+      color: 'bg-purple-500'
     },
     {
       id: 'artifacts',
-      name: 'Gestión de Hallazgos',
+      name: 'Materialidad y Catalogación',
       icon: '🏺',
       description: 'Inventario y catalogación de artefactos',
-      color: 'bg-purple-500'
+      color: 'bg-indigo-500'
+    },
+    {
+      id: 'publications',
+      name: 'Publicaciones y Difusión',
+      icon: '📑',
+      description: 'Informes técnicos y resultados',
+      color: 'bg-red-500'
+    },
+    {
+      id: 'communication',
+      name: 'Comunicación',
+      icon: '💬',
+      description: 'Mensajería interna y notificaciones',
+      color: 'bg-teal-500'
+    },
+    {
+      id: 'tools',
+      name: 'Herramientas Generales',
+      icon: '🧰',
+      description: 'Plantillas, test y formación',
+      color: 'bg-pink-500'
     },
     {
       id: 'visualization',
       name: 'Visualización de Datos',
       icon: '📊',
       description: 'Dashboard analítico y gráficos',
-      color: 'bg-red-500'
+      color: 'bg-yellow-500'
     },
     {
       id: 'reports',
       name: 'Editor Académico',
       icon: '📝',
       description: 'Generador de informes y publicaciones',
-      color: 'bg-indigo-500'
+      color: 'bg-gray-500'
     },
     {
       id: 'ai-tools',
       name: 'Herramientas de IA',
       icon: '🤖',
       description: 'Clasificación automática y análisis predictivo',
-      color: 'bg-pink-500'
-    },
-    {
-      id: 'collaboration',
-      name: 'Colaboración',
-      icon: '👥',
-      description: 'Mensajería y trabajo en equipo',
-      color: 'bg-orange-500'
+      color: 'bg-cyan-500'
     },
     {
       id: 'export',
       name: 'Exportación',
       icon: '📤',
       description: 'Backups y repositorio de datos',
-      color: 'bg-teal-500'
+      color: 'bg-emerald-500'
     }
   ];
 
