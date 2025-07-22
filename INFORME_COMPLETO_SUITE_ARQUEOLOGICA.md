@@ -172,104 +172,187 @@ backend/
 
 ---
 
-## 👥 ROLES Y PERMISOS
+## 👥 ROLES DE USUARIO (CON PERMISOS Y FUNCIONES)
 
-### **1. Administrador (Admin)**
-**Responsabilidades:**
-- Gestión completa del sistema
-- Administración de usuarios y roles
-- Configuración de la plataforma
-- Monitoreo de seguridad
+### **1. Administrador del Sitio**
+**Control Total del Sistema:**
+- ✅ Panel de configuración global
+- ✅ Gestión y aprobación de instituciones e investigadores
+- ✅ Visualización de estadísticas globales
+- ✅ Gestión de suscripciones: gratuita, premium, institucional
+- ✅ Creación de nuevas herramientas o módulos desde el backend
 
-**Permisos:**
-- ✅ Crear, editar, eliminar usuarios
-- ✅ Asignar roles y permisos
-- ✅ Acceso a todos los datos
-- ✅ Configuración del sistema
-- ✅ Reportes de auditoría
-
-**Rutas de Acceso:**
-- `/dashboard/admin/users`
-- `/dashboard/admin/institutions`
-- `/dashboard/admin/reports`
-- `/dashboard/admin/settings`
-
-### **2. Director de Proyecto**
-**Responsabilidades:**
-- Supervisión de proyectos arqueológicos
-- Aprobación de hallazgos importantes
-- Coordinación de equipos
-- Gestión de presupuestos
-
-**Permisos:**
-- ✅ Aprobar/rechazar hallazgos
-- ✅ Gestionar proyectos
-- ✅ Ver reportes de equipo
-- ✅ Configurar políticas
-- ✅ Acceso a datos de todos los sitios
+**Permisos Específicos:**
+- 🔧 Configuración del sistema completo
+- 👥 Gestión de todos los usuarios y roles
+- 📊 Acceso a métricas globales
+- 💳 Administración de planes de suscripción
+- 🛠️ Desarrollo de nuevas funcionalidades
 
 **Rutas de Acceso:**
-- `/dashboard/director/projects`
-- `/dashboard/director/approvals`
-- `/dashboard/director/system`
-- `/dashboard/director/users`
+- `/dashboard/admin/users` - Gestión de usuarios
+- `/dashboard/admin/institutions` - Gestión de instituciones
+- `/dashboard/admin/reports` - Reportes globales
+- `/dashboard/admin/settings` - Configuración del sistema
+- `/dashboard/admin/subscriptions` - Gestión de suscripciones
 
-### **3. Investigador (Researcher)**
-**Responsabilidades:**
-- Trabajo de campo arqueológico
-- Documentación de hallazgos
-- Análisis de datos
-- Generación de reportes
+### **2. Institución**
+**Gestión Institucional:**
+- ✅ Visualiza proyectos e investigadores asociados
+- ✅ Compra de planes premium para sus investigadores/as
+- ✅ Gestión de miembros de la institución
+- ✅ Asignación de permisos especiales (pagos o no) por investigador
+- ✅ Acceso a estadísticas de los proyectos institucionales
 
-**Permisos:**
-- ✅ Mapeo completo con herramientas
-- ✅ Crear y editar hallazgos
-- ✅ Gestión de proyectos propios
-- ✅ Exportar datos
-- ✅ Herramientas de análisis
-
-**Rutas de Acceso:**
-- `/dashboard/researcher/mapping`
-- `/dashboard/researcher/artifacts`
-- `/dashboard/researcher/excavations`
-- `/dashboard/researcher/projects`
-- `/dashboard/researcher/reports`
-
-### **4. Estudiante**
-**Responsabilidades:**
-- Aprendizaje y práctica
-- Asistencia en trabajo de campo
-- Documentación básica
-- Seguimiento de tareas
-
-**Permisos:**
-- ✅ Ver datos públicos
-- ✅ Crear notas de campo
-- ✅ Acceso limitado a herramientas
-- ✅ Ver tutoriales
-- ✅ Seguimiento de tareas
+**Permisos Específicos:**
+- 📋 Gestión de proyectos institucionales
+- 👥 Administración de miembros
+- 💰 Control de suscripciones premium
+- 📊 Estadísticas institucionales
+- 🔐 Asignación de permisos especiales
 
 **Rutas de Acceso:**
-- `/dashboard/student/field-notes`
-- `/dashboard/student/tasks`
-- `/dashboard/student/tutorials`
-- `/dashboard/student/public-data`
+- `/dashboard/institution` - Panel principal
+- `/dashboard/institution/reports` - Reportes institucionales
+- `/dashboard/institution/members` - Gestión de miembros
 
-### **5. Invitado (Guest)**
-**Responsabilidades:**
-- Exploración de datos públicos
-- Información general
-- Contacto con investigadores
+### **3. Director/a**
+**Gestión de Proyectos Arqueológicos:**
+- ✅ Puede o no estar asociado a una institución
+- ✅ Crea y administra proyectos de investigación arqueológica
+- ✅ Crea equipos de trabajo
+- ✅ Asigna tareas y fases del proyecto a investigadores/as y estudiantes
+- ✅ Habilita o restringe herramientas específicas dentro del proyecto
+- ✅ Tiene todas las herramientas del investigador y más
 
-**Permisos:**
-- ✅ Ver datos públicos
-- ✅ Información de contacto
-- ✅ Documentación general
-- ❌ Sin acceso a herramientas
+**Permisos Específicos:**
+- 📋 Creación y gestión de proyectos
+- 👥 Formación y gestión de equipos
+- 📅 Asignación de tareas y fases
+- 🛠️ Control de herramientas por proyecto
+- ✅ Aprobación de hallazgos importantes
+- 📊 Reportes de equipo y proyecto
 
 **Rutas de Acceso:**
-- `/dashboard/guest`
+- `/dashboard/director/projects` - Gestión de proyectos
+- `/dashboard/director/approvals` - Aprobaciones
+- `/dashboard/director/system` - Configuración del sistema
+- `/dashboard/director/users` - Gestión de usuarios del equipo
+
+### **4. Investigador/a**
+**Usuario Más Completo:**
+- ✅ Puede ser independiente o estar vinculado a una institución o director
+- ✅ Accede a herramientas para:
+  - Planificación de proyectos
+  - Toma de muestras
+  - Trabajo de campo (GPS, GIS, prospección, excavación, etc.)
+  - Registro estratigráfico, dibujo, diario de campo
+  - Estudios de laboratorio
+  - Subida de informes, fotos, bases de datos
+  - Herramientas de análisis, filtrado y visualización
+  - Comunicación con otros miembros del equipo
+
+**Permisos Específicos:**
+- 🗺️ Mapeo completo con herramientas avanzadas
+- 📝 Documentación completa de hallazgos
+- 🔬 Análisis de laboratorio
+- 📊 Generación de reportes técnicos
+- 📤 Exportación e importación de datos
+- 💬 Comunicación con equipo
+
+**Rutas de Acceso:**
+- `/dashboard/researcher/mapping` - Herramientas de mapeo
+- `/dashboard/researcher/artifacts` - Gestión de artefactos
+- `/dashboard/researcher/excavations` - Gestión de excavaciones
+- `/dashboard/researcher/projects` - Gestión de proyectos
+- `/dashboard/researcher/reports` - Reportes y análisis
+- `/dashboard/researcher/fieldwork` - Trabajo de campo
+- `/dashboard/researcher/laboratory` - Estudios de laboratorio
+
+### **5. Estudiante**
+**Acceso Limitado y Educativo:**
+- ✅ Acceso limitado a herramientas según asignación de director o institución
+- ✅ Realiza test o prácticas simuladas
+- ✅ Participación parcial en proyectos asignados
+- ✅ Visualiza recursos formativos
+- ✅ Puede colaborar en proyectos reales con permisos acotados
+
+**Permisos Específicos:**
+- 📚 Acceso a tutoriales y recursos formativos
+- 📝 Creación de notas de campo
+- 🎯 Seguimiento de tareas asignadas
+- 👀 Visualización de datos públicos
+- 🧪 Prácticas simuladas
+
+**Rutas de Acceso:**
+- `/dashboard/student/field-notes` - Notas de campo
+- `/dashboard/student/tasks` - Tareas asignadas
+- `/dashboard/student/tutorials` - Recursos formativos
+- `/dashboard/student/public-data` - Datos públicos
+
+### **6. Invitado**
+**Acceso Público Limitado:**
+- ✅ Solo acceso a información pública
+- ✅ Uso de filtros para explorar datos de proyectos abiertos, publicaciones, galerías
+
+**Permisos Específicos:**
+- 👀 Visualización de datos públicos
+- 🔍 Exploración con filtros
+- 📚 Acceso a publicaciones abiertas
+- 📞 Información de contacto
+- ❌ Sin acceso a herramientas de edición
+
+**Rutas de Acceso:**
+- `/dashboard/guest` - Panel de invitado
 - Datos públicos del sitio
+
+---
+
+## 🏗️ FUNCIONALIDADES Y MÓDULOS A IMPLEMENTAR
+
+### **🔧 Módulo de Proyectos Arqueológicos**
+- ✅ Crear, editar y archivar proyectos
+- ✅ Definir cronograma, fases y objetivos
+- ✅ Vincular equipo, roles y tareas
+- ✅ Subida de documentación oficial
+
+### **🧭 Módulo de Trabajo de Campo**
+- ✅ Gestión de prospecciones
+- ✅ Registro de unidades de excavación
+- ✅ Bitácora digital diaria
+- ✅ Herramienta de mapeo con GPS y GIS
+- ✅ Toma de coordenadas, georreferenciación de hallazgos
+
+### **🔬 Módulo de Laboratorio**
+- ✅ Gestión de muestras (tipo, procedencia, análisis)
+- ✅ Registro de resultados
+- ✅ Comparación y visualización de datos
+
+### **🏛️ Módulo de Materialidad y Catalogación**
+- ✅ Registro de artefactos con campos como:
+  - Material, cronología, tipología, contexto
+- ✅ Galería multimedia
+- ✅ Sistema de fichas estandarizadas según normativas
+
+### **📑 Módulo de Publicaciones y Difusión**
+- ✅ Subida de informes técnicos
+- ✅ Publicación de resultados (papers, posters)
+- ✅ Galería visual para difusión pública
+
+### **🎯 Módulo de Estadísticas e Indicadores**
+- ✅ Métricas por usuario, institución, proyecto
+- ✅ Gráficos y KPIs arqueológicos (número de muestras, artefactos, etc.)
+
+### **💬 Módulo de Comunicación**
+- ✅ Mensajería interna
+- ✅ Tablón de avisos por proyecto o institución
+- ✅ Notificaciones y recordatorios automáticos
+
+### **🧰 Módulo de Herramientas Generales**
+- ✅ Plantillas descargables
+- ✅ Test y autoevaluaciones (para estudiantes)
+- ✅ Cuestionarios de auto-registro de habilidades
+- ✅ Módulos de formación y enlaces a manuales
 
 ---
 
@@ -326,7 +409,8 @@ backend/
 - **Páginas:** 50+ páginas diferentes
 - **Componentes:** 20+ componentes reutilizables
 - **APIs:** 30+ endpoints
-- **Roles:** 5 roles diferentes
+- **Roles:** 6 roles diferentes (Admin, Institución, Director, Investigador, Estudiante, Invitado)
+- **Módulos:** 8 módulos principales
 - **Herramientas de Mapeo:** 4 herramientas principales
 
 ---
