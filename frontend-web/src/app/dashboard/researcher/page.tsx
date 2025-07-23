@@ -44,8 +44,11 @@ const ResearcherDashboard: React.FC = () => {
   const [selectedSite, setSelectedSite] = useState<string>('');
   
   // Estados para formularios modales
+  const [showNewProject, setShowNewProject] = useState(false);
   const [showNewArea, setShowNewArea] = useState(false);
   const [showNewSite, setShowNewSite] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
+  const [newProject, setNewProject] = useState({ name: '', description: '' });
   const [newArea, setNewArea] = useState({ name: '', description: '', coordinates: [0, 0] as [number, number] });
   const [newSite, setNewSite] = useState({ name: '', description: '', coordinates: [0, 0] as [number, number] });
 
@@ -150,8 +153,69 @@ const ResearcherDashboard: React.FC = () => {
         recentFindings: 15,
       });
       setLoading(false);
+      
+      // Cargar contexto guardado después de que los datos estén disponibles
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        try {
+          const ctx = JSON.parse(saved);
+          setSelectedProject(ctx.project || '');
+          setSelectedArea(ctx.area || '');
+          setSelectedSite(ctx.site || '');
+        } catch (error) {
+          console.error('Error parsing saved context:', error);
+        }
+      }
     }, 1000);
   }, []);
+
+  // Sincronizar contexto cuando la página se carga o recibe foco
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        try {
+          const ctx = JSON.parse(saved);
+          setSelectedProject(ctx.project || '');
+          setSelectedArea(ctx.area || '');
+          setSelectedSite(ctx.site || '');
+        } catch (error) {
+          console.error('Error parsing context:', error);
+        }
+      }
+    };
+    
+    // Sincronizar inmediatamente
+    syncContext();
+    
+    // Eventos para sincronización
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
+  // Guardar contexto cuando cambie
+  useEffect(() => {
+    // Solo guardar si hay un contexto válido (todos los campos completos)
+    if (selectedProject && selectedArea && selectedSite) {
+      const contextToSave = {
+        project: selectedProject,
+        area: selectedArea,
+        site: selectedSite
+      };
+      
+      localStorage.setItem('investigator-context', JSON.stringify(contextToSave));
+    } else if (!selectedProject && !selectedArea && !selectedSite) {
+      // Si no hay ninguna selección, limpiar el contexto
+      localStorage.removeItem('investigator-context');
+    }
+  }, [selectedProject, selectedArea, selectedSite]);
 
   const handleLogout = async () => {
     await logout();
@@ -163,22 +227,33 @@ const ResearcherDashboard: React.FC = () => {
       alert('Por favor, selecciona un proyecto, área y sitio antes de continuar.');
       return;
     }
-    router.push(path);
+    
+    // Si es la herramienta de proyectos, navegar a editar el proyecto actual
+    if (path.includes('/projects')) {
+      router.push(`/dashboard/researcher/projects/${selectedProject}/edit`);
+    } else {
+      router.push(path);
+    }
   };
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProject(projectId);
     setSelectedArea('');
     setSelectedSite('');
+    // Limpiar contexto cuando se cambia de proyecto
+    localStorage.removeItem('investigator-context');
   };
 
   const handleAreaChange = (areaId: string) => {
     setSelectedArea(areaId);
     setSelectedSite('');
+    // Limpiar contexto cuando se cambia de área
+    localStorage.removeItem('investigator-context');
   };
 
   const handleSiteChange = (siteId: string) => {
     setSelectedSite(siteId);
+    // El contexto se guardará automáticamente cuando se complete la selección
   };
 
   const handleAddArea = () => {
@@ -197,6 +272,24 @@ const ResearcherDashboard: React.FC = () => {
     setAreas([...areas, area]);
     setNewArea({ name: '', description: '', coordinates: [0, 0] });
     setShowNewArea(false);
+  };
+
+  const handleAddProject = () => {
+    if (!newProject.name.trim()) {
+      alert('Por favor, ingresa un nombre para el proyecto.');
+      return;
+    }
+
+    const project: Project = {
+      id: Date.now().toString(),
+      name: newProject.name,
+      description: newProject.description,
+      status: 'active',
+      startDate: new Date().toISOString().split('T')[0]
+    };
+    setProjects([...projects, project]);
+    setNewProject({ name: '', description: '' });
+    setShowNewProject(false);
   };
 
   const handleAddSite = () => {
@@ -227,16 +320,12 @@ const ResearcherDashboard: React.FC = () => {
     // PLANIFICACIÓN Y GESTIÓN
     {
       id: 'projects',
-      name: 'Gestión de Proyectos',
+      name: 'Editar Proyecto',
       icon: '📋',
-      description: 'Crear, editar y archivar proyectos arqueológicos',
+      description: 'Editar configuración del proyecto actual',
       category: 'Planificación',
       color: 'bg-blue-500',
-      examples: [
-        'Proyecto Cazadores Recolectores - La Laguna',
-        'Estudio de Poblamiento Pampeano',
-        'Arqueología de la Llanura Bonaerense'
-      ]
+      examples: []
     },
     {
       id: 'mapping',
@@ -245,11 +334,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Planificación y mapeo del sitio con GPS',
       category: 'Planificación',
       color: 'bg-green-500',
-      examples: [
-        'Mapeo de Sitio Laguna La Brava',
-        'Georreferenciación Arroyo Seco',
-        'Cartografía de Monte Hermoso'
-      ]
+      examples: []
     },
 
     // TRABAJO DE CAMPO
@@ -260,11 +345,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Gestión de prospecciones y excavaciones',
       category: 'Campo',
       color: 'bg-orange-500',
-      examples: [
-        'Excavación en Sitio Laguna La Brava',
-        'Prospección Arroyo Seco 2',
-        'Sondeo Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'surface-mapping',
@@ -273,11 +354,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Registro de hallazgos en superficie',
       category: 'Campo',
       color: 'bg-teal-500',
-      examples: [
-        'Recolección Laguna La Brava',
-        'Mapeo Arroyo Seco',
-        'Registro Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'grid-measurement',
@@ -286,11 +363,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Sistema de coordenadas y mediciones',
       category: 'Campo',
       color: 'bg-purple-500',
-      examples: [
-        'Cuadrícula Laguna La Brava',
-        'Mediciones Arroyo Seco',
-        'Sistema Monte Hermoso'
-      ]
+      examples: []
     },
 
     // ANÁLISIS Y DOCUMENTACIÓN
@@ -301,11 +374,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Gestión de muestras y análisis',
       category: 'Análisis',
       color: 'bg-indigo-500',
-      examples: [
-        'Análisis C14 Laguna La Brava',
-        'Estudios de Cerámica Arroyo Seco',
-        'Análisis Lítico Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'artifacts',
@@ -314,11 +383,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Inventario y catalogación de artefactos',
       category: 'Análisis',
       color: 'bg-red-500',
-      examples: [
-        'Catálogo Lítico Laguna La Brava',
-        'Cerámica Arroyo Seco',
-        'Artefactos Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'artifact-documentation',
@@ -327,11 +392,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Fichas técnicas y dibujos arqueológicos',
       category: 'Análisis',
       color: 'bg-pink-500',
-      examples: [
-        'Fichas Laguna La Brava',
-        'Dibujos Arroyo Seco',
-        'Documentación Monte Hermoso'
-      ]
+      examples: []
     },
 
     // COMUNICACIÓN Y DIFUSIÓN
@@ -342,11 +403,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Informes técnicos y resultados',
       category: 'Difusión',
       color: 'bg-yellow-500',
-      examples: [
-        'Informe Laguna La Brava',
-        'Paper Arroyo Seco',
-        'Poster Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'communication',
@@ -355,11 +412,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Mensajería interna y notificaciones',
       category: 'Difusión',
       color: 'bg-cyan-500',
-      examples: [
-        'Equipo Laguna La Brava',
-        'Comunicación Arroyo Seco',
-        'Notificaciones Monte Hermoso'
-      ]
+      examples: []
     },
 
     // HERRAMIENTAS AVANZADAS
@@ -370,11 +423,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Dashboard analítico y gráficos',
       category: 'Análisis',
       color: 'bg-emerald-500',
-      examples: [
-        'Estadísticas Laguna La Brava',
-        'Gráficos Arroyo Seco',
-        'Análisis Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'ai-tools',
@@ -383,11 +432,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Clasificación automática y análisis predictivo',
       category: 'Tecnología',
       color: 'bg-violet-500',
-      examples: [
-        'IA Laguna La Brava',
-        'ML Arroyo Seco',
-        'Predicción Monte Hermoso'
-      ]
+      examples: []
     },
     {
       id: 'tools',
@@ -396,11 +441,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Plantillas, test y formación',
       category: 'Apoyo',
       color: 'bg-gray-500',
-      examples: [
-        'Plantillas Pampeanas',
-        'Test Arqueología',
-        'Formación Regional'
-      ]
+      examples: []
     },
     {
       id: 'export',
@@ -409,11 +450,7 @@ const ResearcherDashboard: React.FC = () => {
       description: 'Backups y repositorio de datos',
       category: 'Apoyo',
       color: 'bg-slate-500',
-      examples: [
-        'Backup Laguna La Brava',
-        'Export Arroyo Seco',
-        'Repositorio Monte Hermoso'
-      ]
+      examples: []
     }
   ];
 
@@ -473,92 +510,210 @@ const ResearcherDashboard: React.FC = () => {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Flujo de Selección Jerárquica */}
+        {/* Banner de contexto activo */}
+        {selectedProject && selectedArea && selectedSite && (
+          <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
+            <div className="flex items-center space-x-4">
+              <span className="text-blue-700 font-semibold">Trabajando en:</span>
+              <span className="text-blue-900 font-bold">{projects.find(p => p.id === selectedProject)?.name || `Proyecto ${selectedProject}`}</span>
+              <span className="text-blue-700">|</span>
+              <span className="text-blue-900 font-bold">{areas.find(a => a.id === selectedArea)?.name || `Área ${selectedArea}`}</span>
+              <span className="text-blue-700">|</span>
+              <span className="text-blue-900 font-bold">{sites.find(s => s.id === selectedSite)?.name || `Sitio ${selectedSite}`}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedProject('');
+                  setSelectedArea('');
+                  setSelectedSite('');
+                  localStorage.removeItem('investigator-context');
+                }}
+              >
+                🔄 Cambiar Contexto
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {/* Flujo de Selección Jerárquica Moderno */}
         <Card className="mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6">🧭 Contexto de Trabajo</h2>
-            
-            {/* Selección de Proyecto */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                1️⃣ Selecciona un Proyecto
-              </label>
-              {projects.length > 0 ? (
-                <select
-                  value={selectedProject}
-                  onChange={(e) => handleProjectChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">🧭 Contexto de Trabajo</h2>
+              {selectedProject && selectedArea && selectedSite && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedProject('');
+                    setSelectedArea('');
+                    setSelectedSite('');
+                    localStorage.removeItem('investigator-context');
+                  }}
                 >
-                  <option value="">-- Selecciona un proyecto --</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name} ({project.status === 'active' ? 'Activo' : project.status === 'planning' ? 'Planificación' : 'Completado'})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-yellow-800">
-                    Todavía no estás asociado a ningún proyecto. Contactá al administrador para sumarte o crear uno.
-                  </p>
-                </div>
+                  🔄 Cambiar Contexto
+                </Button>
               )}
             </div>
-
-            {/* Selección de Área/Región */}
-            {selectedProject && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  2️⃣ Selecciona un Área/Región
-                </label>
-                <div className="flex space-x-2">
-                  <select
-                    value={selectedArea}
-                    onChange={(e) => handleAreaChange(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">-- Selecciona un área --</option>
-                    {filteredAreas.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.name}
-                      </option>
+            
+            {/* Paso 1: Selección de Proyecto */}
+            {(!selectedProject || !selectedArea || !selectedSite) && (
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 ${selectedProject ? 'bg-green-500' : 'bg-blue-500'}`}>
+                    {selectedProject ? '✓' : '1'}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Selecciona un Proyecto</h3>
+                </div>
+                
+                {projects.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {projects.map((project) => (
+                      <div
+                        key={project.id}
+                        onClick={() => handleProjectChange(project.id)}
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                          selectedProject === project.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-blue-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{project.name}</h4>
+                          {selectedProject === project.id && (
+                            <span className="text-blue-600 text-xl">✓</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{project.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'active' ? 'bg-green-100 text-green-800' :
+                            project.status === 'planning' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {project.status === 'active' ? 'Activo' : 
+                             project.status === 'planning' ? 'Planificación' : 'Completado'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(project.startDate).getFullYear()}
+                          </span>
+                        </div>
+                      </div>
                     ))}
-                  </select>
-                  <Button
+                    
+                    {/* Botón para crear nuevo proyecto */}
+                    <div
+                      onClick={() => setShowNewProject(true)}
+                      className="p-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">➕</div>
+                        <h4 className="font-semibold text-gray-900">Crear Nuevo Proyecto</h4>
+                        <p className="text-sm text-gray-600">Iniciar un nuevo proyecto de investigación</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-yellow-800">
+                      Todavía no estás asociado a ningún proyecto. Contactá al administrador para sumarte o crear uno.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Paso 2: Selección de Área/Región */}
+            {selectedProject && !selectedArea && (
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 ${selectedArea ? 'bg-green-500' : 'bg-blue-500'}`}>
+                    {selectedArea ? '✓' : '2'}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Selecciona un Área/Región</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredAreas.map((area) => (
+                    <div
+                      key={area.id}
+                      onClick={() => handleAreaChange(area.id)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                        selectedArea === area.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">{area.name}</h4>
+                        {selectedArea === area.id && (
+                          <span className="text-blue-600 text-xl">✓</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">{area.description}</p>
+                    </div>
+                  ))}
+                  
+                  {/* Botón para agregar nueva área */}
+                  <div
                     onClick={() => setShowNewArea(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="p-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
                   >
-                    ➕ Agregar nueva Área/Región
-                  </Button>
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">➕</div>
+                      <h4 className="font-semibold text-gray-900">Agregar Nueva Área</h4>
+                      <p className="text-sm text-gray-600">Crear una nueva área de estudio</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Selección de Sitio */}
-            {selectedArea && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  3️⃣ Selecciona un Sitio
-                </label>
-                <div className="flex space-x-2">
-                  <select
-                    value={selectedSite}
-                    onChange={(e) => handleSiteChange(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">-- Selecciona un sitio --</option>
-                    {filteredSites.map((site) => (
-                      <option key={site.id} value={site.id}>
-                        {site.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
+            {/* Paso 3: Selección de Sitio */}
+            {selectedArea && !selectedSite && (
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 ${selectedSite ? 'bg-green-500' : 'bg-blue-500'}`}>
+                    {selectedSite ? '✓' : '3'}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Selecciona un Sitio</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredSites.map((site) => (
+                    <div
+                      key={site.id}
+                      onClick={() => handleSiteChange(site.id)}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                        selectedSite === site.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">{site.name}</h4>
+                        {selectedSite === site.id && (
+                          <span className="text-blue-600 text-xl">✓</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">{site.description}</p>
+                    </div>
+                  ))}
+                  
+                  {/* Botón para agregar nuevo sitio */}
+                  <div
                     onClick={() => setShowNewSite(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="p-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
                   >
-                    ➕ Agregar nuevo Sitio
-                  </Button>
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">➕</div>
+                      <h4 className="font-semibold text-gray-900">Agregar Nuevo Sitio</h4>
+                      <p className="text-sm text-gray-600">Crear un nuevo sitio de excavación</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -583,49 +738,67 @@ const ResearcherDashboard: React.FC = () => {
         </Card>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{stats.activeProjects}</div>
-              <div className="text-sm text-gray-600">Proyectos Activos</div>
+        <Card className="mb-8">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">📊 Estadísticas Generales</h2>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setStatsExpanded(!statsExpanded)}
+              >
+                {statsExpanded ? '👁️ Ocultar' : '👁️ Mostrar'}
+              </Button>
             </div>
-          </Card>
-          
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{stats.totalSites}</div>
-              <div className="text-sm text-gray-600">Sitios Arqueológicos</div>
-            </div>
-          </Card>
-          
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{stats.totalArtifacts}</div>
-              <div className="text-sm text-gray-600">Artefactos Catalogados</div>
-            </div>
-          </Card>
-          
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">{stats.totalSamples}</div>
-              <div className="text-sm text-gray-600">Muestras en Análisis</div>
-            </div>
-          </Card>
-          
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-indigo-600">{stats.pendingTasks}</div>
-              <div className="text-sm text-gray-600">Tareas Pendientes</div>
-            </div>
-          </Card>
-          
-          <Card>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-red-600">{stats.recentFindings}</div>
-              <div className="text-sm text-gray-600">Hallazgos Recientes</div>
-            </div>
-          </Card>
-        </div>
+            
+            {statsExpanded && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/projects')}
+                >
+                  <div className="text-2xl font-bold text-blue-600">{stats.activeProjects}</div>
+                  <div className="text-sm text-gray-600">Proyectos Activos</div>
+                </div>
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/sites')}
+                >
+                  <div className="text-2xl font-bold text-green-600">{stats.totalSites}</div>
+                  <div className="text-sm text-gray-600">Sitios Arqueológicos</div>
+                </div>
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/artifacts')}
+                >
+                  <div className="text-2xl font-bold text-orange-600">{stats.totalArtifacts}</div>
+                  <div className="text-sm text-gray-600">Artefactos Catalogados</div>
+                </div>
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/samples')}
+                >
+                  <div className="text-2xl font-bold text-purple-600">{stats.totalSamples}</div>
+                  <div className="text-sm text-gray-600">Muestras en Análisis</div>
+                </div>
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/tasks')}
+                >
+                  <div className="text-2xl font-bold text-red-600">{stats.pendingTasks}</div>
+                  <div className="text-sm text-gray-600">Tareas Pendientes</div>
+                </div>
+                <div 
+                  className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  onClick={() => router.push('/dashboard/researcher/findings')}
+                >
+                  <div className="text-2xl font-bold text-yellow-600">{stats.recentFindings}</div>
+                  <div className="text-sm text-gray-600">Hallazgos Recientes</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* Herramientas (solo visibles si hay sitio seleccionado) */}
         {selectedSite ? (
@@ -929,6 +1102,43 @@ const ResearcherDashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Modal para agregar proyecto */}
+      {showNewProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">➕ Crear Nuevo Proyecto</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nombre del Proyecto</label>
+                <Input
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+                  placeholder="Ej: Proyecto Arqueología Pampeana"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                  placeholder="Breve descripción del proyecto"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowNewProject(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAddProject}>
+                Crear
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal para agregar área */}
       {showNewArea && (

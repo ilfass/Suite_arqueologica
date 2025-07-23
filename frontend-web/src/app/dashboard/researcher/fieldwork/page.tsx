@@ -37,6 +37,10 @@ interface FieldRecord {
 const FieldworkPage: React.FC = () => {
   const { user } = useAuth();
   const router = useRouter();
+  // Contexto de trabajo
+  const [context, setContext] = useState<{ project: string; area: string; site: string }>({ project: '', area: '', site: '' });
+  const [siteName, setSiteName] = useState('');
+
   const [records, setRecords] = useState<FieldRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'artifact' | 'context' | 'stratigraphy' | 'photo' | 'measurement'>('all');
@@ -126,6 +130,45 @@ const FieldworkPage: React.FC = () => {
     }, 1000);
   }, []);
 
+  useEffect(() => {
+    // Leer contexto de localStorage
+    const saved = localStorage.getItem('investigator-context');
+    if (saved) {
+      const ctx = JSON.parse(saved);
+      setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+    }
+  }, []);
+
+  // Sincronizar contexto al recibir foco o volver a la pestaña
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        const ctx = JSON.parse(saved);
+        setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+      }
+    };
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Simular obtención del nombre del sitio activo
+    const sitios = [
+      { id: '1', name: 'Sitio Laguna La Brava Norte' },
+      { id: '2', name: 'Excavación Arroyo Seco 2' },
+      { id: '3', name: 'Monte Hermoso Playa' }
+    ];
+    const found = sitios.find(s => s.id === context.site);
+    setSiteName(found ? found.name : context.site);
+  }, [context]);
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'artifact': return '🏺';
@@ -168,8 +211,42 @@ const FieldworkPage: React.FC = () => {
     }
   };
 
-  const filteredRecords = records.filter(record => 
-    filter === 'all' ? true : record.type === filter
+  // Filtrar registros por sitio activo (simulación: si tuvieran campo site)
+  // Aquí se asume que en el futuro los registros tendrán un campo site o location.site
+  // Por ahora, no se filtra realmente porque los datos simulados no lo tienen
+  const filteredRecords = context.site
+    ? records // Aquí deberías filtrar por siteName o context.site si los datos lo tuvieran
+    : [];
+
+  // Arrays simulados de proyectos y áreas (igual que en el dashboard)
+  const projects = [
+    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
+    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
+    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
+  ];
+  const areas = [
+    { id: '1', name: 'Laguna La Brava', projectId: '1' },
+    { id: '2', name: 'Arroyo Seco', projectId: '1' },
+    { id: '3', name: 'Monte Hermoso', projectId: '2' }
+  ];
+
+  // Banner de contexto activo
+  const renderContextBanner = () => (
+    context.project && context.area && context.site ? (
+      <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="flex items-center space-x-4">
+          <span className="text-blue-700 font-semibold">Trabajando en:</span>
+          <span className="text-blue-900 font-bold">{projects.find(p => p.id === context.project)?.name || `Proyecto ${context.project}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{areas.find(a => a.id === context.area)?.name || `Área ${context.area}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{siteName || context.site}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/researcher')}>Cambiar Contexto</Button>
+        </div>
+      </div>
+    ) : null
   );
 
   if (loading) {
@@ -183,8 +260,23 @@ const FieldworkPage: React.FC = () => {
     );
   }
 
+  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
+  if (!context.project || !context.area || !context.site) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🧭</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
+          <p className="text-gray-600 mb-4">Para acceder al trabajo de campo, primero debes seleccionar un proyecto, área y sitio.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {renderContextBanner()}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -210,24 +302,24 @@ const FieldworkPage: React.FC = () => {
           <Card title="Resumen de Campo">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{records.length}</div>
+                <div className="text-3xl font-bold text-blue-600">{filteredRecords.length}</div>
                 <div className="text-sm text-gray-600">Total de Registros</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600">
-                  {records.filter(r => r.status === 'approved').length}
+                  {filteredRecords.filter(r => r.status === 'approved').length}
                 </div>
                 <div className="text-sm text-gray-600">Aprobados</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600">
-                  {records.filter(r => r.type === 'artifact').length}
+                  {filteredRecords.filter(r => r.type === 'artifact').length}
                 </div>
                 <div className="text-sm text-gray-600">Objetos</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-600">
-                  {records.reduce((sum, r) => sum + r.photos.length, 0)}
+                  {filteredRecords.reduce((sum, r) => sum + r.photos.length, 0)}
                 </div>
                 <div className="text-sm text-gray-600">Fotografías</div>
               </div>
@@ -244,42 +336,42 @@ const FieldworkPage: React.FC = () => {
                 size="sm"
                 onClick={() => setFilter('all')}
               >
-                Todos ({records.length})
+                Todos ({filteredRecords.length})
               </Button>
               <Button 
                 variant={filter === 'artifact' ? 'primary' : 'outline'} 
                 size="sm"
                 onClick={() => setFilter('artifact')}
               >
-                🏺 Objetos ({records.filter(r => r.type === 'artifact').length})
+                🏺 Objetos ({filteredRecords.filter(r => r.type === 'artifact').length})
               </Button>
               <Button 
                 variant={filter === 'context' ? 'primary' : 'outline'} 
                 size="sm"
                 onClick={() => setFilter('context')}
               >
-                🏛️ Contextos ({records.filter(r => r.type === 'context').length})
+                🏛️ Contextos ({filteredRecords.filter(r => r.type === 'context').length})
               </Button>
               <Button 
                 variant={filter === 'stratigraphy' ? 'primary' : 'outline'} 
                 size="sm"
                 onClick={() => setFilter('stratigraphy')}
               >
-                📊 Estratigrafía ({records.filter(r => r.type === 'stratigraphy').length})
+                📊 Estratigrafía ({filteredRecords.filter(r => r.type === 'stratigraphy').length})
               </Button>
               <Button 
                 variant={filter === 'photo' ? 'primary' : 'outline'} 
                 size="sm"
                 onClick={() => setFilter('photo')}
               >
-                📸 Fotografías ({records.filter(r => r.type === 'photo').length})
+                📸 Fotografías ({filteredRecords.filter(r => r.type === 'photo').length})
               </Button>
               <Button 
                 variant={filter === 'measurement' ? 'primary' : 'outline'} 
                 size="sm"
                 onClick={() => setFilter('measurement')}
               >
-                📏 Mediciones ({records.filter(r => r.type === 'measurement').length})
+                📏 Mediciones ({filteredRecords.filter(r => r.type === 'measurement').length})
               </Button>
             </div>
           </Card>

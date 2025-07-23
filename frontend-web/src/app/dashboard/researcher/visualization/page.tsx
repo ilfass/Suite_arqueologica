@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import ContextBanner from '@/components/ui/ContextBanner';
+import useInvestigatorContext from '@/hooks/useInvestigatorContext';
 
 interface ChartData {
   labels: string[];
@@ -17,9 +20,13 @@ interface ChartData {
 
 const VisualizationPage: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const { context, hasContext, isLoading } = useInvestigatorContext();
+  
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [chartType, setChartType] = useState('artifacts');
+  const [viewMode, setViewMode] = useState<'charts' | '3d' | 'maps'>('charts');
 
   // Datos simulados para visualizaciones
   const artifactTypesData = {
@@ -111,326 +118,282 @@ const VisualizationPage: React.FC = () => {
             label: 'Actividad por Sitio',
             data: siteActivityData.data,
             backgroundColor: [
-              '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'
+              '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'
             ],
             borderColor: [
-              '#2563EB', '#059669', '#D97706', '#7C3AED', '#DC2626'
+              '#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED'
             ]
           }]
         };
       default:
-        return excavationProgressData;
+        return {
+          labels: [],
+          datasets: []
+        };
     }
   };
 
   const renderChart = (type: string) => {
     const data = getChartData(type);
+    const total = data.datasets[0]?.data.reduce((a, b) => a + b, 0) || 0;
     
     return (
-      <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-        <div className="text-center">
-          <span className="text-4xl mb-2 block">📊</span>
-          <p className="text-gray-600">Gráfico de {type}</p>
-          <p className="text-sm text-gray-500">Integración con Chart.js/D3.js</p>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">
+          {type === 'artifacts' && 'Tipos de Artefactos'}
+          {type === 'materials' && 'Distribución por Material'}
+          {type === 'temporal' && 'Distribución Temporal'}
+          {type === 'sites' && 'Actividad por Sitio'}
+        </h3>
+        <div className="h-64 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📊</div>
+            <div className="text-2xl font-bold text-gray-700 mb-2">{total}</div>
+            <div className="text-sm text-gray-600">Total registros</div>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              {data.labels.map((label, index) => (
+                <div key={index} className="flex items-center">
+                  <div 
+                    className="w-3 h-3 rounded mr-2"
+                    style={{ backgroundColor: data.datasets[0]?.backgroundColor[index] }}
+                  ></div>
+                  <span className="truncate">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   };
 
+  const render3DVisualization = () => (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-4">🌐 Visualización 3D del Sitio</h3>
+      <div className="h-96 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🎯</div>
+          <h4 className="text-xl font-semibold text-gray-700 mb-2">Visualización 3D</h4>
+          <p className="text-gray-600 mb-4">Modelo tridimensional del sitio arqueológico</p>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="bg-white p-3 rounded shadow">
+              <div className="font-semibold">Estratos</div>
+              <div className="text-gray-600">5 niveles</div>
+            </div>
+            <div className="bg-white p-3 rounded shadow">
+              <div className="font-semibold">Hallazgos</div>
+              <div className="text-gray-600">247 objetos</div>
+            </div>
+            <div className="bg-white p-3 rounded shadow">
+              <div className="font-semibold">Profundidad</div>
+              <div className="text-gray-600">2.5m</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderMap = () => (
-    <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center">
-      <div className="text-center">
-        <span className="text-6xl mb-4 block">🗺️</span>
-        <p className="text-gray-600">Mapa de distribución de hallazgos</p>
-        <p className="text-sm text-gray-500">Integración con Leaflet/Mapbox</p>
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-4">🗺️ Mapa de Distribución</h3>
+      <div className="h-96 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📍</div>
+          <h4 className="text-xl font-semibold text-gray-700 mb-2">Mapa Interactivo</h4>
+          <p className="text-gray-600 mb-4">Distribución espacial de hallazgos</p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-white p-3 rounded shadow">
+              <div className="font-semibold">Sitios Activos</div>
+              <div className="text-gray-600">12 ubicaciones</div>
+            </div>
+            <div className="bg-white p-3 rounded shadow">
+              <div className="font-semibold">Área Total</div>
+              <div className="text-gray-600">150 km²</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 
   const renderTimeline = () => (
-    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-      <div className="text-center">
-        <span className="text-4xl mb-2 block">📅</span>
-        <p className="text-gray-600">Línea de tiempo arqueológica</p>
-        <p className="text-sm text-gray-500">Secuencia temporal de hallazgos</p>
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-4">📅 Cronología del Proyecto</h3>
+      <div className="space-y-4">
+        {excavationProgressData.labels.map((month, index) => (
+          <div key={month} className="flex items-center">
+            <div className="w-16 text-sm font-medium text-gray-600">{month}</div>
+            <div className="flex-1 mx-4">
+              <div className="bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${(excavationProgressData.datasets[0].data[index] / 45) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="w-20 text-sm text-gray-600">
+              {excavationProgressData.datasets[0].data[index]} unidades
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando visualizaciones...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Visualización de Datos
-                </h1>
-                <p className="mt-2 text-gray-600">
-                  Dashboard analítico y visualización arqueológica
-                </p>
-              </div>
-              <div className="flex space-x-3">
-                <Button variant="outline">
-                  📊 Exportar Reporte
-                </Button>
-                <Button variant="outline">
-                  🖼️ Capturar Pantalla
-                </Button>
-                <Button variant="primary">
-                  🔄 Actualizar Datos
-                </Button>
-              </div>
-            </div>
+      {/* Banner de contexto */}
+      {hasContext && (
+        <ContextBanner
+          project={context.project}
+          area={context.area}
+          site={context.site}
+          showBackButton={true}
+          showChangeButton={false}
+        />
+      )}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button
+            onClick={() => router.push('/dashboard/researcher')}
+            className="hover:text-blue-600 hover:underline"
+          >
+            Dashboard
+          </button>
+          <span>›</span>
+          <span className="text-gray-900 font-medium">Visualización de Datos</span>
+        </nav>
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">📊 Visualización de Datos</h1>
+            <p className="mt-2 text-gray-600">Análisis gráfico y visualización de datos arqueológicos</p>
           </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <select
-              className="border border-gray-300 rounded-md px-3 py-2"
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+        {/* Controles de Visualización */}
+        <div className="mb-6">
+          <div className="flex space-x-2 mb-4">
+            <Button
+              variant={viewMode === 'charts' ? 'primary' : 'outline'}
+              onClick={() => setViewMode('charts')}
             >
-              <option value="all">Todos los períodos</option>
-              <option value="holoceno_temprano">Holoceno Temprano</option>
-              <option value="holoceno_medio">Holoceno Medio</option>
-              <option value="holoceno_tardio">Holoceno Tardío</option>
-              <option value="historico">Histórico</option>
-            </select>
-            
-            <select
-              className="border border-gray-300 rounded-md px-3 py-2"
-              value={selectedSite}
-              onChange={(e) => setSelectedSite(e.target.value)}
+              📊 Gráficos
+            </Button>
+            <Button
+              variant={viewMode === '3d' ? 'primary' : 'outline'}
+              onClick={() => setViewMode('3d')}
             >
-              <option value="all">Todos los sitios</option>
-              <option value="la_laguna">La Laguna</option>
-              <option value="arroyo_seco">Arroyo Seco</option>
-              <option value="mar_chiquita">Mar Chiquita</option>
-              <option value="tandil">Tandil</option>
-              <option value="laguna_padres">Laguna de los Padres</option>
-            </select>
-            
-            <select
-              className="border border-gray-300 rounded-md px-3 py-2"
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value)}
+              🌐 Visualización 3D
+            </Button>
+            <Button
+              variant={viewMode === 'maps' ? 'primary' : 'outline'}
+              onClick={() => setViewMode('maps')}
             >
-              <option value="artifacts">Tipos de Artefactos</option>
-              <option value="materials">Materiales</option>
-              <option value="temporal">Distribución Temporal</option>
-              <option value="sites">Actividad por Sitio</option>
-              <option value="progress">Progreso de Excavación</option>
-            </select>
-            
-            <Button variant="outline">
-              🔄 Aplicar Filtros
+              🗺️ Mapas
             </Button>
           </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🏺</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Artefactos</p>
-                  <p className="text-2xl font-semibold text-gray-900">1,247</p>
-                </div>
-              </div>
+          {viewMode === 'charts' && (
+            <div className="flex space-x-2">
+              <Button
+                variant={chartType === 'artifacts' ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setChartType('artifacts')}
+              >
+                Artefactos
+              </Button>
+              <Button
+                variant={chartType === 'materials' ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setChartType('materials')}
+              >
+                Materiales
+              </Button>
+              <Button
+                variant={chartType === 'temporal' ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setChartType('temporal')}
+              >
+                Temporal
+              </Button>
+              <Button
+                variant={chartType === 'sites' ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setChartType('sites')}
+              >
+                Sitios
+              </Button>
             </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🗺️</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Sitios Activos</p>
-                  <p className="text-2xl font-semibold text-gray-900">12</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📏</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Área Excavada</p>
-                  <p className="text-2xl font-semibold text-gray-900">2.4 km²</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📊</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Muestras Analizadas</p>
-                  <p className="text-2xl font-semibold text-gray-900">89</p>
-                </div>
-              </div>
-            </div>
-          </Card>
+          )}
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Main Chart */}
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {chartType === 'artifacts' && 'Distribución de Tipos de Artefactos'}
-                {chartType === 'materials' && 'Distribución por Materiales'}
-                {chartType === 'temporal' && 'Distribución Temporal'}
-                {chartType === 'sites' && 'Actividad por Sitio'}
-                {chartType === 'progress' && 'Progreso de Excavación'}
-              </h3>
+        {/* Contenido de Visualización */}
+        <div className="space-y-6">
+          {viewMode === 'charts' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {renderChart(chartType)}
-            </div>
-          </Card>
-
-          {/* Map */}
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Mapa de Distribución
-              </h3>
-              {renderMap()}
-            </div>
-          </Card>
-        </div>
-
-        {/* Additional Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Línea de Tiempo
-              </h3>
               {renderTimeline()}
             </div>
-          </Card>
+          )}
 
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Progreso Mensual
-              </h3>
-              {renderChart('progress')}
+          {viewMode === '3d' && (
+            <div className="grid grid-cols-1 gap-6">
+              {render3DVisualization()}
             </div>
-          </Card>
+          )}
 
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Análisis de Materiales
-              </h3>
-              {renderChart('materials')}
+          {viewMode === 'maps' && (
+            <div className="grid grid-cols-1 gap-6">
+              {renderMap()}
             </div>
-          </Card>
+          )}
         </div>
 
-        {/* 3D Visualization */}
-        <Card className="mb-8">
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Visualización 3D
-            </h3>
-            <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <span className="text-6xl mb-4 block">🎯</span>
-                <p className="text-gray-600">Reconstrucción 3D del sitio</p>
-                <p className="text-sm text-gray-500">Integración con Three.js/WebGL</p>
+        {/* Estadísticas Rápidas */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">📈 Estadísticas Rápidas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <div className="p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">247</div>
+                <div className="text-sm text-gray-600">Total Artefactos</div>
               </div>
-            </div>
+            </Card>
+            <Card>
+              <div className="p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">12</div>
+                <div className="text-sm text-gray-600">Sitios Activos</div>
+              </div>
+            </Card>
+            <Card>
+              <div className="p-4 text-center">
+                <div className="text-2xl font-bold text-orange-600">89</div>
+                <div className="text-sm text-gray-600">Muestras en Análisis</div>
+              </div>
+            </Card>
+            <Card>
+              <div className="p-4 text-center">
+                <div className="text-2xl font-bold text-purple-600">45</div>
+                <div className="text-sm text-gray-600">Unidades Excavadas</div>
+              </div>
+            </Card>
           </div>
-        </Card>
-
-        {/* Statistical Analysis */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Análisis Estadístico
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Correlación Material-Período</span>
-                  <span className="text-sm font-medium text-green-600">0.87</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Densidad de Hallazgos</span>
-                  <span className="text-sm font-medium text-blue-600">2.4/km²</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Índice de Diversidad</span>
-                  <span className="text-sm font-medium text-purple-600">0.73</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tasa de Preservación</span>
-                  <span className="text-sm font-medium text-yellow-600">78%</span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Métricas de Campo
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tiempo Promedio de Documentación</span>
-                  <span className="text-sm font-medium text-green-600">15 min</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Precisión GPS</span>
-                  <span className="text-sm font-medium text-blue-600">±2m</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tasa de Error de Medición</span>
-                  <span className="text-sm font-medium text-purple-600">0.5%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Eficiencia de Catalogación</span>
-                  <span className="text-sm font-medium text-yellow-600">92%</span>
-                </div>
-              </div>
-            </div>
-          </Card>
         </div>
       </div>
     </div>

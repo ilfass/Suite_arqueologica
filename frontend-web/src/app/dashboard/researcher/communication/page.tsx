@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -26,6 +27,11 @@ interface Notification {
 }
 
 const CommunicationPage: React.FC = () => {
+  const router = useRouter();
+  // Contexto de trabajo
+  const [context, setContext] = useState<{ project: string; area: string; site: string }>({ project: '', area: '', site: '' });
+  const [siteName, setSiteName] = useState('');
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -39,56 +45,76 @@ const CommunicationPage: React.FC = () => {
 
   // Datos simulados
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        sender: 'Dr. García',
-        recipient: 'Dr. Pérez',
-        subject: 'Reunión de equipo',
-        content: 'Necesitamos coordinar la próxima reunión de equipo para revisar los hallazgos.',
-        date: '2025-07-22 10:30',
-        read: false,
-        priority: 'high'
-      },
-      {
-        id: '2',
-        sender: 'Estudiante López',
-        recipient: 'Dr. Pérez',
-        subject: 'Consulta sobre muestras',
-        content: 'Tengo algunas dudas sobre el procesamiento de las muestras de cerámica.',
-        date: '2025-07-21 15:45',
-        read: true,
-        priority: 'medium'
-      }
-    ]);
-
-    setNotifications([
-      {
-        id: '1',
-        type: 'reminder',
-        title: 'Recordatorio: Entrega de informe',
-        content: 'El informe de excavación debe entregarse mañana.',
-        date: '2025-07-22 09:00',
-        read: false
-      },
-      {
-        id: '2',
-        type: 'task',
-        title: 'Nueva tarea asignada',
-        content: 'Se te ha asignado la catalogación de artefactos del sitio B2.',
-        date: '2025-07-21 14:30',
-        read: false
-      },
-      {
-        id: '3',
-        type: 'alert',
-        title: 'Alerta: Muestra pendiente',
-        content: 'La muestra C-14 está lista para análisis.',
-        date: '2025-07-20 16:15',
-        read: true
-      }
-    ]);
+    // Leer contexto de localStorage
+    const saved = localStorage.getItem('investigator-context');
+    if (saved) {
+      const ctx = JSON.parse(saved);
+      setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+    }
   }, []);
+
+  // Sincronizar contexto al recibir foco o volver a la pestaña
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        const ctx = JSON.parse(saved);
+        setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+      }
+    };
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Simular obtención del nombre del sitio activo
+    const sitios = [
+      { id: '1', name: 'Sitio Laguna La Brava Norte' },
+      { id: '2', name: 'Excavación Arroyo Seco 2' },
+      { id: '3', name: 'Monte Hermoso Playa' }
+    ];
+    const found = sitios.find(s => s.id === context.site);
+    setSiteName(found ? found.name : context.site);
+  }, [context]);
+
+  // Banner de contexto activo
+  const renderContextBanner = () => (
+    context.project && context.area && context.site ? (
+      <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="flex items-center space-x-4">
+          <span className="text-blue-700 font-semibold">Trabajando en:</span>
+          <span className="text-blue-900 font-bold">Proyecto {context.project}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">Área {context.area}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">Sitio {siteName || context.site}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/researcher')}>Cambiar Contexto</Button>
+        </div>
+      </div>
+    ) : null
+  );
+
+  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
+  if (!context.project || !context.area || !context.site) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🧭</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
+          <p className="text-gray-600 mb-4">Para acceder a la comunicación, primero debes seleccionar un proyecto, área y sitio.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSendMessage = () => {
     const message: Message = {
@@ -127,6 +153,7 @@ const CommunicationPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {renderContextBanner()}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">💬 Comunicación</h1>
         <Button onClick={() => setShowNewMessage(true)}>

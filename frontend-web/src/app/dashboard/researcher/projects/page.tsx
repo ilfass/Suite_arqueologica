@@ -1,121 +1,117 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
-import Input from '../../../../components/ui/Input';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import ContextBanner from '@/components/ui/ContextBanner';
+import useInvestigatorContext from '@/hooks/useInvestigatorContext';
 
 interface Project {
   id: string;
   name: string;
   description: string;
-  status: 'active' | 'completed' | 'archived' | 'planning';
-  start_date: string;
-  end_date?: string;
-  site_id: string;
-  site_name: string;
-  coordinator: string;
-  team_size: number;
-  methodology: string;
-  objectives: string[];
+  status: 'active' | 'completed' | 'planning';
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  director?: string;
+  team?: string[];
+  objectives?: string;
+  methodology?: string;
   budget?: number;
-  progress: number;
-  created_at: string;
-  updated_at: string;
+  notes?: string;
 }
 
 const ProjectsPage: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const { context, hasContext, isLoading } = useInvestigatorContext();
+  
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'planning'>('all');
+
+  // Datos simulados de proyectos
+  const mockProjects: Project[] = [
+    {
+      id: '1',
+      name: 'Proyecto Cazadores Recolectores - La Laguna',
+      description: 'Estudio de ocupaciones tempranas en la región pampeana',
+      status: 'active',
+      startDate: '2024-01-01',
+      endDate: '2025-12-31',
+      location: 'Laguna La Brava, Buenos Aires',
+      director: 'Dr. María González',
+      team: ['Dr. Carlos Pérez', 'Lic. Ana Rodríguez', 'Téc. Juan López'],
+      objectives: 'Estudiar los patrones de ocupación temprana en la región pampeana',
+      methodology: 'Prospección sistemática, excavación estratigráfica, análisis de materiales',
+      budget: 150000,
+      notes: 'Proyecto en curso con hallazgos significativos'
+    },
+    {
+      id: '2',
+      name: 'Estudio de Poblamiento Pampeano',
+      description: 'Investigación sobre patrones de asentamiento',
+      status: 'active',
+      startDate: '2024-03-01',
+      location: 'Monte Hermoso, Buenos Aires',
+      director: 'Dr. Roberto Silva',
+      team: ['Dr. Laura Martínez', 'Lic. Pedro Gómez'],
+      objectives: 'Analizar patrones de poblamiento en la costa pampeana',
+      methodology: 'Análisis espacial, dataciones radiocarbónicas',
+      budget: 80000,
+      notes: 'Enfocado en sitios costeros'
+    },
+    {
+      id: '3',
+      name: 'Arqueología de la Llanura Bonaerense',
+      description: 'Análisis de sitios costeros y de interior',
+      status: 'planning',
+      startDate: '2025-01-01',
+      location: 'Región Pampeana',
+      director: 'Dr. Elena Fernández',
+      team: ['Dr. Miguel Torres'],
+      objectives: 'Comprender la diversidad de ocupaciones en la llanura',
+      methodology: 'Síntesis regional, análisis comparativo',
+      budget: 120000,
+      notes: 'Proyecto en fase de planificación'
+    },
+    {
+      id: '4',
+      name: 'Excavación Arroyo Seco',
+      description: 'Investigación de sitios costeros del Holoceno',
+      status: 'completed',
+      startDate: '2023-06-01',
+      endDate: '2024-05-31',
+      location: 'Arroyo Seco, Buenos Aires',
+      director: 'Dr. Carlos Pérez',
+      team: ['Lic. Ana Rodríguez', 'Téc. Juan López'],
+      objectives: 'Documentar ocupaciones costeras del Holoceno',
+      methodology: 'Excavación sistemática, análisis de materiales',
+      budget: 95000,
+      notes: 'Proyecto completado exitosamente'
+    }
+  ];
 
   useEffect(() => {
-    // Simular carga de proyectos
+    // Simular carga de datos
     setTimeout(() => {
-      setProjects([
-        {
-          id: '1',
-          name: 'Excavación en Sitio Pampeano - Cazadores Recolectores',
-          description: 'Investigación sobre patrones de asentamiento de cazadores recolectores en la región pampeana argentina durante el Holoceno temprano',
-          status: 'active',
-          start_date: '2024-01-15',
-          end_date: '2024-12-31',
-          site_id: '1',
-          site_name: 'Sitio Pampeano La Laguna',
-          coordinator: 'Dr. María González',
-          team_size: 8,
-          methodology: 'Excavación sistemática por cuadrículas de 1x1m, análisis de materiales líticos y óseos, datación por C14',
-          objectives: [
-            'Identificar patrones de ocupación estacional',
-            'Analizar tecnología lítica',
-            'Reconstruir paleoambiente',
-            'Establecer cronología de ocupación'
-          ],
-          budget: 50000,
-          progress: 65,
-          created_at: '2024-01-15T10:00:00Z',
-          updated_at: '2024-01-15T10:00:00Z'
-        },
-        {
-          id: '2',
-          name: 'Análisis de Materiales Líticos - Técnica de Tallado',
-          description: 'Estudio de técnicas de tallado y uso de herramientas líticas en contextos de cazadores recolectores',
-          status: 'completed',
-          start_date: '2023-06-01',
-          end_date: '2023-12-31',
-          site_id: '2',
-          site_name: 'Sitio Arroyo Seco',
-          coordinator: 'Dr. Carlos Rodríguez',
-          team_size: 5,
-          methodology: 'Análisis traceológico, experimentación, microscopía electrónica',
-          objectives: [
-            'Identificar técnicas de tallado',
-            'Reconstruir cadenas operativas',
-            'Determinar funciones de herramientas',
-            'Establecer cronología tecnológica'
-          ],
-          budget: 30000,
-          progress: 100,
-          created_at: '2023-06-01T10:00:00Z',
-          updated_at: '2023-12-31T10:00:00Z'
-        },
-        {
-          id: '3',
-          name: 'Prospección Arqueológica - Valle del Río Salado',
-          description: 'Prospección sistemática para identificar nuevos sitios de cazadores recolectores',
-          status: 'planning',
-          start_date: '2024-03-01',
-          end_date: '2024-08-31',
-          site_id: '3',
-          site_name: 'Valle del Río Salado',
-          coordinator: 'Dr. Ana Martínez',
-          team_size: 6,
-          methodology: 'Prospección sistemática, GPS, fotogrametría, análisis de suelos',
-          objectives: [
-            'Identificar nuevos sitios',
-            'Mapear distribución espacial',
-            'Evaluar potencial arqueológico',
-            'Establecer cronología regional'
-          ],
-          budget: 25000,
-          progress: 0,
-          created_at: '2024-01-10T10:00:00Z',
-          updated_at: '2024-01-10T10:00:00Z'
-        }
-      ]);
+      setProjects(mockProjects);
       setLoading(false);
     }, 1000);
   }, []);
 
+  const filteredProjects = projects.filter(project => 
+    filter === 'all' ? true : project.status === filter
+  );
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'archived': return 'bg-gray-100 text-gray-800';
       case 'planning': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -123,219 +119,158 @@ const ProjectsPage: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active': return 'Activo';
-      case 'completed': return 'Completado';
-      case 'archived': return 'Archivado';
       case 'planning': return 'Planificación';
-      default: return status;
+      case 'completed': return 'Completado';
+      default: return 'Desconocido';
     }
   };
 
-  const filteredProjects = projects.filter(project => 
-    filterStatus === 'all' || project.status === filterStatus
-  );
-
-  const handleCreateProject = () => {
-    setShowCreateModal(true);
-  };
-
-  const handleEditProject = (projectId: string) => {
-    // Implementar edición de proyecto
-    console.log('Editar proyecto:', projectId);
-  };
-
-  const handleArchiveProject = (projectId: string) => {
-    // Implementar archivado de proyecto
-    console.log('Archivar proyecto:', projectId);
-  };
-
-  if (loading) {
+  if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow p-6">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando proyectos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestión de Proyectos</h1>
-              <p className="text-gray-600 mt-2">Administra tus proyectos arqueológicos</p>
-            </div>
-            <Button variant="primary" onClick={handleCreateProject}>
-              + Nuevo Proyecto
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Banner de contexto */}
+      {hasContext && (
+        <ContextBanner
+          project={context.project}
+          area={context.area}
+          site={context.site}
+          showBackButton={true}
+          showChangeButton={false}
+        />
+      )}
 
-          {/* Filtros */}
-          <div className="flex gap-4 mb-6">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="planning">Planificación</option>
-              <option value="completed">Completados</option>
-              <option value="archived">Archivados</option>
-            </select>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button
+            onClick={() => router.push('/dashboard/researcher')}
+            className="hover:text-blue-600 hover:underline"
+          >
+            Dashboard
+          </button>
+          <span>›</span>
+          <span className="text-gray-900 font-medium">Proyectos</span>
+        </nav>
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">📋 Proyectos de Investigación</h1>
+            <p className="mt-2 text-gray-600">Gestiona todos tus proyectos arqueológicos</p>
           </div>
+          <Button onClick={() => router.push('/dashboard/researcher')}>
+            ➕ Nuevo Proyecto
+          </Button>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📋</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Proyectos</p>
-                  <p className="text-2xl font-semibold text-gray-900">{projects.length}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">⚡</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Activos</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {projects.filter(p => p.status === 'active').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📊</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">En Planificación</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {projects.filter(p => p.status === 'planning').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">✅</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Completados</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {projects.filter(p => p.status === 'completed').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
+        {/* Filtros */}
+        <div className="mb-6">
+          <div className="flex space-x-2">
+            <Button
+              variant={filter === 'all' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('all')}
+            >
+              Todos ({projects.length})
+            </Button>
+            <Button
+              variant={filter === 'active' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('active')}
+            >
+              Activos ({projects.filter(p => p.status === 'active').length})
+            </Button>
+            <Button
+              variant={filter === 'planning' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('planning')}
+            >
+              Planificación ({projects.filter(p => p.status === 'planning').length})
+            </Button>
+            <Button
+              variant={filter === 'completed' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('completed')}
+            >
+              Completados ({projects.filter(p => p.status === 'completed').length})
+            </Button>
+          </div>
         </div>
 
         {/* Lista de Proyectos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredProjects.map((project) => (
-            <Card key={project.id}>
+            <Card key={project.id} className="hover:shadow-lg transition-shadow">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {project.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3">{project.description}</p>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {project.description}
+                    </p>
                   </div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                     {getStatusText(project.status)}
                   </span>
                 </div>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Sitio:</span>
-                    <span className="font-medium">{project.site_name}</span>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span className="font-medium mr-2">📅 Inicio:</span>
+                    {new Date(project.startDate).toLocaleDateString('es-ES')}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Coordinador:</span>
-                    <span className="font-medium">{project.coordinator}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Equipo:</span>
-                    <span className="font-medium">{project.team_size} personas</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Progreso:</span>
-                    <span className="font-medium">{project.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
+                  {project.endDate && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span className="font-medium mr-2">📅 Fin:</span>
+                      {new Date(project.endDate).toLocaleDateString('es-ES')}
+                    </div>
+                  )}
+                  {project.location && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span className="font-medium mr-2">📍 Ubicación:</span>
+                      {project.location}
+                    </div>
+                  )}
+                  {project.director && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span className="font-medium mr-2">👤 Director:</span>
+                      {project.director}
+                    </div>
+                  )}
+                  {project.budget && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span className="font-medium mr-2">💰 Presupuesto:</span>
+                      ${project.budget.toLocaleString()}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleEditProject(project.id)}
+                    onClick={() => router.push(`/dashboard/researcher/projects/${project.id}/edit`)}
                   >
-                    Editar
+                    ✏️ Editar
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleArchiveProject(project.id)}
+                    onClick={() => router.push(`/dashboard/researcher/projects/${project.id}`)}
                   >
-                    Archivar
-                  </Button>
-                  <Button 
-                    variant="primary" 
-                    size="sm"
-                    onClick={() => window.location.href = `/dashboard/researcher/projects/${project.id}`}
-                  >
-                    Ver Detalles
+                    👁️ Ver Detalles
                   </Button>
                 </div>
               </div>
@@ -345,12 +280,17 @@ const ProjectsPage: React.FC = () => {
 
         {filteredProjects.length === 0 && (
           <Card>
-            <div className="p-12 text-center">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay proyectos</h3>
-              <p className="text-gray-600 mb-4">Comienza creando tu primer proyecto arqueológico</p>
-              <Button variant="primary" onClick={handleCreateProject}>
-                Crear Proyecto
+            <div className="p-8 text-center">
+              <div className="text-4xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay proyectos</h3>
+              <p className="text-gray-600 mb-4">
+                {filter === 'all' 
+                  ? 'Aún no tienes proyectos creados.'
+                  : `No hay proyectos en estado "${getStatusText(filter)}".`
+                }
+              </p>
+              <Button onClick={() => router.push('/dashboard/researcher')}>
+                Crear Primer Proyecto
               </Button>
             </div>
           </Card>

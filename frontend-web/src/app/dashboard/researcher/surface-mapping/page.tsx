@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import ContextBanner from '@/components/ui/ContextBanner';
+import useInvestigatorContext from '@/hooks/useInvestigatorContext';
+import { useRouter } from 'next/navigation';
 
 interface SurfaceFinding {
   id: string;
@@ -17,9 +20,17 @@ interface SurfaceFinding {
   site: string;
   collector: string;
   photoUrl?: string;
+  projectId: string;
+  areaId: string;
+  siteId: string;
 }
 
 const SurfaceMappingPage: React.FC = () => {
+  // Contexto de trabajo usando el hook personalizado
+  const router = useRouter();
+  const { context, hasContext, isLoading } = useInvestigatorContext();
+  const [siteName, setSiteName] = useState('');
+
   const [findings, setFindings] = useState<SurfaceFinding[]>([]);
   const [selectedFinding, setSelectedFinding] = useState<SurfaceFinding | null>(null);
   const [showAddFinding, setShowAddFinding] = useState(false);
@@ -34,7 +45,19 @@ const SurfaceMappingPage: React.FC = () => {
     collector: ''
   });
 
-  // Datos simulados con ejemplos pampeanos
+  // Arrays simulados de proyectos y áreas (igual que en el dashboard)
+  const projects = [
+    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
+    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
+    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
+  ];
+  const areas = [
+    { id: '1', name: 'Laguna La Brava', projectId: '1' },
+    { id: '2', name: 'Arroyo Seco', projectId: '1' },
+    { id: '3', name: 'Monte Hermoso', projectId: '2' }
+  ];
+
+  // Datos simulados con ejemplos pampeanos y contexto
   useEffect(() => {
     setFindings([
       {
@@ -47,7 +70,10 @@ const SurfaceMappingPage: React.FC = () => {
         description: 'Punta de proyectil tipo Cola de Pescado, retoque bifacial, base cóncava',
         date: '2025-07-22',
         site: 'Laguna La Brava',
-        collector: 'Dr. Pérez'
+        collector: 'Dr. Pérez',
+        projectId: '1',
+        areaId: '1',
+        siteId: '1'
       },
       {
         id: '2',
@@ -59,7 +85,10 @@ const SurfaceMappingPage: React.FC = () => {
         description: 'Fragmento de cerámica con decoración incisa',
         date: '2025-07-21',
         site: 'Arroyo Seco',
-        collector: 'Dr. Pérez'
+        collector: 'Dr. Pérez',
+        projectId: '1',
+        areaId: '2',
+        siteId: '2'
       },
       {
         id: '3',
@@ -71,7 +100,10 @@ const SurfaceMappingPage: React.FC = () => {
         description: 'Fragmento de hueso de guanaco con marcas de corte',
         date: '2025-07-20',
         site: 'Monte Hermoso',
-        collector: 'Dr. Pérez'
+        collector: 'Dr. Pérez',
+        projectId: '2',
+        areaId: '3',
+        siteId: '3'
       },
       {
         id: '4',
@@ -83,25 +115,54 @@ const SurfaceMappingPage: React.FC = () => {
         description: 'Raspador lítico con retoque unifacial',
         date: '2025-07-19',
         site: 'Laguna La Brava',
-        collector: 'Dr. Pérez'
+        collector: 'Dr. Pérez',
+        projectId: '1',
+        areaId: '1',
+        siteId: '1'
       }
     ]);
   }, []);
 
-  const handleAddFinding = () => {
-    const finding: SurfaceFinding = {
-      id: Date.now().toString(),
-      name: newFinding.name,
-      type: newFinding.type,
-      material: newFinding.material,
-      coordinates: newFinding.coordinates,
-      condition: newFinding.condition,
-      description: newFinding.description,
-      site: newFinding.site,
-      collector: newFinding.collector,
-      date: new Date().toISOString().split('T')[0]
-    };
-    setFindings([...findings, finding]);
+  // El hook useInvestigatorContext ya maneja la carga del contexto
+
+  // Filtrar hallazgos por contexto
+  const [filteredFindings, setFilteredFindings] = useState<SurfaceFinding[]>([]);
+
+  useEffect(() => {
+    if (hasContext && context.project && context.area && context.site) {
+      const filtered = findings.filter(finding => 
+        finding.projectId === context.project &&
+        finding.areaId === context.area &&
+        finding.siteId === context.site
+      );
+      setFilteredFindings(filtered);
+    } else {
+      setFilteredFindings([]);
+    }
+  }, [findings, hasContext, context]);
+
+  useEffect(() => {
+    // Simular obtención del nombre del sitio activo
+    // Puedes reemplazar esto por una consulta real si tienes los datos
+    const sitios = [
+      { id: '1', name: 'Sitio Laguna La Brava Norte' },
+      { id: '2', name: 'Excavación Arroyo Seco 2' },
+      { id: '3', name: 'Monte Hermoso Playa' }
+    ];
+    const found = sitios.find(s => s.id === context.site);
+    setSiteName(found ? found.name : context.site);
+  }, [context]);
+
+  // handleAddFinding acepta un hallazgo como argumento
+  const handleAddFinding = (finding: Omit<SurfaceFinding, 'id' | 'date'>) => {
+    setFindings(prev => [
+      ...prev,
+      {
+        ...finding,
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0]
+      }
+    ]);
     setNewFinding({ name: '', type: 'lithic', material: '', coordinates: [0, 0], condition: 'good', description: '', site: '', collector: '' });
     setShowAddFinding(false);
   };
@@ -138,8 +199,61 @@ const SurfaceMappingPage: React.FC = () => {
     }
   };
 
+
+
+  // Banner de contexto activo usando el componente reutilizable
+  const renderContextBanner = () => (
+    <ContextBanner
+      project={context.project}
+      area={context.area}
+      site={context.site}
+      projectName={projects.find(p => p.id === context.project)?.name}
+      areaName={areas.find(a => a.id === context.area)?.name}
+      siteName={siteName}
+    />
+  );
+
+  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando contexto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasContext) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🧭</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
+          <p className="text-gray-600 mb-4">Para acceder al mapeo de superficie, primero debes seleccionar un proyecto, área y sitio.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
+      {renderContextBanner()}
+      
+      {/* Breadcrumb de navegación */}
+      <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+        <button 
+          onClick={() => router.push('/dashboard/researcher')}
+          className="hover:text-blue-600 hover:underline"
+        >
+          Dashboard
+        </button>
+        <span>›</span>
+        <span className="text-gray-900 font-medium">Mapeo de Superficie</span>
+      </nav>
+      
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">🌍 Mapeo de Superficie</h1>
         <Button onClick={() => setShowAddFinding(true)}>
@@ -151,14 +265,14 @@ const SurfaceMappingPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{findings.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{filteredFindings.length}</div>
             <div className="text-sm text-gray-600">Total Hallazgos</div>
           </div>
         </Card>
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {findings.filter(f => f.type === 'lithic').length}
+              {filteredFindings.filter(f => f.type === 'lithic').length}
             </div>
             <div className="text-sm text-gray-600">Artefactos Líticos</div>
           </div>
@@ -166,7 +280,7 @@ const SurfaceMappingPage: React.FC = () => {
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {findings.filter(f => f.type === 'ceramic').length}
+              {filteredFindings.filter(f => f.type === 'ceramic').length}
             </div>
             <div className="text-sm text-gray-600">Cerámica</div>
           </div>
@@ -174,7 +288,7 @@ const SurfaceMappingPage: React.FC = () => {
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {findings.filter(f => f.type === 'bone').length}
+              {filteredFindings.filter(f => f.type === 'bone').length}
             </div>
             <div className="text-sm text-gray-600">Restos Óseos</div>
           </div>
@@ -189,40 +303,26 @@ const SurfaceMappingPage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hallazgo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sitio
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Material
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hallazgo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sitio</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {findings.map((finding) => (
+                {filteredFindings.map((finding) => (
                   <tr key={finding.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <span className="text-2xl mr-2">{getTypeIcon(finding.type)}</span>
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(finding.type)}`}>
                           {finding.type === 'lithic' ? 'Lítico' :
-                           finding.type === 'ceramic' ? 'Cerámica' :
-                           finding.type === 'bone' ? 'Hueso' :
-                           finding.type === 'shell' ? 'Concha' : 'Otro'}
+                            finding.type === 'ceramic' ? 'Cerámica' :
+                            finding.type === 'bone' ? 'Hueso' :
+                            finding.type === 'shell' ? 'Concha' : 'Otro'}
                         </span>
                       </div>
                     </td>
@@ -242,13 +342,11 @@ const SurfaceMappingPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(finding.condition)}`}>
                         {finding.condition === 'excellent' ? 'Excelente' :
-                         finding.condition === 'good' ? 'Bueno' :
-                         finding.condition === 'fair' ? 'Regular' : 'Pobre'}
+                          finding.condition === 'good' ? 'Bueno' :
+                          finding.condition === 'fair' ? 'Regular' : 'Pobre'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {finding.date}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{finding.date}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <Button size="sm" variant="outline" onClick={() => setSelectedFinding(finding)}>
                         👁️ Ver
@@ -272,7 +370,7 @@ const SurfaceMappingPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Nombre del Hallazgo</label>
                 <Input
                   value={newFinding.name}
-                  onChange={(e) => setNewFinding({...newFinding, name: e.target.value})}
+                  onChange={(e) => setNewFinding({ ...newFinding, name: e.target.value })}
                   placeholder="Ej: Punta de Proyectil Cola de Pescado"
                 />
               </div>
@@ -280,7 +378,7 @@ const SurfaceMappingPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Tipo</label>
                 <select
                   value={newFinding.type}
-                  onChange={(e) => setNewFinding({...newFinding, type: e.target.value as any})}
+                  onChange={(e) => setNewFinding({ ...newFinding, type: e.target.value as any })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="lithic">🪨 Artefacto Lítico</option>
@@ -294,7 +392,7 @@ const SurfaceMappingPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Material</label>
                 <Input
                   value={newFinding.material}
-                  onChange={(e) => setNewFinding({...newFinding, material: e.target.value})}
+                  onChange={(e) => setNewFinding({ ...newFinding, material: e.target.value })}
                   placeholder="Ej: Sílice, Arcilla, Hueso"
                 />
               </div>
@@ -305,7 +403,7 @@ const SurfaceMappingPage: React.FC = () => {
                     type="number"
                     step="0.0001"
                     value={newFinding.coordinates[0]}
-                    onChange={(e) => setNewFinding({...newFinding, coordinates: [parseFloat(e.target.value), newFinding.coordinates[1]]})}
+                    onChange={(e) => setNewFinding({ ...newFinding, coordinates: [parseFloat(e.target.value), newFinding.coordinates[1]] })}
                     placeholder="-38.1234"
                   />
                 </div>
@@ -315,7 +413,7 @@ const SurfaceMappingPage: React.FC = () => {
                     type="number"
                     step="0.0001"
                     value={newFinding.coordinates[1]}
-                    onChange={(e) => setNewFinding({...newFinding, coordinates: [newFinding.coordinates[0], parseFloat(e.target.value)]})}
+                    onChange={(e) => setNewFinding({ ...newFinding, coordinates: [newFinding.coordinates[0], parseFloat(e.target.value)] })}
                     placeholder="-61.5678"
                   />
                 </div>
@@ -324,7 +422,7 @@ const SurfaceMappingPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Estado de Conservación</label>
                 <select
                   value={newFinding.condition}
-                  onChange={(e) => setNewFinding({...newFinding, condition: e.target.value as any})}
+                  onChange={(e) => setNewFinding({ ...newFinding, condition: e.target.value as any })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="excellent">Excelente</option>
@@ -333,19 +431,21 @@ const SurfaceMappingPage: React.FC = () => {
                   <option value="poor">Pobre</option>
                 </select>
               </div>
-              <div>
+              {/* Campo sitio autocompletado y oculto */}
+              <input type="hidden" value={siteName} />
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">Sitio</label>
                 <Input
                   value={newFinding.site}
-                  onChange={(e) => setNewFinding({...newFinding, site: e.target.value})}
+                  onChange={(e) => setNewFinding({ ...newFinding, site: e.target.value })}
                   placeholder="Ej: Laguna La Brava"
                 />
-              </div>
+              </div> */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Descripción</label>
                 <textarea
                   value={newFinding.description}
-                  onChange={(e) => setNewFinding({...newFinding, description: e.target.value})}
+                  onChange={(e) => setNewFinding({ ...newFinding, description: e.target.value })}
                   placeholder="Descripción detallada del hallazgo"
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   rows={3}
@@ -356,7 +456,16 @@ const SurfaceMappingPage: React.FC = () => {
               <Button variant="outline" onClick={() => setShowAddFinding(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleAddFinding}>
+              <Button onClick={() => {
+                // Al guardar, autocompletar el sitio con el contexto y agregar campos de contexto
+                handleAddFinding({ 
+                  ...newFinding, 
+                  site: siteName,
+                  projectId: context.project,
+                  areaId: context.area,
+                  siteId: context.site
+                });
+              }}>
                 Agregar
               </Button>
             </div>
@@ -376,9 +485,9 @@ const SurfaceMappingPage: React.FC = () => {
                   <span className="text-2xl">{getTypeIcon(selectedFinding.type)}</span>
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(selectedFinding.type)}`}>
                     {selectedFinding.type === 'lithic' ? 'Artefacto Lítico' :
-                     selectedFinding.type === 'ceramic' ? 'Cerámica' :
-                     selectedFinding.type === 'bone' ? 'Hueso' :
-                     selectedFinding.type === 'shell' ? 'Concha' : 'Otro'}
+                      selectedFinding.type === 'ceramic' ? 'Cerámica' :
+                      selectedFinding.type === 'bone' ? 'Hueso' :
+                      selectedFinding.type === 'shell' ? 'Concha' : 'Otro'}
                   </span>
                 </div>
               </div>
@@ -404,8 +513,8 @@ const SurfaceMappingPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Estado</label>
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(selectedFinding.condition)}`}>
                   {selectedFinding.condition === 'excellent' ? 'Excelente' :
-                   selectedFinding.condition === 'good' ? 'Bueno' :
-                   selectedFinding.condition === 'fair' ? 'Regular' : 'Pobre'}
+                    selectedFinding.condition === 'good' ? 'Bueno' :
+                    selectedFinding.condition === 'fair' ? 'Regular' : 'Pobre'}
                 </span>
               </div>
               <div>

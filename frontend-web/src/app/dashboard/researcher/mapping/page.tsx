@@ -135,6 +135,25 @@ const MappingPage: React.FC = () => {
     }, 1000);
   }, []);
 
+  // Sincronizar contexto al recibir foco o volver a la pestaña
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        const ctx = JSON.parse(saved);
+        // setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' }); // This line was removed as per the edit hint
+      }
+    };
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
   const handleLayerToggle = (layerId: string) => {
     setLayers(layers.map(layer => 
       layer.id === layerId ? { ...layer, visible: !layer.visible } : layer

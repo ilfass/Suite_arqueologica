@@ -5,6 +5,9 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
+import ContextBanner from '../../../../components/ui/ContextBanner';
+import useInvestigatorContext from '../../../../hooks/useInvestigatorContext';
+import { useRouter } from 'next/navigation';
 
 interface Artifact {
   id: string;
@@ -25,10 +28,15 @@ interface Artifact {
   dateFound: string;
   foundBy: string;
   status: string;
+  projectId: string;
+  areaId: string;
+  siteId: string;
 }
 
 const ArtifactsPage: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const { context, hasContext, isLoading } = useInvestigatorContext();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [filteredArtifacts, setFilteredArtifacts] = useState<Artifact[]>([]);
   const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
@@ -41,27 +49,31 @@ const ArtifactsPage: React.FC = () => {
   });
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
 
-  // Datos simulados de hallazgos arqueológicos de la región pampeana
+  // Datos simulados de hallazgos arqueológicos de la región pampeana con contexto
   const mockArtifacts: Artifact[] = [
+    // Proyecto 1 - Laguna La Brava
     {
       id: '1',
-      name: 'Punta de Proyectil Bifacial',
+      name: 'Punta de Proyectil Cola de Pescado',
       type: 'Arma',
       material: 'Sílex',
       period: 'Holoceno Tardío',
-      location: 'Sitio La Laguna, Pampa Húmeda',
-      coordinates: { lat: -34.6037, lng: -58.3816 },
+      location: 'Sitio Laguna La Brava Norte',
+      coordinates: { lat: -38.1234, lng: -61.5678 },
       dimensions: { length: 4.2, width: 1.8, height: 0.3 },
       weight: 12.5,
       condition: 'Excelente',
-      description: 'Punta de proyectil con retoque bifacial, posiblemente utilizada para caza de guanacos',
+      description: 'Punta de proyectil tipo Cola de Pescado, retoque bifacial, base cóncava',
       photos: ['/api/placeholder/400/300'],
       relatedArtifacts: ['2', '3'],
       excavationUnit: 'CU-01',
       stratigraphicUnit: 'SU-03',
       dateFound: '2024-01-15',
-      foundBy: 'Dr. María González',
-      status: 'Documentado'
+      foundBy: 'Dr. Pérez',
+      status: 'Documentado',
+      projectId: '1',
+      areaId: '1',
+      siteId: '1'
     },
     {
       id: '2',
@@ -69,8 +81,8 @@ const ArtifactsPage: React.FC = () => {
       type: 'Herramienta',
       material: 'Cuarzo',
       period: 'Holoceno Medio',
-      location: 'Sitio Arroyo Seco, Pampa Seca',
-      coordinates: { lat: -36.3216, lng: -60.2163 },
+      location: 'Sitio Laguna La Brava Norte',
+      coordinates: { lat: -38.1235, lng: -61.5679 },
       dimensions: { length: 3.1, width: 2.4, height: 0.8 },
       weight: 8.2,
       condition: 'Bueno',
@@ -80,8 +92,11 @@ const ArtifactsPage: React.FC = () => {
       excavationUnit: 'CU-02',
       stratigraphicUnit: 'SU-05',
       dateFound: '2024-01-14',
-      foundBy: 'Lic. Carlos Ruiz',
-      status: 'En Análisis'
+      foundBy: 'Dr. Pérez',
+      status: 'En Análisis',
+      projectId: '1',
+      areaId: '1',
+      siteId: '1'
     },
     {
       id: '3',
@@ -89,8 +104,8 @@ const ArtifactsPage: React.FC = () => {
       type: 'Cerámica',
       material: 'Arcilla',
       period: 'Holoceno Tardío',
-      location: 'Sitio Laguna de los Padres',
-      coordinates: { lat: -37.9547, lng: -57.5874 },
+      location: 'Sitio Laguna La Brava Norte',
+      coordinates: { lat: -38.1236, lng: -61.5680 },
       dimensions: { length: 6.8, width: 5.2, height: 0.4 },
       weight: 15.3,
       condition: 'Regular',
@@ -101,16 +116,20 @@ const ArtifactsPage: React.FC = () => {
       stratigraphicUnit: 'SU-02',
       dateFound: '2024-01-13',
       foundBy: 'Dra. Ana Martínez',
-      status: 'Restaurado'
+      status: 'Restaurado',
+      projectId: '1',
+      areaId: '1',
+      siteId: '1'
     },
+    // Proyecto 2 - Arroyo Seco
     {
       id: '4',
       name: 'Punta de Flecha',
       type: 'Arma',
       material: 'Obsidiana',
       period: 'Holoceno Tardío',
-      location: 'Sitio Tandil, Sierras Pampeanas',
-      coordinates: { lat: -37.3214, lng: -59.1332 },
+      location: 'Sitio Arroyo Seco',
+      coordinates: { lat: -38.2345, lng: -61.6789 },
       dimensions: { length: 2.8, width: 1.2, height: 0.2 },
       weight: 3.1,
       condition: 'Excelente',
@@ -121,16 +140,20 @@ const ArtifactsPage: React.FC = () => {
       stratigraphicUnit: 'SU-01',
       dateFound: '2024-01-12',
       foundBy: 'Dr. Roberto Silva',
-      status: 'Documentado'
+      status: 'Documentado',
+      projectId: '1',
+      areaId: '2',
+      siteId: '2'
     },
+    // Proyecto 3 - Monte Hermoso
     {
       id: '5',
       name: 'Molino de Piedra',
       type: 'Herramienta',
       material: 'Granito',
       period: 'Holoceno Medio',
-      location: 'Sitio Mar Chiquita',
-      coordinates: { lat: -37.7489, lng: -57.4444 },
+      location: 'Sitio Monte Hermoso',
+      coordinates: { lat: -38.3456, lng: -61.7890 },
       dimensions: { length: 25.0, width: 18.0, height: 8.0 },
       weight: 4500.0,
       condition: 'Bueno',
@@ -141,7 +164,10 @@ const ArtifactsPage: React.FC = () => {
       stratigraphicUnit: 'SU-04',
       dateFound: '2024-01-11',
       foundBy: 'Lic. Patricia López',
-      status: 'En Conservación'
+      status: 'En Conservación',
+      projectId: '2',
+      areaId: '3',
+      siteId: '3'
     }
   ];
 
@@ -153,6 +179,16 @@ const ArtifactsPage: React.FC = () => {
   useEffect(() => {
     let filtered = artifacts;
     
+    // Filtrar por contexto si está disponible
+    if (hasContext && context.project && context.area && context.site) {
+      filtered = filtered.filter(artifact => 
+        artifact.projectId === context.project &&
+        artifact.areaId === context.area &&
+        artifact.siteId === context.site
+      );
+    }
+    
+    // Aplicar filtros adicionales
     if (filters.type) {
       filtered = filtered.filter(artifact => artifact.type === filters.type);
     }
@@ -170,7 +206,7 @@ const ArtifactsPage: React.FC = () => {
     }
     
     setFilteredArtifacts(filtered);
-  }, [filters, artifacts]);
+  }, [filters, artifacts, hasContext, context]);
 
   const artifactTypes = [...new Set(artifacts.map(a => a.type))];
   const materials = [...new Set(artifacts.map(a => a.material))];
@@ -204,8 +240,67 @@ const ArtifactsPage: React.FC = () => {
     }
   };
 
+  // Arrays simulados para nombres de contexto
+  const projects = [
+    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
+    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
+    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
+  ];
+  const areas = [
+    { id: '1', name: 'Laguna La Brava', projectId: '1' },
+    { id: '2', name: 'Arroyo Seco', projectId: '1' },
+    { id: '3', name: 'Monte Hermoso', projectId: '2' }
+  ];
+  const sites = [
+    { id: '1', name: 'Sitio Laguna La Brava Norte', areaId: '1' },
+    { id: '2', name: 'Sitio Arroyo Seco', areaId: '2' },
+    { id: '3', name: 'Sitio Monte Hermoso', areaId: '3' }
+  ];
+
+  const projectName = projects.find(p => p.id === context.project)?.name;
+  const areaName = areas.find(a => a.id === context.area)?.name;
+  const siteName = sites.find(s => s.id === context.site)?.name;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando contexto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasContext) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🧭</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Contexto Requerido</h2>
+          <p className="text-gray-600 mb-6">
+            Para ver los artefactos, primero debes seleccionar un contexto de trabajo en el dashboard.
+          </p>
+          <Button onClick={() => router.push('/dashboard/researcher')}>
+            Ir al Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Banner de contexto */}
+      <ContextBanner
+        project={context.project}
+        area={context.area}
+        site={context.site}
+        projectName={projectName}
+        areaName={areaName}
+        siteName={siteName}
+      />
+      
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -216,7 +311,7 @@ const ArtifactsPage: React.FC = () => {
                   Gestión de Hallazgos
                 </h1>
                 <p className="mt-2 text-gray-600">
-                  Inventario y catalogación de artefactos arqueológicos
+                  Inventario y catalogación de artefactos arqueológicos en {siteName}
                 </p>
               </div>
               <div className="flex space-x-3">
@@ -226,8 +321,8 @@ const ArtifactsPage: React.FC = () => {
                 <Button variant="outline" onClick={() => handleExport('pdf')}>
                   📄 Exportar PDF
                 </Button>
-                <Button variant="primary">
-                  ➕ Nuevo Hallazgo
+                <Button variant="primary" onClick={() => router.push('/dashboard/researcher/artifacts/new')}>
+                  ➕ Nuevo Artefacto
                 </Button>
               </div>
             </div>

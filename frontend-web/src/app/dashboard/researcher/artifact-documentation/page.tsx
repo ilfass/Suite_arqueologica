@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useRouter } from 'next/navigation';
 
 interface ArtifactDocument {
   id: string;
@@ -29,6 +30,11 @@ interface ArtifactDocument {
 }
 
 const ArtifactDocumentationPage: React.FC = () => {
+  const router = useRouter();
+  // Contexto de trabajo
+  const [context, setContext] = useState<{ project: string; area: string; site: string }>({ project: '', area: '', site: '' });
+  const [siteName, setSiteName] = useState('');
+
   const [documents, setDocuments] = useState<ArtifactDocument[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<ArtifactDocument | null>(null);
   const [showAddDocument, setShowAddDocument] = useState(false);
@@ -46,6 +52,18 @@ const ArtifactDocumentationPage: React.FC = () => {
     context: '',
     documenter: ''
   });
+
+  // Arrays simulados de proyectos y áreas (igual que en el dashboard)
+  const projects = [
+    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
+    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
+    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
+  ];
+  const areas = [
+    { id: '1', name: 'Laguna La Brava', projectId: '1' },
+    { id: '2', name: 'Arroyo Seco', projectId: '1' },
+    { id: '3', name: 'Monte Hermoso', projectId: '2' }
+  ];
 
   // Datos simulados con ejemplos pampeanos
   useEffect(() => {
@@ -125,26 +143,94 @@ const ArtifactDocumentationPage: React.FC = () => {
     ]);
   }, []);
 
-  const handleAddDocument = () => {
-    const document: ArtifactDocument = {
-      id: Date.now().toString(),
-      artifactName: newDocument.artifactName,
-      catalogNumber: newDocument.catalogNumber,
-      type: newDocument.type,
-      material: newDocument.material,
-      dimensions: newDocument.dimensions,
-      weight: newDocument.weight,
-      condition: newDocument.condition,
-      description: newDocument.description,
-      technicalDrawing: newDocument.technicalDrawing,
-      photos: [],
-      site: newDocument.site,
-      context: newDocument.context,
-      date: new Date().toISOString().split('T')[0],
-      documenter: newDocument.documenter,
-      status: 'draft'
+  useEffect(() => {
+    // Leer contexto de localStorage
+    const saved = localStorage.getItem('investigator-context');
+    if (saved) {
+      const ctx = JSON.parse(saved);
+      setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+    }
+  }, []);
+
+  // Sincronizar contexto al recibir foco o volver a la pestaña
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        const ctx = JSON.parse(saved);
+        setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+      }
     };
-    setDocuments([...documents, document]);
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Simular obtención del nombre del sitio activo
+    const sitios = [
+      { id: '1', name: 'Sitio Laguna La Brava Norte' },
+      { id: '2', name: 'Excavación Arroyo Seco 2' },
+      { id: '3', name: 'Monte Hermoso Playa' }
+    ];
+    const found = sitios.find(s => s.id === context.site);
+    setSiteName(found ? found.name : context.site);
+  }, [context]);
+
+  // Filtrar documentos por sitio activo
+  const filteredDocuments = context.site
+    ? documents.filter(d => d.site === siteName || d.site === context.site)
+    : [];
+
+  // Banner de contexto activo
+  const renderContextBanner = () => (
+    context.project && context.area && context.site ? (
+      <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="flex items-center space-x-4">
+          <span className="text-blue-700 font-semibold">Trabajando en:</span>
+          <span className="text-blue-900 font-bold">{projects.find(p => p.id === context.project)?.name || `Proyecto ${context.project}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{areas.find(a => a.id === context.area)?.name || `Área ${context.area}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{siteName || context.site}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/researcher')}>Cambiar Contexto</Button>
+        </div>
+      </div>
+    ) : null
+  );
+
+  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
+  if (!context.project || !context.area || !context.site) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🧭</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
+          <p className="text-gray-600 mb-4">Para acceder a la documentación de artefactos, primero debes seleccionar un proyecto, área y sitio.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddDocument = (doc: Omit<ArtifactDocument, 'id' | 'date' | 'status' | 'photos'>) => {
+    setDocuments(prev => [
+      ...prev,
+      {
+        ...doc,
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        status: 'draft',
+        photos: []
+      }
+    ]);
     setNewDocument({
       artifactName: '',
       catalogNumber: '',
@@ -205,6 +291,7 @@ const ArtifactDocumentationPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {renderContextBanner()}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">📝 Documentación de Artefactos</h1>
         <Button onClick={() => setShowAddDocument(true)}>
@@ -216,28 +303,28 @@ const ArtifactDocumentationPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{documents.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{filteredDocuments.length}</div>
             <div className="text-sm text-gray-600">Total Fichas</div>
           </div>
         </Card>
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {documents.filter(d => d.type === 'lithic').length}
+              {filteredDocuments.filter(d => d.type === 'lithic').length}
             </div>
             <div className="text-sm text-gray-600">Artefactos Líticos</div>
           </div>
         </Card>
         <Card>
           <div className="text-2xl font-bold text-red-600">
-            {documents.filter(d => d.type === 'ceramic').length}
+            {filteredDocuments.filter(d => d.type === 'ceramic').length}
           </div>
           <div className="text-sm text-gray-600">Cerámica</div>
         </Card>
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              {documents.filter(d => d.status === 'approved').length}
+              {filteredDocuments.filter(d => d.status === 'approved').length}
             </div>
             <div className="text-sm text-gray-600">Aprobadas</div>
           </div>
@@ -252,40 +339,26 @@ const ArtifactDocumentationPage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Artefacto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sitio
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Dimensiones
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artefacto</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sitio</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dimensiones</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {documents.map((document) => (
+                {filteredDocuments.map((document) => (
                   <tr key={document.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <span className="text-2xl mr-2">{getTypeIcon(document.type)}</span>
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(document.type)}`}>
                           {document.type === 'lithic' ? 'Lítico' :
-                           document.type === 'ceramic' ? 'Cerámica' :
-                           document.type === 'bone' ? 'Hueso' :
-                           document.type === 'metal' ? 'Metal' : 'Otro'}
+                            document.type === 'ceramic' ? 'Cerámica' :
+                            document.type === 'bone' ? 'Hueso' :
+                            document.type === 'metal' ? 'Metal' : 'Otro'}
                         </span>
                       </div>
                     </td>
@@ -307,14 +380,14 @@ const ArtifactDocumentationPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(document.condition)}`}>
                         {document.condition === 'excellent' ? 'Excelente' :
-                         document.condition === 'good' ? 'Bueno' :
-                         document.condition === 'fair' ? 'Regular' : 'Pobre'}
+                          document.condition === 'good' ? 'Bueno' :
+                          document.condition === 'fair' ? 'Regular' : 'Pobre'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(document.status)}`}>
                         {document.status === 'draft' ? 'Borrador' :
-                         document.status === 'review' ? 'En Revisión' : 'Aprobado'}
+                          document.status === 'review' ? 'En Revisión' : 'Aprobado'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -345,7 +418,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Nombre del Artefacto</label>
                 <Input
                   value={newDocument.artifactName}
-                  onChange={(e) => setNewDocument({...newDocument, artifactName: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, artifactName: e.target.value })}
                   placeholder="Ej: Punta de Proyectil Cola de Pescado"
                 />
               </div>
@@ -353,7 +426,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Número de Catálogo</label>
                 <Input
                   value={newDocument.catalogNumber}
-                  onChange={(e) => setNewDocument({...newDocument, catalogNumber: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, catalogNumber: e.target.value })}
                   placeholder="Ej: LLB-001"
                 />
               </div>
@@ -361,7 +434,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Tipo</label>
                 <select
                   value={newDocument.type}
-                  onChange={(e) => setNewDocument({...newDocument, type: e.target.value as any})}
+                  onChange={(e) => setNewDocument({ ...newDocument, type: e.target.value as any })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="lithic">🪨 Artefacto Lítico</option>
@@ -375,7 +448,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Material</label>
                 <Input
                   value={newDocument.material}
-                  onChange={(e) => setNewDocument({...newDocument, material: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, material: e.target.value })}
                   placeholder="Ej: Sílice, Arcilla, Hueso"
                 />
               </div>
@@ -386,8 +459,8 @@ const ArtifactDocumentationPage: React.FC = () => {
                   step="0.1"
                   value={newDocument.dimensions.length}
                   onChange={(e) => setNewDocument({
-                    ...newDocument, 
-                    dimensions: {...newDocument.dimensions, length: parseFloat(e.target.value)}
+                    ...newDocument,
+                    dimensions: { ...newDocument.dimensions, length: parseFloat(e.target.value) }
                   })}
                 />
               </div>
@@ -398,8 +471,8 @@ const ArtifactDocumentationPage: React.FC = () => {
                   step="0.1"
                   value={newDocument.dimensions.width}
                   onChange={(e) => setNewDocument({
-                    ...newDocument, 
-                    dimensions: {...newDocument.dimensions, width: parseFloat(e.target.value)}
+                    ...newDocument,
+                    dimensions: { ...newDocument.dimensions, width: parseFloat(e.target.value) }
                   })}
                 />
               </div>
@@ -410,8 +483,8 @@ const ArtifactDocumentationPage: React.FC = () => {
                   step="0.1"
                   value={newDocument.dimensions.height}
                   onChange={(e) => setNewDocument({
-                    ...newDocument, 
-                    dimensions: {...newDocument.dimensions, height: parseFloat(e.target.value)}
+                    ...newDocument,
+                    dimensions: { ...newDocument.dimensions, height: parseFloat(e.target.value) }
                   })}
                 />
               </div>
@@ -421,14 +494,14 @@ const ArtifactDocumentationPage: React.FC = () => {
                   type="number"
                   step="0.1"
                   value={newDocument.weight}
-                  onChange={(e) => setNewDocument({...newDocument, weight: parseFloat(e.target.value)})}
+                  onChange={(e) => setNewDocument({ ...newDocument, weight: parseFloat(e.target.value) })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Estado de Conservación</label>
                 <select
                   value={newDocument.condition}
-                  onChange={(e) => setNewDocument({...newDocument, condition: e.target.value as any})}
+                  onChange={(e) => setNewDocument({ ...newDocument, condition: e.target.value as any })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="excellent">Excelente</option>
@@ -437,19 +510,21 @@ const ArtifactDocumentationPage: React.FC = () => {
                   <option value="poor">Pobre</option>
                 </select>
               </div>
-              <div>
+              {/* Campo sitio autocompletado y oculto */}
+              <input type="hidden" value={siteName} />
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">Sitio</label>
                 <Input
                   value={newDocument.site}
-                  onChange={(e) => setNewDocument({...newDocument, site: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, site: e.target.value })}
                   placeholder="Ej: Laguna La Brava"
                 />
-              </div>
+              </div> */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Contexto</label>
                 <Input
                   value={newDocument.context}
-                  onChange={(e) => setNewDocument({...newDocument, context: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, context: e.target.value })}
                   placeholder="Ej: Superficie, sector norte"
                 />
               </div>
@@ -457,7 +532,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Descripción Técnica</label>
                 <textarea
                   value={newDocument.description}
-                  onChange={(e) => setNewDocument({...newDocument, description: e.target.value})}
+                  onChange={(e) => setNewDocument({ ...newDocument, description: e.target.value })}
                   placeholder="Descripción técnica detallada del artefacto"
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   rows={3}
@@ -468,7 +543,10 @@ const ArtifactDocumentationPage: React.FC = () => {
               <Button variant="outline" onClick={() => setShowAddDocument(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleAddDocument}>
+              <Button onClick={() => {
+                // Al guardar, autocompletar el sitio con el contexto
+                handleAddDocument({ ...newDocument, site: siteName });
+              }}>
                 Crear Ficha
               </Button>
             </div>
@@ -478,12 +556,12 @@ const ArtifactDocumentationPage: React.FC = () => {
 
       {/* Modal para ver documento */}
       {selectedDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">📝 Ficha Técnica Completa</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div>
+                    <div>
                   <label className="block text-sm font-medium text-gray-700">Tipo</label>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl">{getTypeIcon(selectedDocument.type)}</span>
@@ -495,27 +573,27 @@ const ArtifactDocumentationPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Nombre</label>
                   <p className="text-sm text-gray-900">{selectedDocument.artifactName}</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Número de Catálogo</label>
                   <p className="text-sm text-gray-900">{selectedDocument.catalogNumber}</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Material</label>
                   <p className="text-sm text-gray-900">{selectedDocument.material}</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Sitio</label>
                   <p className="text-sm text-gray-900">{selectedDocument.site}</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Contexto</label>
                   <p className="text-sm text-gray-900">{selectedDocument.context}</p>
-                </div>
-              </div>
+                    </div>
+                  </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Dimensiones</label>
@@ -523,10 +601,10 @@ const ArtifactDocumentationPage: React.FC = () => {
                     {selectedDocument.dimensions.length} × {selectedDocument.dimensions.width} × {selectedDocument.dimensions.height} cm
                   </p>
                 </div>
-                <div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Peso</label>
                   <p className="text-sm text-gray-900">{selectedDocument.weight} g</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Estado</label>
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(selectedDocument.condition)}`}>
@@ -534,23 +612,23 @@ const ArtifactDocumentationPage: React.FC = () => {
                      selectedDocument.condition === 'good' ? 'Bueno' :
                      selectedDocument.condition === 'fair' ? 'Regular' : 'Pobre'}
                   </span>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedDocument.status)}`}>
                     {selectedDocument.status === 'draft' ? 'Borrador' :
                      selectedDocument.status === 'review' ? 'En Revisión' : 'Aprobado'}
                   </span>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Fecha</label>
                   <p className="text-sm text-gray-900">{selectedDocument.date}</p>
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Documentador</label>
                   <p className="text-sm text-gray-900">{selectedDocument.documenter}</p>
-                </div>
-              </div>
+                      </div>
+                    </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Descripción Técnica</label>
                 <p className="text-sm text-gray-900">{selectedDocument.description}</p>
@@ -563,7 +641,7 @@ const ArtifactDocumentationPage: React.FC = () => {
                     <p className="text-sm text-gray-600 mt-2">{selectedDocument.technicalDrawing}</p>
                   </div>
                 </div>
-              </div>
+                      </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Fotografías</label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -576,22 +654,22 @@ const ArtifactDocumentationPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+                  </div>
+                  </div>
             <div className="flex justify-end space-x-2 mt-6">
               <Button variant="outline">
                 📐 Agregar Dibujo
               </Button>
               <Button variant="outline">
                 📷 Agregar Foto
-              </Button>
+                  </Button>
               <Button variant="outline" onClick={() => setSelectedDocument(null)}>
-                Cerrar
-              </Button>
-            </div>
+                    Cerrar
+                  </Button>
+                </div>
+              </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

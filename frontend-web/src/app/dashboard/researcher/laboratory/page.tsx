@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useRouter } from 'next/navigation';
 
 interface Sample {
   id: string;
@@ -17,6 +18,11 @@ interface Sample {
 }
 
 const LaboratoryPage: React.FC = () => {
+  const router = useRouter();
+  // Contexto de trabajo
+  const [context, setContext] = useState<{ project: string; area: string; site: string }>({ project: '', area: '', site: '' });
+  const [siteName, setSiteName] = useState('');
+
   const [samples, setSamples] = useState<Sample[]>([]);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [showAddSample, setShowAddSample] = useState(false);
@@ -27,6 +33,18 @@ const LaboratoryPage: React.FC = () => {
     analysis: '',
     results: ''
   });
+
+  // Arrays simulados de proyectos y áreas (igual que en el dashboard)
+  const projects = [
+    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
+    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
+    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
+  ];
+  const areas = [
+    { id: '1', name: 'Laguna La Brava', projectId: '1' },
+    { id: '2', name: 'Arroyo Seco', projectId: '1' },
+    { id: '3', name: 'Monte Hermoso', projectId: '2' }
+  ];
 
   // Datos simulados
   useEffect(() => {
@@ -54,18 +72,93 @@ const LaboratoryPage: React.FC = () => {
     ]);
   }, []);
 
-  const handleAddSample = () => {
-    const sample: Sample = {
-      id: Date.now().toString(),
-      name: newSample.name,
-      type: newSample.type,
-      origin: newSample.origin,
-      analysis: newSample.analysis,
-      results: newSample.results,
-      date: new Date().toISOString().split('T')[0],
-      status: 'pending'
+  useEffect(() => {
+    // Leer contexto de localStorage
+    const saved = localStorage.getItem('investigator-context');
+    if (saved) {
+      const ctx = JSON.parse(saved);
+      setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+    }
+  }, []);
+
+  // Sincronizar contexto al recibir foco o volver a la pestaña
+  useEffect(() => {
+    const syncContext = () => {
+      const saved = localStorage.getItem('investigator-context');
+      if (saved) {
+        const ctx = JSON.parse(saved);
+        setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+      }
     };
-    setSamples([...samples, sample]);
+    window.addEventListener('focus', syncContext);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncContext();
+    });
+    return () => {
+      window.removeEventListener('focus', syncContext);
+      window.removeEventListener('visibilitychange', syncContext);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Simular obtención del nombre del sitio activo
+    const sitios = [
+      { id: '1', name: 'Sitio Laguna La Brava Norte' },
+      { id: '2', name: 'Excavación Arroyo Seco 2' },
+      { id: '3', name: 'Monte Hermoso Playa' }
+    ];
+    const found = sitios.find(s => s.id === context.site);
+    setSiteName(found ? found.name : context.site);
+  }, [context]);
+
+  // Filtrar muestras por sitio activo (cuando corresponda)
+  const filteredSamples = context.site
+    ? samples // Aquí deberías filtrar por siteName o context.site si los datos lo tuvieran
+    : [];
+
+  // Banner de contexto activo
+  const renderContextBanner = () => (
+    context.project && context.area && context.site ? (
+      <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="flex items-center space-x-4">
+          <span className="text-blue-700 font-semibold">Trabajando en:</span>
+          <span className="text-blue-900 font-bold">{projects.find(p => p.id === context.project)?.name || `Proyecto ${context.project}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{areas.find(a => a.id === context.area)?.name || `Área ${context.area}`}</span>
+          <span className="text-blue-700">|</span>
+          <span className="text-blue-900 font-bold">{siteName || context.site}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/researcher')}>Cambiar Contexto</Button>
+        </div>
+      </div>
+    ) : null
+  );
+
+  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
+  if (!context.project || !context.area || !context.site) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🧭</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
+          <p className="text-gray-600 mb-4">Para acceder al laboratorio, primero debes seleccionar un proyecto, área y sitio.</p>
+          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddSample = (sample: Omit<Sample, 'id' | 'date' | 'status'>) => {
+    setSamples(prev => [
+      ...prev,
+      {
+        ...sample,
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending'
+      }
+    ]);
     setNewSample({ name: '', type: '', origin: '', analysis: '', results: '' });
     setShowAddSample(false);
   };
@@ -81,6 +174,7 @@ const LaboratoryPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {renderContextBanner()}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">🔬 Laboratorio</h1>
         <Button onClick={() => setShowAddSample(true)}>
@@ -92,14 +186,14 @@ const LaboratoryPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{samples.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{filteredSamples.length}</div>
             <div className="text-sm text-gray-600">Total Muestras</div>
           </div>
         </Card>
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {samples.filter(s => s.status === 'pending').length}
+              {filteredSamples.filter(s => s.status === 'pending').length}
             </div>
             <div className="text-sm text-gray-600">Pendientes</div>
           </div>
@@ -107,7 +201,7 @@ const LaboratoryPage: React.FC = () => {
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {samples.filter(s => s.status === 'in_progress').length}
+              {filteredSamples.filter(s => s.status === 'in_progress').length}
             </div>
             <div className="text-sm text-gray-600">En Proceso</div>
           </div>
@@ -115,7 +209,7 @@ const LaboratoryPage: React.FC = () => {
         <Card>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              {samples.filter(s => s.status === 'completed').length}
+              {filteredSamples.filter(s => s.status === 'completed').length}
             </div>
             <div className="text-sm text-gray-600">Completadas</div>
           </div>
@@ -154,7 +248,7 @@ const LaboratoryPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {samples.map((sample) => (
+                {filteredSamples.map((sample) => (
                   <tr key={sample.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{sample.name}</div>
@@ -212,14 +306,16 @@ const LaboratoryPage: React.FC = () => {
                   placeholder="Tipo de muestra"
                 />
               </div>
-              <div>
+              {/* Campo origen autocompletado y oculto */}
+              <input type="hidden" value={siteName} />
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">Origen</label>
                 <Input
                   value={newSample.origin}
                   onChange={(e) => setNewSample({...newSample, origin: e.target.value})}
                   placeholder="Procedencia"
                 />
-              </div>
+              </div> */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Análisis</label>
                 <Input
@@ -241,7 +337,10 @@ const LaboratoryPage: React.FC = () => {
               <Button variant="outline" onClick={() => setShowAddSample(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleAddSample}>
+              <Button onClick={() => {
+                // Al guardar, autocompletar el origen con el contexto
+                handleAddSample({ ...newSample, origin: siteName });
+              }}>
                 Agregar
               </Button>
             </div>
