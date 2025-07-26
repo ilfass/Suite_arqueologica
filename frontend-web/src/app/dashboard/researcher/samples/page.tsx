@@ -23,7 +23,7 @@ interface Sample {
 }
 
 const SamplesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { context, hasContext, isLoading } = useInvestigatorContext();
   

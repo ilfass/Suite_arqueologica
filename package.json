@@ -22,7 +22,9 @@
     "lint:backend": "cd backend && npm run lint",
     "install:all": "npm install && npm run install:web && npm run install:backend",
     "install:web": "cd frontend-web && npm install",
-    "install:backend": "cd backend && npm install"
+    "install:backend": "cd backend && npm install",
+    "test:visual": "node scripts/testing/run_visual_test.js",
+    "test:services": "node scripts/testing/check_services_before_test.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
@@ -38,6 +40,6 @@
   "license": "MIT",
   "dependencies": {
     "buffer": "^6.0.3",
-    "puppeteer": "^24.14.0"
+    "puppeteer": "^24.15.0"
   }
 }

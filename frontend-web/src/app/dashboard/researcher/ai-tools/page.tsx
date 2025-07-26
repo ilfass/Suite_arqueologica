@@ -24,7 +24,7 @@ interface ClassificationResult {
 }
 
 const AIToolsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [analyses, setAnalyses] = useState<AIAnalysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AIAnalysis | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

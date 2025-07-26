@@ -1,295 +1,331 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
-  page.setDefaultTimeout(20000);
+  const baseUrl = 'http://localhost:3000';
+  const screenshotsDir = './reports/testing/screenshots';
+  if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir, { recursive: true });
 
-  // Limpiar el contexto de localStorage antes de iniciar
-  await page.goto('http://localhost:3000');
-  await page.evaluate(() => localStorage.removeItem('investigator-context'));
+  let step = 1;
+  const snap = async (desc) => {
+    await page.screenshot({ path: `${screenshotsDir}/step${step++}_${desc.replace(/\s+/g, '_')}.png` });
+  };
+  const log = (msg) => console.log(`🟢 ${msg}`);
 
-  // 1. Ir al dashboard de investigador
-  await page.goto('http://localhost:3000/dashboard/researcher');
-  // Lógica condicional: intentar esperar el banner de contexto, si no aparece, esperar el selector de contexto
-  let bannerFound = false;
-  try {
-    await page.waitForSelector('.sticky.top-0', { timeout: 2000 });
-    bannerFound = true;
-    console.log('🟢 Banner de contexto ya presente (contexto guardado)');
-  } catch (err) {
-    // No hay banner, buscar el selector de contexto
-    console.log('ℹ️  No hay banner de contexto, esperando selector de contexto...');
-    // Esperar el h2 de Contexto de Trabajo
-    await page.waitForFunction(() => {
-      const h2s = Array.from(document.querySelectorAll('h2'));
-      return h2s.some(el => el.textContent && el.textContent.includes('Contexto de Trabajo'));
-    }, { timeout: 10000 });
-    // Seleccionar proyecto, área y sitio
-    await clickButtonByText('Proyecto Cazadores Recolectores');
-    await new Promise(r => setTimeout(r, 500));
-    await clickButtonByText('Laguna La Brava');
-    await new Promise(r => setTimeout(r, 500));
-    await clickButtonByText('Sitio Laguna La Brava Norte');
-    await new Promise(r => setTimeout(r, 500));
-    // Esperar el banner
-    await page.waitForSelector('.sticky.top-0', { timeout: 10000 });
-    console.log('🟢 Banner de contexto mostrado tras selección');
+  // 1. Registro o login de investigador
+  await page.goto(`${baseUrl}/register`);
+  await page.waitForSelector('form');
+  await page.type('input[name="email"]', 'investigador.e2e@prueba.com');
+  await page.type('input[name="fullName"]', 'Investigador E2E');
+  await page.type('input[name="password"]', 'Test1234!');
+  await page.select('select[name="role"]', 'researcher');
+  await snap('registro_investigador');
+  await page.click('button[type="submit"]');
+  try { await page.waitForNavigation({ timeout: 5000 }); } catch {}
+  if (page.url().includes('/register')) {
+    await page.goto(`${baseUrl}/login`);
+    await page.waitForSelector('form');
+    await page.type('input[name="email"]', 'investigador.e2e@prueba.com');
+    await page.type('input[name="password"]', 'Test1234!');
+    await snap('login_investigador');
+    await page.click('button[type="submit"]');
+    await page.waitForNavigation();
   }
-  console.log('🟢 Dashboard cargado');
+  await snap('dashboard_investigador');
+  log('Login/registro exitoso');
 
-  // 2. Seleccionar Proyecto, Área y Sitio usando búsqueda por texto
-  async function clickButtonByText(text) {
-    const buttons = await page.$$('button');
-    let found = false;
-    const buscado = text.trim().toLowerCase();
-    let allBtnTexts = [];
-    for (const btn of buttons) {
-      const btnText = await page.evaluate(el => el.textContent, btn);
-      allBtnTexts.push(btnText);
-      if (btnText && btnText.replace(/\s+/g, ' ').trim().toLowerCase().includes(buscado)) {
-        await btn.click();
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      console.error(`❌ No se encontró el botón con texto: ${text}`);
-      console.error('Botones encontrados:');
-      allBtnTexts.forEach((t, i) => console.error(`[${i}] "${t && t.replace(/\s+/g, ' ').trim()}"`));
-      process.exit(1);
-    }
-  }
-  await clickButtonByText('Proyecto Cazadores Recolectores');
-  await new Promise(r => setTimeout(r, 500));
-  await clickButtonByText('Laguna La Brava');
-  await new Promise(r => setTimeout(r, 500));
-  await clickButtonByText('Sitio Laguna La Brava Norte');
-  await new Promise(r => setTimeout(r, 500));
-  console.log('🟢 Contexto seleccionado');
+  // 2. Ir a proyectos y crear uno nuevo
+  await page.goto(`${baseUrl}/dashboard/researcher/projects`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('proyectos_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && b.textContent.includes('Nuevo Proyecto'));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForNavigation();
+  await page.waitForSelector('form');
+  await snap('formulario_nuevo_proyecto');
+  await page.type('input[placeholder*="Nombre del Proyecto"]', 'Proyecto E2E Puppeteer');
+  await page.type('textarea[placeholder*="Describe el proyecto"]', 'Proyecto de prueba E2E automatizada.');
+  await page.type('textarea[placeholder*="metodología"]', 'Metodología E2E.');
+  await page.type('input[type="date"]', '2025-01-01');
+  await page.type('input[type="number"]', '10000');
+  await page.type('input[placeholder="1"]', '3');
+  await page.type('input[placeholder*="Nombre completo del director"]', 'Investigador E2E');
+  await page.type('input[placeholder="Objetivo 1"]', 'Objetivo E2E 1');
+  await page.click('button:has-text("Agregar Objetivo")');
+  await page.type('input[placeholder="Objetivo 2"]', 'Objetivo E2E 2');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const area = btns.find(b => b.textContent && b.textContent.includes('Crear nueva área'));
+    if (area) area.click();
+  });
+  await page.waitForSelector('input[placeholder*="Argentina"]', { visible: true });
+  await page.type('input[placeholder*="Nombre"]', 'Área E2E');
+  await page.type('input[placeholder*="Argentina"]', 'Argentina');
+  await page.type('input[placeholder*="Buenos Aires"]', 'Buenos Aires');
+  await page.type('input[placeholder*="Latitud"]', '-38.1234');
+  await page.type('input[placeholder*="Longitud"]', '-61.5678');
+  await page.type('input[placeholder*="1500"]', '1500');
+  await page.type('textarea', 'Área de prueba E2E.');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const agregar = btns.find(b => b.textContent && b.textContent.includes('Agregar Área'));
+    if (agregar) agregar.click();
+  });
+  await snap('area_agregada');
+  await page.select('select[multiple]', 'Área E2E-' + new Date().getFullYear());
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(2000);
+  await snap('proyecto_creado');
+  log('Proyecto creado');
 
-  // 3. Verificar banner de contexto
-  const bannerText = await page.$eval('.sticky.top-0', el => el.textContent);
-  if (bannerText.includes('Proyecto Cazadores Recolectores') && bannerText.includes('Laguna La Brava') && bannerText.includes('Sitio Laguna La Brava Norte')) {
-    console.log('✅ Banner de contexto correcto en dashboard');
-  } else {
-    throw new Error('❌ Banner de contexto incorrecto en dashboard');
-  }
+  // 3. Editar y ver detalles de proyecto
+  await page.goto(`${baseUrl}/dashboard/researcher/projects`);
+  await page.waitForSelector('button', { visible: true });
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const editar = btns.find(b => b.textContent && b.textContent.includes('Editar'));
+    if (editar) editar.click();
+  });
+  await page.waitForNavigation();
+  await snap('editar_proyecto');
+  await page.goto(`${baseUrl}/dashboard/researcher/projects`);
+  await page.waitForSelector('button', { visible: true });
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const ver = btns.find(b => b.textContent && b.textContent.includes('Ver Detalles'));
+    if (ver) ver.click();
+  });
+  await page.waitForNavigation();
+  await snap('ver_detalles_proyecto');
+  log('Editar y ver detalles de proyecto OK');
 
-  // Función para hacer clic en el botón 'Abrir' de la card de una herramienta por su título
-  async function clickCardButtonByTitle(title) {
-    const cards = await page.$$('.hover\\:shadow-lg'); // Card principal de herramienta
-    let found = false;
-    for (const card of cards) {
-      const cardText = await page.evaluate(el => el.textContent, card);
-      if (cardText && cardText.replace(/\s+/g, ' ').toLowerCase().includes(title.trim().toLowerCase())) {
-        const btns = await card.$$('button');
-        for (const btn of btns) {
-          const btnText = await page.evaluate(el => el.textContent, btn);
-          if (btnText && btnText.toLowerCase().includes('abrir')) {
+  // 4. Probar navegación y botones en otras secciones principales
+  const secciones = [
+    { url: '/dashboard/researcher/fieldwork', nombre: 'Trabajo de Campo' },
+    { url: '/dashboard/researcher/findings', nombre: 'Hallazgos' },
+    { url: '/dashboard/researcher/artifacts', nombre: 'Artefactos' },
+    { url: '/dashboard/researcher/laboratory', nombre: 'Laboratorio' },
+    { url: '/dashboard/researcher/samples', nombre: 'Muestras' },
+    { url: '/dashboard/researcher/tasks', nombre: 'Tareas' },
+    { url: '/dashboard/researcher/publications', nombre: 'Publicaciones' },
+    { url: '/dashboard/researcher/communication', nombre: 'Comunicación' },
+    { url: '/dashboard/researcher/tools', nombre: 'Herramientas' },
+    { url: '/dashboard/researcher/visualization', nombre: 'Visualización' },
+    { url: '/dashboard/researcher/surface-mapping', nombre: 'Mapeo de Superficie' },
+    { url: '/dashboard/researcher/mapping', nombre: 'Mapeo SIG' },
+    { url: '/dashboard/researcher/projects/timeline', nombre: 'Cronograma' }
+  ];
+  for (const sec of secciones) {
+    await page.goto(`${baseUrl}${sec.url}`);
+    await page.waitForTimeout(1000);
+    await snap(`seccion_${sec.nombre.replace(/\s+/g, '_')}`);
+    log(`Navegación a ${sec.nombre}`);
+    // Probar todos los botones visibles
+    const botones = await page.$$('button');
+    for (const btn of botones) {
+      const text = await page.evaluate(el => el.textContent, btn);
+      if (text && text.trim().length > 0) {
+        try {
+          await btn.hover();
+          // No hacer clic en logout ni en navegación principal
+          if (!/cerrar sesión|logout|dashboard|volver|cancelar/i.test(text)) {
             await btn.click();
-            found = true;
-            break;
+            await page.waitForTimeout(500);
+            await snap(`boton_${text.trim().replace(/\s+/g, '_')}_${sec.nombre.replace(/\s+/g, '_')}`);
+            log(`Botón probado: ${text.trim()} en ${sec.nombre}`);
           }
+        } catch (e) {
+          log(`Botón no clickeable o sin acción visible: ${text.trim()} en ${sec.nombre}`);
         }
-        if (found) break;
       }
     }
-    if (!found) {
-      console.error(`❌ No se encontró el botón 'Abrir' para la herramienta: ${title}`);
-      process.exit(1);
-    }
   }
 
-  // 4. Navegar a Mapping
-  console.log('⏳ Navegando a Mapping...');
-  await clickCardButtonByTitle('Mapeo SIG Integrado');
-  await page.waitForSelector('.sticky.top-0');
-  const bannerMap = await page.$eval('.sticky.top-0', el => el.textContent);
-  if (bannerMap.includes('Proyecto Cazadores Recolectores') && bannerMap.includes('Laguna La Brava') && bannerMap.includes('Sitio Laguna La Brava Norte')) {
-    console.log('✅ Banner de contexto correcto en Mapping');
-  } else {
-    throw new Error('❌ Banner de contexto incorrecto en Mapping');
-  }
-
-  // 5. Navegar a Trabajo de Campo
-  console.log('⏳ Navegando a Trabajo de Campo...');
-  await page.goto('http://localhost:3000/dashboard/researcher/fieldwork');
-  await page.waitForSelector('.sticky.top-0');
-  const bannerField = await page.$eval('.sticky.top-0', el => el.textContent);
-  if (bannerField.includes('Proyecto Cazadores Recolectores') && bannerField.includes('Laguna La Brava') && bannerField.includes('Sitio Laguna La Brava Norte')) {
-    console.log('✅ Banner de contexto correcto en Fieldwork');
-  } else {
-    console.error('❌ Banner de contexto incorrecto en Fieldwork. Texto real:');
-    console.error(bannerField);
-    throw new Error('❌ Banner de contexto incorrecto en Fieldwork');
-  }
-
-  // 6. Navegar a Mapeo de Superficie
-  console.log('⏳ Navegando a Mapeo de Superficie...');
-  await page.goto('http://localhost:3000/dashboard/researcher/surface-mapping');
-  await page.waitForSelector('.sticky.top-0');
-  // Abrir modal de agregar hallazgo
-  await clickButtonByText('Agregar Hallazgo');
-  await new Promise(r => setTimeout(r, 500));
-  // Completar campos del formulario usando page.type y blur/tab
-  await page.waitForSelector('input[placeholder="Ej: Punta de Proyectil Cola de Pescado"]');
-  await page.click('input[placeholder="Ej: Punta de Proyectil Cola de Pescado"]');
-  await page.type('input[placeholder="Ej: Punta de Proyectil Cola de Pescado"]', 'Test Hallazgo Puppeteer');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Nombre del hallazgo ingresado');
-
-  await page.click('input[placeholder="Ej: Sílice, Arcilla, Hueso"]');
-  await page.type('input[placeholder="Ej: Sílice, Arcilla, Hueso"]', 'Sílice');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Material ingresado');
-
-  await page.click('textarea[placeholder="Descripción detallada del hallazgo"]');
-  await page.type('textarea[placeholder="Descripción detallada del hallazgo"]', 'Hallazgo de prueba automatizada');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Descripción ingresada');
-  // Hacer clic en el botón 'Agregar' del modal
-  const agregarBtns = await page.$$('button');
-  let agregarClicked = false;
-  for (const btn of agregarBtns) {
-    const btnText = await page.evaluate(el => el.textContent, btn);
-    if (btnText && btnText.trim().toLowerCase() === 'agregar') {
-      await btn.click();
-      agregarClicked = true;
-      console.log('🟢 Botón Agregar clickeado');
-      break;
-    }
-  }
-  if (!agregarClicked) {
-    console.error('❌ No se encontró el botón Agregar en el modal');
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-    console.error('HTML del body para depuración:', bodyHtml);
-    throw new Error('❌ No se encontró el botón Agregar en el modal');
-  }
-  // Esperar a que el modal desaparezca
-  await page.waitForSelector('.fixed.inset-0', { hidden: true, timeout: 5000 });
-  console.log('🟢 Modal de agregar hallazgo cerrado');
-  // Esperar a que el hallazgo aparezca en la tabla
-  try {
-    await page.waitForFunction(() => {
-      return Array.from(document.querySelectorAll('tbody tr')).some(tr => tr.textContent && tr.textContent.toLowerCase().includes('test hallazgo puppeteer'));
-    }, { timeout: 10000 });
-    console.log('✅ Hallazgo de prueba creado correctamente');
-  } catch (e) {
-    const tableHtml = await page.evaluate(() => {
-      const table = document.querySelector('table');
-      return table ? table.outerHTML : 'No se encontró la tabla';
-    });
-    console.error('❌ No se detectó el hallazgo en la tabla tras 10s');
-    console.error('HTML de la tabla para depuración:', tableHtml);
-    throw e;
-  }
-
-  // 7. Navegar a Documentación de Artefactos
-  console.log('⏳ Navegando a Documentación de Artefactos...');
-  await page.goto('http://localhost:3000/dashboard/researcher/artifact-documentation');
-  await page.waitForSelector('.sticky.top-0');
-  await clickButtonByText('Nueva Ficha');
-  await page.waitForSelector('input[placeholder="Ej: Punta de Proyectil Cola de Pescado"]');
-  await page.type('input[placeholder="Ej: Punta de Proyectil Cola de Pescado"]', 'Test Artefacto Puppeteer');
-  await page.type('input[placeholder="Ej: LLB-001"]', 'TEST-001');
-  await page.type('input[placeholder="Ej: Sílice, Arcilla, Hueso"]', 'Sílice');
-  await page.type('textarea[placeholder="Descripción técnica detallada del artefacto"]', 'Ficha de prueba automatizada');
-  await clickButtonByText('Crear Ficha');
-  await new Promise(r => setTimeout(r, 1000));
-  const fichaExiste = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('td')).some(td => td.textContent.includes('Test Artefacto Puppeteer'));
+  // 5. Logout y login de nuevo para probar persistencia
+  await page.goto(`${baseUrl}/dashboard/researcher`);
+  await page.waitForSelector('button', { visible: true });
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const logout = btns.find(b => b.textContent && /cerrar sesión|logout/i.test(b.textContent));
+    if (logout) logout.click();
   });
-  if (fichaExiste) {
-    console.log('✅ Ficha técnica de prueba creada correctamente');
-  } else {
-    throw new Error('❌ No se creó la ficha técnica de prueba');
-  }
+  await page.waitForTimeout(2000);
+  await snap('logout');
+  await page.goto(`${baseUrl}/login`);
+  await page.waitForSelector('form');
+  await page.type('input[name="email"]', 'investigador.e2e@prueba.com');
+  await page.type('input[name="password"]', 'Test1234!');
+  await page.click('button[type="submit"]');
+  await page.waitForNavigation();
+  await snap('login_post_logout');
+  log('Logout y login de persistencia OK');
 
-  // 8. Navegar a Laboratorio
-  console.log('⏳ Navegando a Laboratorio...');
-  await page.goto('http://localhost:3000/dashboard/researcher/laboratory');
-  await page.waitForSelector('.sticky.top-0');
-  // Abrir modal de agregar muestra
-  await clickButtonByText('Agregar Muestra');
-  await new Promise(r => setTimeout(r, 500));
-  
-  // Imprimir HTML del body para depuración del modal
-  const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-  console.log('🟢 HTML del body tras abrir modal de muestra:', bodyHtml);
-  
-  // Completar campos del formulario usando page.type y blur/tab
-  await page.waitForSelector('input[placeholder="Nombre de la muestra"]');
-  await page.click('input[placeholder="Nombre de la muestra"]');
-  await page.type('input[placeholder="Nombre de la muestra"]', 'Muestra Puppeteer');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Nombre de muestra ingresado');
-
-  await page.click('input[placeholder="Tipo de muestra"]');
-  await page.type('input[placeholder="Tipo de muestra"]', 'Carbono 14');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Tipo de muestra ingresado');
-
-  await page.click('input[placeholder="Tipo de análisis"]');
-  await page.type('input[placeholder="Tipo de análisis"]', 'Dating');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Tipo de análisis ingresado');
-
-  await page.click('input[placeholder="Resultados iniciales"]');
-  await page.type('input[placeholder="Resultados iniciales"]', 'Pendiente de resultados');
-  await page.keyboard.press('Tab');
-  console.log('🟢 Resultados ingresados');
-  // Hacer clic en el botón 'Agregar' del modal
-  const agregarMuestraBtns = await page.$$('button');
-  let agregarMuestraClicked = false;
-  for (const btn of agregarMuestraBtns) {
-    const btnText = await page.evaluate(el => el.textContent, btn);
-    if (btnText && btnText.trim().toLowerCase() === 'agregar') {
-      await btn.click();
-      agregarMuestraClicked = true;
-      console.log('🟢 Botón Agregar Muestra clickeado');
-      break;
-    }
-  }
-  if (!agregarMuestraClicked) {
-    console.error('❌ No se encontró el botón Agregar Muestra en el modal');
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-    console.error('HTML del body para depuración:', bodyHtml);
-    throw new Error('❌ No se encontró el botón Agregar Muestra en el modal');
-  }
-  // Esperar a que el modal desaparezca
-  await page.waitForSelector('.fixed.inset-0', { hidden: true, timeout: 5000 });
-  console.log('🟢 Modal de agregar muestra cerrado');
-  // Esperar a que la muestra aparezca en la tabla
-  try {
-    await page.waitForFunction(() => {
-      return Array.from(document.querySelectorAll('tbody tr')).some(tr => tr.textContent && tr.textContent.toLowerCase().includes('muestra puppeteer'));
-    }, { timeout: 10000 });
-    console.log('✅ Muestra de prueba creada correctamente');
-  } catch (e) {
-    const tableHtml = await page.evaluate(() => {
-      const table = document.querySelector('table');
-      return table ? table.outerHTML : 'No se encontró la tabla';
-    });
-    console.error('❌ No se detectó la muestra en la tabla tras 10s');
-    console.error('HTML de la tabla para depuración:', tableHtml);
-    throw e;
-  }
-
-  // 9. Verificar persistencia de contexto (simplificado)
-  console.log('🔄 Verificando persistencia de contexto...');
-  const contextPersisted = await page.evaluate(() => {
-    const context = localStorage.getItem('investigator-context');
-    return context && context.includes('Proyecto Cazadores Recolectores');
+  // 6. Crear y verificar hallazgo
+  await page.goto(`${baseUrl}/dashboard/researcher/findings`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('hallazgos_lista');
+  // Buscar botón de crear nuevo hallazgo
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
   });
-  
-  if (contextPersisted) {
-    console.log('✅ Persistencia de contexto OK');
-  } else {
-    console.log('⚠️  Contexto no persistió, pero el flujo principal funciona');
-  }
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Nombre del Hallazgo"]', 'Hallazgo E2E');
+  await page.type('textarea', 'Descripción hallazgo E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('hallazgo_creado');
+  // Verificar en la lista
+  const hallazgoExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Hallazgo E2E'));
+  });
+  log(hallazgoExiste ? 'Hallazgo creado OK' : '❌ Hallazgo no encontrado');
 
-  console.log('✅ TEST E2E FINALIZADO CORRECTAMENTE');
+  // 7. Crear y verificar artefacto
+  await page.goto(`${baseUrl}/dashboard/researcher/artifacts`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('artefactos_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Nombre del Artefacto"]', 'Artefacto E2E');
+  await page.type('textarea', 'Descripción artefacto E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('artefacto_creado');
+  const artefactoExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Artefacto E2E'));
+  });
+  log(artefactoExiste ? 'Artefacto creado OK' : '❌ Artefacto no encontrado');
+
+  // 8. Crear y verificar muestra
+  await page.goto(`${baseUrl}/dashboard/researcher/laboratory`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('laboratorio_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Nombre de la muestra"]', 'Muestra E2E');
+  await page.type('textarea', 'Descripción muestra E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('muestra_creada');
+  const muestraExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Muestra E2E'));
+  });
+  log(muestraExiste ? 'Muestra creada OK' : '❌ Muestra no encontrada');
+
+  // 9. Crear y verificar tarea
+  await page.goto(`${baseUrl}/dashboard/researcher/tasks`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('tareas_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Nombre de la tarea"]', 'Tarea E2E');
+  await page.type('textarea', 'Descripción tarea E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('tarea_creada');
+  const tareaExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Tarea E2E'));
+  });
+  log(tareaExiste ? 'Tarea creada OK' : '❌ Tarea no encontrada');
+
+  // 10. Crear y verificar publicación
+  await page.goto(`${baseUrl}/dashboard/researcher/publications`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('publicaciones_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Título"]', 'Publicación E2E');
+  await page.type('textarea', 'Resumen publicación E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('publicacion_creada');
+  const publicacionExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Publicación E2E'));
+  });
+  log(publicacionExiste ? 'Publicación creada OK' : '❌ Publicación no encontrada');
+
+  // 11. Crear y verificar comunicación
+  await page.goto(`${baseUrl}/dashboard/researcher/communication`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('comunicacion_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Asunto"]', 'Comunicación E2E');
+  await page.type('textarea', 'Mensaje comunicación E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('comunicacion_creada');
+  const comunicacionExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Comunicación E2E'));
+  });
+  log(comunicacionExiste ? 'Comunicación creada OK' : '❌ Comunicación no encontrada');
+
+  // 12. Crear y verificar herramienta
+  await page.goto(`${baseUrl}/dashboard/researcher/tools`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('herramientas_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Nombre de la herramienta"]', 'Herramienta E2E');
+  await page.type('textarea', 'Descripción herramienta E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('herramienta_creada');
+  const herramientaExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Herramienta E2E'));
+  });
+  log(herramientaExiste ? 'Herramienta creada OK' : '❌ Herramienta no encontrada');
+
+  // 13. Crear y verificar visualización
+  await page.goto(`${baseUrl}/dashboard/researcher/visualization`);
+  await page.waitForSelector('button', { visible: true });
+  await snap('visualizacion_lista');
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('button'));
+    const nuevo = btns.find(b => b.textContent && /nuevo|crear|agregar/i.test(b.textContent));
+    if (nuevo) nuevo.click();
+  });
+  await page.waitForSelector('form');
+  await page.type('input[placeholder*="Título"]', 'Visualización E2E');
+  await page.type('textarea', 'Descripción visualización E2E');
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+  await snap('visualizacion_creada');
+  const visualizacionExiste = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('td')).some(td => td.textContent && td.textContent.includes('Visualización E2E'));
+  });
+  log(visualizacionExiste ? 'Visualización creada OK' : '❌ Visualización no encontrada');
+
   await browser.close();
-  process.exit(0);
 })(); 

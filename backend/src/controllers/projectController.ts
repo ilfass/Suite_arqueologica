@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { AppError } from '../utils/appError';
 import { catchAsync } from '../utils/catchAsync';
+import { ProjectService } from '../services/projectService';
 
 export interface Project {
   id: string;

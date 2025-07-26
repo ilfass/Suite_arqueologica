@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, apiClient } from '../lib/api';
+import axios from 'axios';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,7 +44,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        apiClient.clearToken();
+        // Solo limpiar el token si hay un error específico de autenticación
+        if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 400)) {
+          console.log('Clearing token due to auth error');
+          apiClient.clearToken();
+        }
       } finally {
         setLoading(false);
       }
@@ -50,6 +56,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
+
+  // Función para refrescar el usuario
+  const refreshUser = async () => {
+    try {
+      const token = apiClient.getToken();
+      if (token) {
+        const currentUser = await apiClient.getCurrentUser();
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        apiClient.clearToken();
+        setUser(null);
+      }
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -130,6 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateProfile,
     isAuthenticated: !!user,
+    refreshUser,
   };
 
   return (

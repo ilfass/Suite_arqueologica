@@ -10,13 +10,14 @@ import objectRoutes from './routes/objects';
 import excavationRoutes from './routes/excavations';
 import projectRoutes from './routes/projects';
 import researcherRoutes from './routes/researchers';
+import contextRoutes from './routes/context';
 
 const app = express();
 
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true,
 }));
 app.use(morgan('dev'));
@@ -34,6 +35,7 @@ app.use('/api/artifacts', objectRoutes); // Alias para compatibilidad con fronte
 app.use('/api/excavations', excavationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/researchers', researcherRoutes);
+app.use('/api/context', contextRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -59,6 +61,7 @@ app.get('/api', (req, res) => {
       excavations: '/api/excavations',
       projects: '/api/projects',
       researchers: '/api/researchers',
+      context: '/api/context',
       health: '/api/health',
     },
     documentation: 'https://github.com/your-repo/suite-arqueologica/docs',
@@ -88,4 +91,5 @@ app.listen(PORT, () => {
   console.log(`⛏️ Excavations endpoints: http://localhost:${PORT}/api/excavations`);
   console.log(`📋 Projects endpoints: http://localhost:${PORT}/api/projects`);
   console.log(`👨‍🔬 Researchers endpoints: http://localhost:${PORT}/api/researchers`);
+  console.log(`🎯 Context endpoints: http://localhost:${PORT}/api/context`);
 }); 

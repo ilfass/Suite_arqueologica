@@ -685,3 +685,23 @@ export interface CreateExcavationRequest {
   notes?: string;
   tags?: string[];
 } 
+
+export interface Area {
+  id: string;
+  name: string;
+  countries: string[];
+  provinces: string[];
+  latitude?: string;
+  longitude?: string;
+  size?: string;
+  size_unit?: string;
+  description?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectArea {
+  project_id: string;
+  area_id: string;
+} 

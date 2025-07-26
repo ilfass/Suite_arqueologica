@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useState } from 'react';
+import ContextSelector from '../ui/ContextSelector';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -77,6 +78,11 @@ export default function Header() {
               </Link>
             )}
           </nav>
+
+          {/* Selector de Contexto */}
+          <div className="hidden md:block">
+            <ContextSelector />
+          </div>
 
           {/* Menú de usuario */}
           <div className="flex items-center space-x-4">
@@ -186,6 +192,10 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
+              {/* Selector de Contexto Móvil */}
+              <div className="px-3 py-2">
+                <ContextSelector />
+              </div>
               <Link
                 href="/dashboard"
                 className="block px-3 py-2 text-gray-700 hover:text-blue-600 rounded-md text-base font-medium"

@@ -45,18 +45,6 @@ const SurfaceMappingPage: React.FC = () => {
     collector: ''
   });
 
-  // Arrays simulados de proyectos y áreas (igual que en el dashboard)
-  const projects = [
-    { id: '1', name: 'Proyecto Cazadores Recolectores - La Laguna' },
-    { id: '2', name: 'Estudio de Poblamiento Pampeano' },
-    { id: '3', name: 'Arqueología de la Llanura Bonaerense' }
-  ];
-  const areas = [
-    { id: '1', name: 'Laguna La Brava', projectId: '1' },
-    { id: '2', name: 'Arroyo Seco', projectId: '1' },
-    { id: '3', name: 'Monte Hermoso', projectId: '2' }
-  ];
-
   // Datos simulados con ejemplos pampeanos y contexto
   useEffect(() => {
     setFindings([
@@ -104,437 +92,335 @@ const SurfaceMappingPage: React.FC = () => {
         projectId: '2',
         areaId: '3',
         siteId: '3'
-      },
-      {
-        id: '4',
-        name: 'Raspador Lítico',
-        type: 'lithic',
-        material: 'Cuarzo',
-        coordinates: [-38.4567, -61.8901],
-        condition: 'good',
-        description: 'Raspador lítico con retoque unifacial',
-        date: '2025-07-19',
-        site: 'Laguna La Brava',
-        collector: 'Dr. Pérez',
-        projectId: '1',
-        areaId: '1',
-        siteId: '1'
       }
     ]);
+
+    // Cargar contexto desde localStorage
+    const loadContext = () => {
+      try {
+        const savedContext = localStorage.getItem('investigator-context');
+        if (savedContext) {
+          const contextData = JSON.parse(savedContext);
+          setSiteName(contextData.siteName || 'Sitio Actual');
+        }
+      } catch (error) {
+        console.error('Error loading context:', error);
+      }
+    };
+
+    loadContext();
   }, []);
 
-  // El hook useInvestigatorContext ya maneja la carga del contexto
-
-  // Filtrar hallazgos por contexto
-  const [filteredFindings, setFilteredFindings] = useState<SurfaceFinding[]>([]);
-
-  useEffect(() => {
-    if (hasContext && context.project && context.area && context.site) {
-      const filtered = findings.filter(finding => 
-        finding.projectId === context.project &&
-        finding.areaId === context.area &&
-        finding.siteId === context.site
-      );
-      setFilteredFindings(filtered);
-    } else {
-      setFilteredFindings([]);
-    }
-  }, [findings, hasContext, context]);
-
-  useEffect(() => {
-    // Simular obtención del nombre del sitio activo
-    // Puedes reemplazar esto por una consulta real si tienes los datos
-    const sitios = [
-      { id: '1', name: 'Sitio Laguna La Brava Norte' },
-      { id: '2', name: 'Excavación Arroyo Seco 2' },
-      { id: '3', name: 'Monte Hermoso Playa' }
-    ];
-    const found = sitios.find(s => s.id === context.site);
-    setSiteName(found ? found.name : context.site);
-  }, [context]);
-
-  // handleAddFinding acepta un hallazgo como argumento
   const handleAddFinding = (finding: Omit<SurfaceFinding, 'id' | 'date'>) => {
-    setFindings(prev => [
-      ...prev,
-      {
-        ...finding,
-        id: Date.now().toString(),
-        date: new Date().toISOString().split('T')[0]
-      }
-    ]);
-    setNewFinding({ name: '', type: 'lithic', material: '', coordinates: [0, 0], condition: 'good', description: '', site: '', collector: '' });
+    const newFinding: SurfaceFinding = {
+      ...finding,
+      id: `finding-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0]
+    };
+    setFindings([...findings, newFinding]);
     setShowAddFinding(false);
+    setNewFinding({
+      name: '',
+      type: 'lithic',
+      material: '',
+      coordinates: [0, 0],
+      condition: 'good',
+      description: '',
+      site: '',
+      collector: ''
+    });
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lithic': return '🪨';
-      case 'ceramic': return '🏺';
-      case 'bone': return '🦴';
-      case 'shell': return '🐚';
-      case 'other': return '🔍';
-      default: return '🔍';
-    }
+    const icons = {
+      lithic: '🪨',
+      ceramic: '🏺',
+      bone: '🦴',
+      shell: '🐚',
+      other: '📦'
+    };
+    return icons[type as keyof typeof icons] || '📦';
   };
 
   const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'excellent': return 'bg-green-100 text-green-800';
-      case 'good': return 'bg-blue-100 text-blue-800';
-      case 'fair': return 'bg-yellow-100 text-yellow-800';
-      case 'poor': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors = {
+      excellent: 'bg-green-100 text-green-800',
+      good: 'bg-blue-100 text-blue-800',
+      fair: 'bg-yellow-100 text-yellow-800',
+      poor: 'bg-red-100 text-red-800'
+    };
+    return colors[condition as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'lithic': return 'bg-orange-100 text-orange-800';
-      case 'ceramic': return 'bg-red-100 text-red-800';
-      case 'bone': return 'bg-yellow-100 text-yellow-800';
-      case 'shell': return 'bg-blue-100 text-blue-800';
-      case 'other': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors = {
+      lithic: 'bg-orange-100 text-orange-800',
+      ceramic: 'bg-red-100 text-red-800',
+      bone: 'bg-yellow-100 text-yellow-800',
+      shell: 'bg-blue-100 text-blue-800',
+      other: 'bg-gray-100 text-gray-800'
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-
-
-  // Banner de contexto activo usando el componente reutilizable
   const renderContextBanner = () => (
-    <ContextBanner
-      project={context.project}
-      area={context.area}
-      site={context.site}
-      projectName={projects.find(p => p.id === context.project)?.name}
-      areaName={areas.find(a => a.id === context.area)?.name}
-      siteName={siteName}
-    />
-  );
-
-  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando contexto...</p>
+    <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">🗺️ Mapeo de Superficie</h2>
+          <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <span>📋 Proyecto: {context?.project || 'No seleccionado'}</span>
+            <span>📍 Área: {context?.area || 'No seleccionada'}</span>
+            <span>🏛️ Sitio: {context?.site || 'No seleccionado'}</span>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!hasContext) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🧭</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
-          <p className="text-gray-600 mb-4">Para acceder al mapeo de superficie, primero debes seleccionar un proyecto, área y sitio.</p>
-          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 space-y-6">
-      {renderContextBanner()}
-      
-      {/* Breadcrumb de navegación */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-        <button 
+        <Button
           onClick={() => router.push('/dashboard/researcher')}
-          className="hover:text-blue-600 hover:underline"
+          className="px-4 py-2 bg-green-500 text-white hover:bg-green-600"
         >
-          Dashboard
-        </button>
-        <span>›</span>
-        <span className="text-gray-900 font-medium">Mapeo de Superficie</span>
-      </nav>
-      
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">🌍 Mapeo de Superficie</h1>
-        <Button onClick={() => setShowAddFinding(true)}>
-          ➕ Agregar Hallazgo
+          ← Volver al Dashboard
         </Button>
       </div>
+    </div>
+  );
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{filteredFindings.length}</div>
-            <div className="text-sm text-gray-600">Total Hallazgos</div>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {filteredFindings.filter(f => f.type === 'lithic').length}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Mapeo de Superficie</h1>
+              <p className="text-green-100">
+                Registro de hallazgos en superficie - Sistema de Gestión Arqueológica
+              </p>
             </div>
-            <div className="text-sm text-gray-600">Artefactos Líticos</div>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {filteredFindings.filter(f => f.type === 'ceramic').length}
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => router.push('/dashboard/researcher')}
+                className="px-4 py-2 bg-white bg-opacity-20 text-white hover:bg-opacity-30 border border-white border-opacity-30"
+              >
+                ← Dashboard
+              </Button>
             </div>
-            <div className="text-sm text-gray-600">Cerámica</div>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {filteredFindings.filter(f => f.type === 'bone').length}
-            </div>
-            <div className="text-sm text-gray-600">Restos Óseos</div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Lista de Hallazgos */}
-      <Card>
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">📋 Registro de Hallazgos en Superficie</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hallazgo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sitio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFindings.map((finding) => (
-                  <tr key={finding.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-2">{getTypeIcon(finding.type)}</span>
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(finding.type)}`}>
-                          {finding.type === 'lithic' ? 'Lítico' :
-                            finding.type === 'ceramic' ? 'Cerámica' :
-                            finding.type === 'bone' ? 'Hueso' :
-                            finding.type === 'shell' ? 'Concha' : 'Otro'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{finding.name}</div>
-                      <div className="text-sm text-gray-500">{finding.description.substring(0, 50)}...</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{finding.site}</div>
-                      <div className="text-xs text-gray-500">
-                        {finding.coordinates[0].toFixed(4)}, {finding.coordinates[1].toFixed(4)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{finding.material}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(finding.condition)}`}>
-                        {finding.condition === 'excellent' ? 'Excelente' :
-                          finding.condition === 'good' ? 'Bueno' :
-                          finding.condition === 'fair' ? 'Regular' : 'Pobre'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{finding.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedFinding(finding)}>
-                        👁️ Ver
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
-      </Card>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {renderContextBanner()}
+
+        {/* Estadísticas */}
+        <Card className="mb-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{findings.length}</div>
+              <div className="text-sm text-gray-600">Total Hallazgos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {findings.filter(f => f.type === 'lithic').length}
+              </div>
+              <div className="text-sm text-gray-600">Líticos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {findings.filter(f => f.type === 'ceramic').length}
+              </div>
+              <div className="text-sm text-gray-600">Cerámicos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {findings.filter(f => f.type === 'bone').length}
+              </div>
+              <div className="text-sm text-gray-600">Óseos</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Controles */}
+        <Card className="mb-6 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-800">Hallazgos de Superficie</h3>
+            <Button
+              onClick={() => setShowAddFinding(true)}
+              className="px-4 py-2 bg-green-500 text-white hover:bg-green-600"
+            >
+              + Agregar Hallazgo
+            </Button>
+          </div>
+        </Card>
+
+        {/* Lista de hallazgos */}
+        <div className="grid gap-6">
+          {findings.length === 0 ? (
+            <Card className="p-8">
+              <div className="text-center">
+                <p className="text-gray-600">No se encontraron hallazgos de superficie.</p>
+              </div>
+            </Card>
+          ) : (
+            findings.map((finding) => (
+              <Card key={finding.id} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="text-3xl">{getTypeIcon(finding.type)}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-xl font-semibold text-gray-800">{finding.name}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(finding.type)}`}>
+                          {finding.type.toUpperCase()}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(finding.condition)}`}>
+                          {finding.condition.toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-3">{finding.description}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Material:</span>
+                          <p className="text-sm text-gray-700">{finding.material}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Coordenadas:</span>
+                          <p className="text-sm text-gray-700">
+                            {finding.coordinates[0].toFixed(4)}, {finding.coordinates[1].toFixed(4)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">Sitio:</span>
+                          <p className="text-sm text-gray-700">{finding.site}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>Recolector: {finding.collector}</span>
+                        <span>Fecha: {finding.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => setSelectedFinding(finding)}
+                      className="px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 text-sm"
+                    >
+                      Ver
+                    </Button>
+                    <Button
+                      onClick={() => console.log('Editar hallazgo:', finding.id)}
+                      className="px-3 py-1 bg-green-500 text-white hover:bg-green-600 text-sm"
+                    >
+                      Editar
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
 
       {/* Modal para agregar hallazgo */}
       {showAddFinding && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">➕ Agregar Nuevo Hallazgo</h3>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Agregar Hallazgo de Superficie</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nombre del Hallazgo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
                 <Input
+                  type="text"
                   value={newFinding.name}
-                  onChange={(e) => setNewFinding({ ...newFinding, name: e.target.value })}
-                  placeholder="Ej: Punta de Proyectil Cola de Pescado"
+                  onChange={(e) => setNewFinding({...newFinding, name: e.target.value})}
+                  placeholder="Ej: Punta de proyectil"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                 <select
                   value={newFinding.type}
-                  onChange={(e) => setNewFinding({ ...newFinding, type: e.target.value as any })}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  onChange={(e) => setNewFinding({...newFinding, type: e.target.value as any})}
+                  className="w-full p-2 border border-gray-300 rounded-md"
                 >
-                  <option value="lithic">🪨 Artefacto Lítico</option>
-                  <option value="ceramic">🏺 Cerámica</option>
-                  <option value="bone">🦴 Hueso</option>
-                  <option value="shell">🐚 Concha</option>
-                  <option value="other">🔍 Otro</option>
+                  <option value="lithic">Lítico</option>
+                  <option value="ceramic">Cerámico</option>
+                  <option value="bone">Óseo</option>
+                  <option value="shell">Concha</option>
+                  <option value="other">Otro</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Material</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
                 <Input
+                  type="text"
                   value={newFinding.material}
-                  onChange={(e) => setNewFinding({ ...newFinding, material: e.target.value })}
-                  placeholder="Ej: Sílice, Arcilla, Hueso"
+                  onChange={(e) => setNewFinding({...newFinding, material: e.target.value})}
+                  placeholder="Ej: Sílice, Arcilla"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Latitud</label>
-                  <Input
-                    type="number"
-                    step="0.0001"
-                    value={newFinding.coordinates[0]}
-                    onChange={(e) => setNewFinding({ ...newFinding, coordinates: [parseFloat(e.target.value), newFinding.coordinates[1]] })}
-                    placeholder="-38.1234"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Longitud</label>
-                  <Input
-                    type="number"
-                    step="0.0001"
-                    value={newFinding.coordinates[1]}
-                    onChange={(e) => setNewFinding({ ...newFinding, coordinates: [newFinding.coordinates[0], parseFloat(e.target.value)] })}
-                    placeholder="-61.5678"
-                  />
-                </div>
-              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Estado de Conservación</label>
-                <select
-                  value={newFinding.condition}
-                  onChange={(e) => setNewFinding({ ...newFinding, condition: e.target.value as any })}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="excellent">Excelente</option>
-                  <option value="good">Bueno</option>
-                  <option value="fair">Regular</option>
-                  <option value="poor">Pobre</option>
-                </select>
-              </div>
-              {/* Campo sitio autocompletado y oculto */}
-              <input type="hidden" value={siteName} />
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700">Sitio</label>
-                <Input
-                  value={newFinding.site}
-                  onChange={(e) => setNewFinding({ ...newFinding, site: e.target.value })}
-                  placeholder="Ej: Laguna La Brava"
-                />
-              </div> */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                 <textarea
                   value={newFinding.description}
-                  onChange={(e) => setNewFinding({ ...newFinding, description: e.target.value })}
+                  onChange={(e) => setNewFinding({...newFinding, description: e.target.value})}
                   placeholder="Descripción detallada del hallazgo"
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="w-full p-2 border border-gray-300 rounded-md"
                   rows={3}
                 />
               </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">
-              <Button variant="outline" onClick={() => setShowAddFinding(false)}>
+              <Button
+                onClick={() => setShowAddFinding(false)}
+                className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600"
+              >
                 Cancelar
               </Button>
-              <Button onClick={() => {
-                // Al guardar, autocompletar el sitio con el contexto y agregar campos de contexto
-                handleAddFinding({ 
-                  ...newFinding, 
-                  site: siteName,
-                  projectId: context.project,
-                  areaId: context.area,
-                  siteId: context.site
-                });
-              }}>
-                Agregar
-              </Button>
+                             <Button
+                 onClick={() => handleAddFinding({
+                   ...newFinding,
+                   projectId: context?.project || '',
+                   areaId: context?.area || '',
+                   siteId: context?.site || ''
+                 })}
+                 className="px-4 py-2 bg-green-500 text-white hover:bg-green-600"
+               >
+                 Agregar
+               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal para ver hallazgo */}
+      {/* Modal para ver detalles */}
       {selectedFinding && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">🌍 Detalles del Hallazgo</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="text-3xl">{getTypeIcon(selectedFinding.type)}</div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Tipo</label>
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">{getTypeIcon(selectedFinding.type)}</span>
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(selectedFinding.type)}`}>
-                    {selectedFinding.type === 'lithic' ? 'Artefacto Lítico' :
-                      selectedFinding.type === 'ceramic' ? 'Cerámica' :
-                      selectedFinding.type === 'bone' ? 'Hueso' :
-                      selectedFinding.type === 'shell' ? 'Concha' : 'Otro'}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Nombre</label>
-                <p className="text-sm text-gray-900">{selectedFinding.name}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Sitio</label>
-                <p className="text-sm text-gray-900">{selectedFinding.site}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Coordenadas</label>
-                <p className="text-sm text-gray-900">
-                  {selectedFinding.coordinates[0].toFixed(6)}, {selectedFinding.coordinates[1].toFixed(6)}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Material</label>
-                <p className="text-sm text-gray-900">{selectedFinding.material}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Estado</label>
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getConditionColor(selectedFinding.condition)}`}>
-                  {selectedFinding.condition === 'excellent' ? 'Excelente' :
-                    selectedFinding.condition === 'good' ? 'Bueno' :
-                    selectedFinding.condition === 'fair' ? 'Regular' : 'Pobre'}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Descripción</label>
-                <p className="text-sm text-gray-900">{selectedFinding.description}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Fecha</label>
-                <p className="text-sm text-gray-900">{selectedFinding.date}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Recolector</label>
-                <p className="text-sm text-gray-900">{selectedFinding.collector}</p>
+                <h3 className="text-xl font-semibold">{selectedFinding.name}</h3>
+                <p className="text-gray-600">{selectedFinding.type.toUpperCase()}</p>
               </div>
             </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button variant="outline">
-                📷 Agregar Foto
-              </Button>
-              <Button variant="outline" onClick={() => setSelectedFinding(null)}>
+            <div className="space-y-3">
+              <p><strong>Descripción:</strong> {selectedFinding.description}</p>
+              <p><strong>Material:</strong> {selectedFinding.material}</p>
+              <p><strong>Condición:</strong> {selectedFinding.condition}</p>
+              <p><strong>Coordenadas:</strong> {selectedFinding.coordinates[0]}, {selectedFinding.coordinates[1]}</p>
+              <p><strong>Sitio:</strong> {selectedFinding.site}</p>
+              <p><strong>Recolector:</strong> {selectedFinding.collector}</p>
+              <p><strong>Fecha:</strong> {selectedFinding.date}</p>
+            </div>
+            <div className="flex justify-end mt-6">
+              <Button
+                onClick={() => setSelectedFinding(null)}
+                className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600"
+              >
                 Cerrar
               </Button>
             </div>

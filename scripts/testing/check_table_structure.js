@@ -1,5 +1,5 @@
+require('dotenv').config({ path: './backend/.env' });
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '../../backend/.env' });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,34 +12,64 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkTableStructure() {
-  console.log('🔍 Verificando estructura de la tabla users...\n');
-  
   try {
-    // Obtener un usuario para ver la estructura
-    const { data: user, error: userError } = await supabase
+    console.log('🔧 Verificando estructura de la tabla users...');
+
+    // Intentar obtener información de la tabla
+    const { data: tableInfo, error: tableError } = await supabase
       .from('users')
       .select('*')
-      .limit(1)
-      .single();
-    
-    if (userError) {
-      console.log(`❌ Error al obtener usuario: ${userError.message}`);
+      .limit(1);
+
+    if (tableError) {
+      console.error('❌ Error accediendo a la tabla users:', tableError);
       return;
     }
+
+    console.log('✅ Tabla users accesible');
+    console.log('📋 Estructura de la tabla:');
     
-    console.log('✅ Estructura de la tabla users:');
-    console.log('Columnas disponibles:');
-    Object.keys(user).forEach(column => {
-      console.log(`   - ${column}: ${typeof user[column]} = ${user[column]}`);
-    });
+    if (tableInfo && tableInfo.length > 0) {
+      const columns = Object.keys(tableInfo[0]);
+      columns.forEach(column => {
+        console.log(`  - ${column}: ${typeof tableInfo[0][column]}`);
+      });
+    } else {
+      console.log('  Tabla vacía, no se puede determinar estructura');
+    }
+
+    // Intentar insertar un registro de prueba
+    console.log('\n🔧 Intentando insertar registro de prueba...');
     
-    console.log('\n📋 Usuario de ejemplo:');
-    console.log(JSON.stringify(user, null, 2));
-    
+    const testRecord = {
+      id: '00000000-0000-0000-0000-000000000000',
+      email: 'test@example.com',
+      role: 'RESEARCHER',
+      subscription_plan: 'FREE'
+    };
+
+    const { data: insertData, error: insertError } = await supabase
+      .from('users')
+      .insert([testRecord])
+      .select();
+
+    if (insertError) {
+      console.error('❌ Error insertando registro de prueba:', insertError);
+    } else {
+      console.log('✅ Registro de prueba insertado exitosamente');
+      
+      // Limpiar el registro de prueba
+      await supabase
+        .from('users')
+        .delete()
+        .eq('id', '00000000-0000-0000-0000-000000000000');
+      
+      console.log('🧹 Registro de prueba eliminado');
+    }
+
   } catch (error) {
-    console.log(`❌ Error general: ${error.message}`);
+    console.error('❌ Error general:', error);
   }
 }
 
-// Ejecutar verificación
 checkTableStructure(); 

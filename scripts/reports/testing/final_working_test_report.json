@@ -1,0 +1,162 @@
+{
+  "summary": {
+    "totalTests": 25,
+    "successfulTests": 16,
+    "failedTests": 9,
+    "successRate": "64.00",
+    "duration": "61.319"
+  },
+  "results": [
+    {
+      "test": "Login - Autenticación exitosa",
+      "success": true,
+      "details": "Dashboard cargado correctamente",
+      "timestamp": "2025-07-24T20:37:28.890Z"
+    },
+    {
+      "test": "Dashboard - Navegador de Contexto",
+      "success": true,
+      "details": "Componente encontrado",
+      "timestamp": "2025-07-24T20:37:28.894Z"
+    },
+    {
+      "test": "Estadísticas - Colapsar/Expandir",
+      "success": true,
+      "details": "Funcionalidad de colapso funciona",
+      "timestamp": "2025-07-24T20:37:31.540Z"
+    },
+    {
+      "test": "Estadísticas - Links funcionales",
+      "success": true,
+      "details": "Navegación desde estadísticas funciona",
+      "timestamp": "2025-07-24T20:37:35.933Z"
+    },
+    {
+      "test": "Herramientas - Trabajo de Campo",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Mapeo SIG Integrado",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Hallazgos",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Muestras",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Laboratorio",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Cronología",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Reportes",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Herramientas - Exportar Datos",
+      "success": false,
+      "details": "Herramienta no encontrada",
+      "timestamp": "2025-07-24T20:37:40.938Z"
+    },
+    {
+      "test": "Trabajo de Campo - Página",
+      "success": true,
+      "details": "Página cargada correctamente",
+      "timestamp": "2025-07-24T20:37:44.959Z"
+    },
+    {
+      "test": "Trabajo de Campo - Filtros",
+      "success": true,
+      "details": "Filtros funcionan",
+      "timestamp": "2025-07-24T20:37:46.223Z"
+    },
+    {
+      "test": "Mapeo de Superficie - Página",
+      "success": true,
+      "details": "Página cargada correctamente",
+      "timestamp": "2025-07-24T20:37:50.202Z"
+    },
+    {
+      "test": "Mapeo de Superficie - Modal",
+      "success": true,
+      "details": "Modal de agregar hallazgo funciona",
+      "timestamp": "2025-07-24T20:37:51.545Z"
+    },
+    {
+      "test": "Mapeo de Superficie - Botón Volver",
+      "success": true,
+      "details": "Navegación de regreso funciona",
+      "timestamp": "2025-07-24T20:37:54.638Z"
+    },
+    {
+      "test": "Página - Hallazgos",
+      "success": true,
+      "details": "Página cargada: 🔍 Hallazgos Recientes",
+      "timestamp": "2025-07-24T20:37:58.551Z"
+    },
+    {
+      "test": "Página - Muestras",
+      "success": true,
+      "details": "Página cargada: 🧪 Muestras en Análisis",
+      "timestamp": "2025-07-24T20:38:02.453Z"
+    },
+    {
+      "test": "Página - Laboratorio",
+      "success": false,
+      "details": "Página no cargó correctamente",
+      "timestamp": "2025-07-24T20:38:06.303Z"
+    },
+    {
+      "test": "Página - Reportes",
+      "success": true,
+      "details": "Página cargada: Editor Académico",
+      "timestamp": "2025-07-24T20:38:10.297Z"
+    },
+    {
+      "test": "Página - Exportar",
+      "success": true,
+      "details": "Página cargada: Exportación y Repositorio",
+      "timestamp": "2025-07-24T20:38:14.253Z"
+    },
+    {
+      "test": "Interacciones - Hover en estadísticas",
+      "success": true,
+      "details": "Efecto hover funciona",
+      "timestamp": "2025-07-24T20:38:19.184Z"
+    },
+    {
+      "test": "Interacciones - Hover en herramientas",
+      "success": true,
+      "details": "Efecto hover funciona",
+      "timestamp": "2025-07-24T20:38:20.652Z"
+    },
+    {
+      "test": "Interacciones - Botones de contexto",
+      "success": true,
+      "details": "Hover en botón: + Nuevo Proyecto",
+      "timestamp": "2025-07-24T20:38:21.689Z"
+    }
+  ],
+  "timestamp": "2025-07-24T20:38:21.689Z"
+}

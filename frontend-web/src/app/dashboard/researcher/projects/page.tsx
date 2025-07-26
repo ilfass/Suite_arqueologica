@@ -25,7 +25,7 @@ interface Project {
 }
 
 const ProjectsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { context, hasContext, isLoading } = useInvestigatorContext();
   
@@ -168,7 +168,7 @@ const ProjectsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">📋 Proyectos de Investigación</h1>
             <p className="mt-2 text-gray-600">Gestiona todos tus proyectos arqueológicos</p>
           </div>
-          <Button onClick={() => router.push('/dashboard/researcher')}>
+          <Button onClick={() => router.push('/dashboard/researcher/projects/new')}>
             ➕ Nuevo Proyecto
           </Button>
         </div>

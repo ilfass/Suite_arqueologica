@@ -1,472 +1,214 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { useRouter } from 'next/navigation';
-
-interface Template {
-  id: string;
-  name: string;
-  type: 'form' | 'report' | 'checklist' | 'protocol';
-  description: string;
-  downloads: number;
-  lastUpdated: string;
-}
-
-interface Test {
-  id: string;
-  title: string;
-  description: string;
-  questions: number;
-  duration: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  completed: boolean;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  category: string;
-  level: 'basic' | 'intermediate' | 'advanced' | 'expert';
-  selfAssessed: boolean;
-}
+import React from 'react';
+import { useAuth } from '../../../../contexts/AuthContext';
+import Card from '../../../../components/ui/Card';
+import Button from '../../../../components/ui/Button';
 
 const ToolsPage: React.FC = () => {
-  const router = useRouter();
-  // Contexto de trabajo
-  const [context, setContext] = useState<{ project: string; area: string; site: string }>({ project: '', area: '', site: '' });
-  const [siteName, setSiteName] = useState('');
+  const { user, loading: authLoading } = useAuth();
 
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [tests, setTests] = useState<Test[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [activeTab, setActiveTab] = useState<'templates' | 'tests' | 'skills' | 'training'>('templates');
-
-  // Datos simulados
-  useEffect(() => {
-    setTemplates([
-      {
-        id: '1',
-        name: 'Ficha de Artefacto Estándar',
-        type: 'form',
-        description: 'Plantilla para catalogación de artefactos arqueológicos',
-        downloads: 45,
-        lastUpdated: '2025-07-20'
-      },
-      {
-        id: '2',
-        name: 'Informe de Excavación',
-        type: 'report',
-        description: 'Plantilla para informes técnicos de excavación',
-        downloads: 32,
-        lastUpdated: '2025-07-18'
-      },
-      {
-        id: '3',
-        name: 'Checklist de Seguridad',
-        type: 'checklist',
-        description: 'Lista de verificación de seguridad en campo',
-        downloads: 28,
-        lastUpdated: '2025-07-15'
-      }
-    ]);
-
-    setTests([
-      {
-        id: '1',
-        title: 'Fundamentos de Arqueología',
-        description: 'Test básico sobre conceptos fundamentales de arqueología',
-        questions: 20,
-        duration: '30 min',
-        difficulty: 'beginner',
-        completed: false
-      },
-      {
-        id: '2',
-        title: 'Técnicas de Excavación',
-        description: 'Evaluación de conocimientos sobre técnicas de excavación',
-        questions: 25,
-        duration: '45 min',
-        difficulty: 'intermediate',
-        completed: true
-      },
-      {
-        id: '3',
-        title: 'Análisis de Materiales',
-        description: 'Test avanzado sobre análisis de materiales arqueológicos',
-        questions: 30,
-        duration: '60 min',
-        difficulty: 'advanced',
-        completed: false
-      }
-    ]);
-
-    setSkills([
-      {
-        id: '1',
-        name: 'Excavación Arqueológica',
-        category: 'Técnicas de Campo',
-        level: 'advanced',
-        selfAssessed: true
-      },
-      {
-        id: '2',
-        name: 'Catalogación de Artefactos',
-        category: 'Laboratorio',
-        level: 'intermediate',
-        selfAssessed: false
-      },
-      {
-        id: '3',
-        name: 'Análisis GIS',
-        category: 'Tecnología',
-        level: 'basic',
-        selfAssessed: true
-      },
-      {
-        id: '4',
-        name: 'Dibujo Arqueológico',
-        category: 'Documentación',
-        level: 'expert',
-        selfAssessed: true
-      }
-    ]);
-  }, []);
-
-  useEffect(() => {
-    // Leer contexto de localStorage
-    const saved = localStorage.getItem('investigator-context');
-    if (saved) {
-      const ctx = JSON.parse(saved);
-      setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
+  const tools = [
+    {
+      name: 'AI Tools',
+      description: 'Herramientas de inteligencia artificial para análisis arqueológico',
+      icon: '🤖',
+      color: 'bg-blue-500',
+      path: '/ai-tools',
+      examples: ['Análisis de patrones', 'Clasificación automática', 'Predicciones']
+    },
+    {
+      name: 'Artifact Documentation',
+      description: 'Documentación detallada de artefactos arqueológicos',
+      icon: '🏺',
+      color: 'bg-green-500',
+      path: '/artifact-documentation',
+      examples: ['Fichas de artefactos', 'Fotografías', 'Mediciones']
+    },
+    {
+      name: 'Collaboration',
+      description: 'Herramientas de colaboración en equipo',
+      icon: '👥',
+      color: 'bg-purple-500',
+      path: '/collaboration',
+      examples: ['Compartir datos', 'Comentarios', 'Trabajo en equipo']
+    },
+    {
+      name: 'Communication',
+      description: 'Sistema de comunicación interna',
+      icon: '💬',
+      color: 'bg-orange-500',
+      path: '/communication',
+      examples: ['Mensajes', 'Notificaciones', 'Alertas']
+    },
+    {
+      name: 'Export',
+      description: 'Exportación de datos en múltiples formatos',
+      icon: '📤',
+      color: 'bg-red-500',
+      path: '/export',
+      examples: ['JSON', 'CSV', 'PDF', 'Shapefile']
+    },
+    {
+      name: 'Fieldwork',
+      description: 'Gestión de trabajo de campo',
+      icon: '🏕️',
+      color: 'bg-yellow-500',
+      path: '/fieldwork',
+      examples: ['Excavaciones', 'Prospecciones', 'Registro de campo']
+    },
+    {
+      name: 'Grid Measurement',
+      description: 'Sistema de medición y cuadrícula',
+      icon: '📏',
+      color: 'bg-indigo-500',
+      path: '/grid-measurement',
+      examples: ['Cuadrículas', 'Mediciones', 'Coordenadas']
+    },
+    {
+      name: 'Laboratory',
+      description: 'Gestión de análisis de laboratorio',
+      icon: '🔬',
+      color: 'bg-teal-500',
+      path: '/laboratory',
+      examples: ['Análisis cerámico', 'Datación', 'Estudios especializados']
+    },
+    {
+      name: 'Mapping',
+      description: 'Sistema de mapeo SIG integrado',
+      icon: '🗺️',
+      color: 'bg-pink-500',
+      path: '/mapping',
+      examples: ['Visualización', 'Análisis espacial', 'Exportación']
+    },
+    {
+      name: 'Publications',
+      description: 'Gestión de publicaciones y reportes',
+      icon: '📚',
+      color: 'bg-gray-500',
+      path: '/publications',
+      examples: ['Artículos', 'Informes', 'Presentaciones']
+    },
+    {
+      name: 'Surface Mapping',
+      description: 'Mapeo de superficie y prospección',
+      icon: '🌍',
+      color: 'bg-cyan-500',
+      path: '/surface-mapping',
+      examples: ['Prospección', 'Mapeo', 'Registro']
+    },
+    {
+      name: 'Tasks',
+      description: 'Gestión de tareas y proyectos',
+      icon: '✅',
+      color: 'bg-emerald-500',
+      path: '/tasks',
+      examples: ['Asignación', 'Seguimiento', 'Completado']
+    },
+    {
+      name: 'Visualization',
+      description: 'Herramientas de visualización de datos',
+      icon: '📊',
+      color: 'bg-violet-500',
+      path: '/visualization',
+      examples: ['Gráficos', 'Mapas', 'Diagramas']
     }
-  }, []);
+  ];
 
-  // Sincronizar contexto al recibir foco o volver a la pestaña
-  useEffect(() => {
-    const syncContext = () => {
-      const saved = localStorage.getItem('investigator-context');
-      if (saved) {
-        const ctx = JSON.parse(saved);
-        setContext({ project: ctx.project || '', area: ctx.area || '', site: ctx.site || '' });
-      }
-    };
-    window.addEventListener('focus', syncContext);
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') syncContext();
-    });
-    return () => {
-      window.removeEventListener('focus', syncContext);
-      window.removeEventListener('visibilitychange', syncContext);
-    };
-  }, []);
+  const handleToolClick = (tool: any) => {
+    // Por ahora, mostrar un mensaje de que la herramienta está en desarrollo
+    alert(`${tool.name} está en desarrollo. Próximamente disponible.`);
+  };
 
-  useEffect(() => {
-    // Simular obtención del nombre del sitio activo
-    const sitios = [
-      { id: '1', name: 'Sitio Laguna La Brava Norte' },
-      { id: '2', name: 'Excavación Arroyo Seco 2' },
-      { id: '3', name: 'Monte Hermoso Playa' }
-    ];
-    const found = sitios.find(s => s.id === context.site);
-    setSiteName(found ? found.name : context.site);
-  }, [context]);
-
-  // Banner de contexto activo
-  const renderContextBanner = () => (
-    context.project && context.area && context.site ? (
-      <div className="sticky top-0 z-30 w-full bg-blue-50 border-b border-blue-200 py-2 px-4 flex items-center justify-between shadow-sm mb-4">
-        <div className="flex items-center space-x-4">
-          <span className="text-blue-700 font-semibold">Trabajando en:</span>
-          <span className="text-blue-900 font-bold">Proyecto {context.project}</span>
-          <span className="text-blue-700">|</span>
-          <span className="text-blue-900 font-bold">Área {context.area}</span>
-          <span className="text-blue-700">|</span>
-          <span className="text-blue-900 font-bold">Sitio {siteName || context.site}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/researcher')}>Cambiar Contexto</Button>
-        </div>
-      </div>
-    ) : null
-  );
-
-  // Si no hay contexto, mostrar mensaje y botón para ir al dashboard
-  if (!context.project || !context.area || !context.site) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🧭</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Selecciona tu contexto de trabajo</h3>
-          <p className="text-gray-600 mb-4">Para acceder a las herramientas generales, primero debes seleccionar un proyecto, área y sitio.</p>
-          <Button variant="primary" onClick={() => router.push('/dashboard/researcher')}>Ir al Dashboard</Button>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando información del usuario...</p>
+          </div>
+        </Card>
       </div>
     );
   }
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'form': return '📝';
-      case 'report': return '📋';
-      case 'checklist': return '✅';
-      case 'protocol': return '📖';
-      default: return '📄';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'basic': return 'bg-blue-100 text-blue-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-orange-100 text-orange-800';
-      case 'expert': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Acceso Restringido</h2>
+          <p className="text-gray-600">Debes iniciar sesión para acceder a las herramientas.</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {renderContextBanner()}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">🧰 Herramientas Generales</h1>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          {[
-            { id: 'templates', name: '📄 Plantillas', icon: '📄' },
-            { id: 'tests', name: '🧪 Test y Evaluaciones', icon: '🧪' },
-            { id: 'skills', name: '📊 Habilidades', icon: '📊' },
-            { id: 'training', name: '📚 Formación', icon: '📚' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.name}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Contenido de las tabs */}
-      {activeTab === 'templates' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template) => (
-              <Card key={template.id}>
-                <div className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-2xl">{getTypeIcon(template.type)}</span>
-                        <h3 className="text-lg font-semibold text-gray-900">{template.name}</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-4">{template.description}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>📥 {template.downloads} descargas</span>
-                        <span>📅 {template.lastUpdated}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex space-x-2">
-                    <Button size="sm" className="flex-1">
-                      📥 Descargar
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      👁️ Vista Previa
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'tests' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tests.map((test) => (
-              <Card key={test.id}>
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{test.title}</h3>
-                    {test.completed && <span className="text-green-500">✅</span>}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{test.description}</p>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span>Preguntas:</span>
-                      <span className="font-medium">{test.questions}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Duración:</span>
-                      <span className="font-medium">{test.duration}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Dificultad:</span>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(test.difficulty)}`}>
-                        {test.difficulty === 'beginner' ? 'Básico' : 
-                         test.difficulty === 'intermediate' ? 'Intermedio' : 'Avanzado'}
-                      </span>
-                    </div>
-                  </div>
-                  <Button className="w-full" disabled={test.completed}>
-                    {test.completed ? '✅ Completado' : '🚀 Iniciar Test'}
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'skills' && (
-        <div className="space-y-6">
-          <Card>
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">📊 Auto-evaluación de Habilidades</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Habilidad
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Categoría
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nivel
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {skills.map((skill) => (
-                      <tr key={skill.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{skill.name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{skill.category}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getLevelColor(skill.level)}`}>
-                            {skill.level === 'basic' ? 'Básico' :
-                             skill.level === 'intermediate' ? 'Intermedio' :
-                             skill.level === 'advanced' ? 'Avanzado' : 'Experto'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            skill.selfAssessed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {skill.selfAssessed ? 'Evaluado' : 'Pendiente'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Button size="sm" variant="outline">
-                            ✏️ Evaluar
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6" data-testid="tools-header">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">🛠️ Herramientas de Investigación</h1>
+              <p className="text-blue-100">
+                Acceso a todas las herramientas especializadas para investigación arqueológica
+              </p>
             </div>
-          </Card>
-        </div>
-      )}
-
-      {activeTab === 'training' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold mb-4">📚 Recursos de Formación</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                    <span className="text-2xl">📖</span>
-                    <div>
-                      <h4 className="font-medium">Manual de Excavación</h4>
-                      <p className="text-sm text-gray-600">Guía completa de técnicas de excavación</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                    <span className="text-2xl">🎥</span>
-                    <div>
-                      <h4 className="font-medium">Videos Tutoriales</h4>
-                      <p className="text-sm text-gray-600">Tutoriales en video de técnicas arqueológicas</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
-                    <span className="text-2xl">📋</span>
-                    <div>
-                      <h4 className="font-medium">Protocolos de Laboratorio</h4>
-                      <p className="text-sm text-gray-600">Protocolos estándar para análisis de laboratorio</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold mb-4">🔗 Enlaces Útiles</h3>
-                <div className="space-y-3">
-                  <a href="#" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                    <span className="text-2xl">🌐</span>
-                    <div>
-                      <h4 className="font-medium">INAH - Instituto Nacional de Antropología</h4>
-                      <p className="text-sm text-gray-600">Recursos oficiales de arqueología</p>
-                    </div>
-                  </a>
-                  <a href="#" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                    <span className="text-2xl">📚</span>
-                    <div>
-                      <h4 className="font-medium">Biblioteca Digital</h4>
-                      <p className="text-sm text-gray-600">Acceso a publicaciones especializadas</p>
-                    </div>
-                  </a>
-                  <a href="#" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                    <span className="text-2xl">👥</span>
-                    <div>
-                      <h4 className="font-medium">Comunidad Arqueológica</h4>
-                      <p className="text-sm text-gray-600">Foros y grupos de discusión</p>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            </Card>
+            <Button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-white bg-opacity-20 text-white hover:bg-opacity-30 border border-white border-opacity-30"
+            >
+              ← Volver
+            </Button>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Grid de herramientas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tools.map((tool, index) => (
+            <Card
+              key={index}
+              className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer"
+              data-testid={`tool-${tool.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/[^a-z0-9-]/g, '')}`}
+              onClick={() => handleToolClick(tool)}
+            >
+              <div className="flex items-start space-x-4">
+                <div className={`text-3xl ${tool.color} text-white p-3 rounded-lg`}>
+                  {tool.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{tool.name}</h3>
+                  <p className="text-gray-600 mb-4">{tool.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tool.examples.map((example, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                      >
+                        {example}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Información adicional */}
+        <Card className="mt-8 p-6 bg-blue-50 border-blue-200">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">💡 Información</h3>
+          <p className="text-blue-700">
+            Estas herramientas están diseñadas específicamente para investigadores arqueológicos. 
+            Cada herramienta se integra con el sistema de gestión de datos arqueológicos para 
+            proporcionar una experiencia de investigación completa y eficiente.
+          </p>
+        </Card>
+      </div>
     </div>
   );
 };

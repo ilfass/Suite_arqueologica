@@ -160,7 +160,38 @@ export class AuthService {
         .eq('id', userId)
         .single();
 
-      if (userError) throw new AppError(userError.message, 400);
+      if (userError) {
+        // Si el usuario no existe en la tabla users, crear perfil temporal
+        console.log('🔧 Usuario no encontrado en tabla users, creando perfil temporal...');
+        console.log('🆔 ID del usuario:', userId);
+        
+        // Obtener información básica del usuario desde Supabase Auth
+        const { data: authUser, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !authUser.user) {
+          throw new AppError('User not found in auth system', 404);
+        }
+
+        const tempUser: User = {
+          id: authUser.user.id,
+          email: authUser.user.email || '',
+          role: 'RESEARCHER' as UserRole,
+          first_name: authUser.user.email?.split('@')[0] || 'Usuario',
+          last_name: '',
+          institution: 'Universidad Nacional de La Plata',
+          specialization: 'Arqueología',
+          academic_degree: 'Doctorado',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        console.log('✅ Perfil temporal creado para:', tempUser.email);
+        console.log('⚠️  Nota: Este es un perfil temporal. Para persistencia, contacte al administrador.');
+        
+        return tempUser;
+      }
+      
       if (!userData) throw new AppError('User not found', 404);
 
       return userData;

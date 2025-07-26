@@ -16,13 +16,18 @@ export enum SubscriptionPlan {
   INSTITUTIONAL = 'INSTITUTIONAL',
 }
 
-export interface User extends SupabaseUser {
-  fullName: string;
+export interface User {
+  id: string;
+  email: string;
   role: UserRole;
-  subscriptionPlan: SubscriptionPlan;
+  first_name: string;
+  last_name: string;
   institution?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  specialization?: string;
+  academic_degree?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserProfile extends User {

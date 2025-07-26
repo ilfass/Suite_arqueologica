@@ -87,7 +87,7 @@ export const getProject = async (id: string): Promise<Project> => {
 };
 
 // Crear un nuevo proyecto
-export const createProject = async (projectData: CreateProjectData): Promise<Project> => {
+export const createProject = async (projectData: any): Promise<any> => {
   try {
     const response = await axios.post(`${API_BASE_URL}/projects`, projectData);
     return response.data.data;

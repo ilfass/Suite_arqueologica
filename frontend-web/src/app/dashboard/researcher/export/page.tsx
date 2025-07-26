@@ -35,7 +35,7 @@ interface Backup {
 }
 
 const ExportPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [exportJobs, setExportJobs] = useState<ExportJob[]>([]);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [backups, setBackups] = useState<Backup[]>([]);

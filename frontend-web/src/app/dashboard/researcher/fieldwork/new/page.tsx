@@ -28,7 +28,7 @@ interface FieldworkRecord {
 }
 
 const NewFieldworkPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { context, hasContext, isLoading } = useInvestigatorContext();
   

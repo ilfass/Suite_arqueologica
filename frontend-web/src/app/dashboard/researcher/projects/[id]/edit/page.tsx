@@ -13,7 +13,7 @@ interface Project {
   id: string;
   name: string;
   description: string;
-  status: 'active' | 'completed' | 'planning';
+  status: 'active' | 'completed' | 'planning' | 'archived';
   startDate: string;
   endDate?: string;
   location?: string;
@@ -26,7 +26,7 @@ interface Project {
 }
 
 const EditProjectPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const { context, hasContext, isLoading } = useInvestigatorContext();
@@ -37,7 +37,7 @@ const EditProjectPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'active' as const,
+    status: 'active' as 'active' | 'completed' | 'planning' | 'archived',
     startDate: '',
     endDate: '',
     location: '',
@@ -246,12 +246,13 @@ const EditProjectPage: React.FC = () => {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                    onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'completed' | 'planning' | 'archived'})}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
                     <option value="planning">Planificación</option>
                     <option value="active">Activo</option>
                     <option value="completed">Completado</option>
+                    <option value="archived">Archivado</option>
                   </select>
                 </div>
                 <div>

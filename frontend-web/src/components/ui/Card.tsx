@@ -6,6 +6,7 @@ interface CardProps {
   title?: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -14,9 +15,13 @@ const Card: React.FC<CardProps> = ({
   title,
   subtitle,
   actions,
+  onClick,
 }) => {
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}>
+    <div 
+      className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}
+      onClick={onClick}
+    >
       {(title || subtitle || actions) && (
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">

@@ -3,12 +3,13 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '../contexts/AuthContext'
+import { ArchaeologicalProvider } from '../contexts/ArchaeologicalContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Suite Arqueológica',
-  description: 'Plataforma integral para la gestión de sitios arqueológicos',
+  title: 'Suite Arqueológica - Sistema de Gestión Arqueológica Integrada',
+  description: 'Plataforma completa para la gestión de proyectos arqueológicos, incluyendo trabajo de campo, análisis de laboratorio, y documentación científica.',
 }
 
 export default function RootLayout({
@@ -20,7 +21,9 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <ArchaeologicalProvider>
+            {children}
+          </ArchaeologicalProvider>
         </AuthProvider>
       </body>
     </html>

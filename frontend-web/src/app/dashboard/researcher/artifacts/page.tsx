@@ -34,7 +34,7 @@ interface Artifact {
 }
 
 const ArtifactsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { context, hasContext, isLoading } = useInvestigatorContext();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);

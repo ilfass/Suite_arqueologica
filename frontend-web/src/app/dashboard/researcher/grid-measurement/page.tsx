@@ -26,7 +26,7 @@ interface GridUnit {
 }
 
 const GridMeasurementPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [gridUnits, setGridUnits] = useState<GridUnit[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<GridUnit | null>(null);
   const [isCreating, setIsCreating] = useState(false);

@@ -115,7 +115,7 @@ class ApiClient {
       const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
         headers: this.getHeaders()
       });
-      return response.data.user;
+      return response.data.data.user;
     } catch (error) {
       console.error('Get current user error:', error);
       throw error;

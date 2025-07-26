@@ -43,6 +43,18 @@ export default function Sidebar() {
       roles: ['RESEARCHER']
     },
     { 
+      href: '/dashboard/researcher/chronology', 
+      label: 'Cronologías', 
+      icon: '⏳',
+      roles: ['RESEARCHER']
+    },
+    { 
+      href: '/dashboard/researcher/laboratory', 
+      label: 'Laboratorio', 
+      icon: '🔬',
+      roles: ['RESEARCHER']
+    },
+    { 
       href: '/dashboard/director', 
       label: 'Panel Director', 
       icon: '📋',
@@ -84,7 +96,7 @@ export default function Sidebar() {
   return (
     <aside className={`bg-gray-50 border-r border-gray-200 transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    }`} data-testid="sidebar">
       <div className="flex flex-col h-full">
         {/* Toggle button */}
         <div className="flex justify-end p-4 border-b border-gray-200">
@@ -110,11 +122,12 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
+        <nav className="flex-1 px-2 py-4 space-y-1" data-testid="sidebar-nav">
           {filteredMenuItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              data-testid={`nav-${item.href.replace(/\//g, '-').replace(/^-/, '')}`}
               className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                 isActive(item.href)
                   ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500'
