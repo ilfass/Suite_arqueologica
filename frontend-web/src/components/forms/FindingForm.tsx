@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useArchaeological } from '../../contexts/ArchaeologicalContext';
+import { useUnifiedContext } from '../../hooks/useUnifiedContext';
 import { FindingFormData, ArchaeologicalContext as ArchContext } from '../../types/archaeological';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -23,6 +24,7 @@ const FindingForm: React.FC<FindingFormProps> = ({
   context
 }) => {
   const { getFormContext } = useArchaeological();
+  const { context: unifiedContext } = useUnifiedContext();
   const formContext = getFormContext();
 
   const [formData, setFormData] = useState<FindingFormData>({
@@ -60,8 +62,16 @@ const FindingForm: React.FC<FindingFormProps> = ({
         areaId: context.areaId || '',
         projectId: context.projectId || ''
       }));
+    } else if (unifiedContext.project_id) {
+      // Usar contexto unificado si está disponible
+      setFormData(prev => ({
+        ...prev,
+        projectId: unifiedContext.project_id || '',
+        areaId: unifiedContext.area_id || '',
+        siteId: unifiedContext.site_id || ''
+      }));
     }
-  }, [initialData, context]);
+  }, [initialData, context, unifiedContext]);
 
   const handleInputChange = (field: keyof FindingFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));

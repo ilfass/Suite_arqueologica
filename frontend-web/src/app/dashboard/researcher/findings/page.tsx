@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import ContextBanner from '@/components/ui/ContextBanner';
-import useInvestigatorContext from '@/hooks/useInvestigatorContext';
+import { useUnifiedContext } from '@/hooks/useUnifiedContext';
 
 interface Finding {
   id: string;
@@ -31,7 +30,7 @@ interface Finding {
 const FindingsPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { context, hasContext, isLoading } = useInvestigatorContext();
+  const { context, hasContext, isLoading } = useUnifiedContext();
   
   // Debug del contexto
   console.log('🔍 Findings Page - Context:', context);
@@ -42,17 +41,20 @@ const FindingsPage: React.FC = () => {
   if (typeof window !== 'undefined') {
     (window as any).setTestContext = () => {
       const testContext = {
-        project: 'Proyecto Cazadores Recolectores - La Laguna',
-        area: 'Laguna La Brava',
-        site: '' // Sitio opcional
+        project_id: 'proj-test-001',
+        project_name: 'Proyecto Cazadores Recolectores - La Laguna',
+        area_id: 'area-test-001',
+        area_name: 'Laguna La Brava',
+        site_id: 'site-test-001',
+        site_name: 'Sitio Pampeano La Laguna'
       };
-      localStorage.setItem('investigator-context', JSON.stringify(testContext));
+      localStorage.setItem('unified-context', JSON.stringify(testContext));
       console.log('🔧 Contexto de prueba establecido:', testContext);
       window.location.reload();
     };
     
     (window as any).clearTestContext = () => {
-      localStorage.removeItem('investigator-context');
+      localStorage.removeItem('unified-context');
       console.log('🗑️ Contexto de prueba eliminado');
       window.location.reload();
     };
@@ -264,10 +266,10 @@ const FindingsPage: React.FC = () => {
       const findingData = {
         ...newFinding,
         id: `finding-${Date.now()}`,
-        siteId: context.site || '1',
-        siteName: context.site || 'Sitio Actual',
-        projectId: context.project || '1',
-        projectName: context.project || 'Proyecto Actual',
+        siteId: context.site_id || '1',
+        siteName: context.site_name || 'Sitio Actual',
+        projectId: context.project_id || '1',
+        projectName: context.project_name || 'Proyecto Actual',
         discoveredBy: user?.full_name || 'Usuario Actual',
         status: 'new' as const
       };
@@ -336,9 +338,9 @@ const FindingsPage: React.FC = () => {
   const handleOpenNewFindingModal = () => {
     // Cargar información de contexto si está disponible
     const contextInfo = [];
-    if (context.project) contextInfo.push(`Proyecto: ${context.project}`);
-    if (context.area) contextInfo.push(`Área: ${context.area}`);
-    if (context.site) contextInfo.push(`Sitio: ${context.site}`);
+    if (context.project_name) contextInfo.push(`Proyecto: ${context.project_name}`);
+    if (context.area_name) contextInfo.push(`Área: ${context.area_name}`);
+    if (context.site_name) contextInfo.push(`Sitio: ${context.site_name}`);
     
     const contextString = contextInfo.join(', ') || 'Contexto no especificado';
     
@@ -402,17 +404,6 @@ const FindingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner de contexto */}
-      {hasContext && (
-        <ContextBanner
-          project={context.project}
-          area={context.area}
-          site={context.site}
-          showBackButton={true}
-          showChangeButton={false}
-        />
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
@@ -436,9 +427,9 @@ const FindingsPage: React.FC = () => {
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug - Estado del Contexto:</h3>
               <div className="text-xs text-yellow-700 space-y-1">
-                <div><strong>Proyecto:</strong> {context.project || 'No establecido'}</div>
-                <div><strong>Área:</strong> {context.area || 'No establecida'}</div>
-                <div><strong>Sitio:</strong> {context.site || 'No establecido'}</div>
+                <div><strong>Proyecto:</strong> {context.project_name || 'No establecido'}</div>
+                <div><strong>Área:</strong> {context.area_name || 'No establecida'}</div>
+                <div><strong>Sitio:</strong> {context.site_name || 'No establecido'}</div>
                 <div><strong>Has Context:</strong> {hasContext ? 'SÍ' : 'NO'}</div>
                 <div><strong>Is Loading:</strong> {isLoading ? 'SÍ' : 'NO'}</div>
               </div>
@@ -454,11 +445,14 @@ const FindingsPage: React.FC = () => {
                 variant="outline"
                 onClick={() => {
                   const testContext = {
-                    project: 'Proyecto Cazadores Recolectores - La Laguna',
-                    area: 'Laguna La Brava',
-                    site: '' // Sitio opcional
+                    project_id: 'proj-test-001',
+                    project_name: 'Proyecto Cazadores Recolectores - La Laguna',
+                    area_id: 'area-test-001',
+                    area_name: 'Laguna La Brava',
+                    site_id: 'site-test-001',
+                    site_name: 'Sitio Pampeano La Laguna'
                   };
-                  localStorage.setItem('investigator-context', JSON.stringify(testContext));
+                  localStorage.setItem('unified-context', JSON.stringify(testContext));
                   console.log('🔧 Contexto de prueba establecido:', testContext);
                   window.location.reload();
                 }}
@@ -469,7 +463,7 @@ const FindingsPage: React.FC = () => {
               <Button 
                 variant="outline"
                 onClick={() => {
-                  localStorage.removeItem('investigator-context');
+                  localStorage.removeItem('unified-context');
                   console.log('🗑️ Contexto eliminado');
                   window.location.reload();
                 }}
@@ -712,7 +706,7 @@ const FindingsPage: React.FC = () => {
                         <input 
                           type="text" 
                           className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.project || 'No especificado'} 
+                          value={context.project_name || 'No especificado'} 
                           disabled 
                         />
                       </div>
@@ -721,7 +715,7 @@ const FindingsPage: React.FC = () => {
                         <input 
                           type="text" 
                           className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.area || 'No especificado'} 
+                          value={context.area_name || 'No especificado'} 
                           disabled 
                         />
                       </div>
@@ -730,7 +724,7 @@ const FindingsPage: React.FC = () => {
                         <input 
                           type="text" 
                           className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.site || 'No especificado'} 
+                          value={context.site_name || 'No especificado'} 
                           disabled 
                         />
                       </div>

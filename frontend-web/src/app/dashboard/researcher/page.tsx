@@ -7,6 +7,7 @@ import { ArchaeologicalContext as ArchContext } from '../../../types/archaeologi
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import ContextNavigator from '../../../components/navigation/ContextNavigator';
+import UnifiedContextSelector from '../../../components/ui/UnifiedContextSelector';
 import ProjectCreationFormNew from '../../../components/forms/ProjectCreationFormNew';
 import AreaCreationForm from '../../../components/forms/AreaCreationForm';
 import SiteCreationForm from '../../../components/forms/SiteCreationForm';
@@ -351,10 +352,11 @@ const ResearcherDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        {/* Navegador de Contexto Horizontal */}
-        <Card className="mb-6 p-6" data-testid="context-navigator">
+        {/* Banner de Contexto */}
+        {/* Selector de Contexto Unificado */}
+        <Card className="mb-6 p-6" data-testid="unified-context-selector">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">🧭 Navegador de Contexto Arqueológico</h2>
+            <h2 className="text-xl font-bold text-gray-800">🎯 Contexto Arqueológico Activo</h2>
             <div className="flex items-center space-x-2" data-testid="context-actions">
               <Button
                 onClick={() => setShowNewProject(true)}
@@ -376,10 +378,7 @@ const ResearcherDashboard: React.FC = () => {
               </Button>
             </div>
           </div>
-          <ContextNavigator
-            onContextChange={handleContextChange}
-            currentContext={currentContext}
-          />
+          <UnifiedContextSelector />
         </Card>
 
         {/* Estadísticas - ahora horizontal y full width */}

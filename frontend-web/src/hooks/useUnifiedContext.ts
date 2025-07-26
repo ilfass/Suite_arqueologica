@@ -23,7 +23,7 @@ export interface ContextState {
 }
 
 // ============================================================================
-// HOOK UNIFICADO DE CONTEXTO
+// HOOK UNIFICADO DE CONTEXTO (VERSIÓN SIMPLIFICADA)
 // ============================================================================
 
 export const useUnifiedContext = () => {
@@ -36,100 +36,59 @@ export const useUnifiedContext = () => {
     isContextComplete: false
   });
 
+  // Cargar contexto desde localStorage al inicio
+  useEffect(() => {
+    try {
+      const savedContext = localStorage.getItem('unified-context');
+      if (savedContext) {
+        const context = JSON.parse(savedContext);
+        const hasContext = !!context.project_id;
+        const isContextComplete = hasContext && !!context.site_id;
+        
+        setState({
+          context,
+          isLoading: false,
+          error: null,
+          hasContext,
+          isContextComplete
+        });
+      } else {
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      console.error('Error loading context from localStorage:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, []);
+
   // ============================================================================
-  // FUNCIONES DE API
+  // FUNCIONES DE API (SIMPLIFICADAS)
   // ============================================================================
 
   const fetchContext = useCallback(async () => {
-    if (!user) {
-      setState(prev => ({ ...prev, isLoading: false, hasContext: false }));
-      return;
-    }
-
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const response = await fetch('/api/context/current', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      const context = data.data.context;
-      const hasContext = data.data.hasContext;
-      const isContextComplete = hasContext && context?.site_id;
-
-      setState({
-        context,
-        isLoading: false,
-        error: null,
-        hasContext,
-        isContextComplete
-      });
-
-      // Guardar en localStorage como backup
-      if (context) {
-        localStorage.setItem('unified-context', JSON.stringify(context));
-      } else {
-        localStorage.removeItem('unified-context');
-      }
-
-    } catch (error) {
-      console.error('Error fetching context:', error);
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      }));
-    }
-  }, [user]);
+    // Por ahora, solo cargar desde localStorage
+    console.log('Fetching context from localStorage...');
+  }, []);
 
   const updateContext = useCallback(async (contextData: UnifiedContext) => {
-    if (!user) {
-      throw new Error('Usuario no autenticado');
-    }
-
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const response = await fetch('/api/context/update', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(contextData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const context = data.data.context;
-      const hasContext = true;
-      const isContextComplete = Boolean(context?.site_id);
-
+      
+      // Guardar en localStorage
+      localStorage.setItem('unified-context', JSON.stringify(contextData));
+      
+      const hasContext = !!contextData.project_id;
+      const isContextComplete = hasContext && !!contextData.site_id;
+      
       setState({
-        context,
+        context: contextData,
         isLoading: false,
         error: null,
         hasContext,
         isContextComplete
       });
-
-      // Guardar en localStorage como backup
-      localStorage.setItem('unified-context', JSON.stringify(context));
-
-      return context;
-
+      
+      console.log('Context updated:', contextData);
     } catch (error) {
       console.error('Error updating context:', error);
       setState(prev => ({
@@ -137,30 +96,12 @@ export const useUnifiedContext = () => {
         isLoading: false,
         error: error instanceof Error ? error.message : 'Error desconocido'
       }));
-      throw error;
     }
-  }, [user]);
+  }, []);
 
   const clearContext = useCallback(async () => {
-    if (!user) {
-      throw new Error('Usuario no autenticado');
-    }
-
     try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const response = await fetch('/api/context/clear', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
+      localStorage.removeItem('unified-context');
       setState({
         context: null,
         isLoading: false,
@@ -168,134 +109,124 @@ export const useUnifiedContext = () => {
         hasContext: false,
         isContextComplete: false
       });
-
-      // Limpiar localStorage
-      localStorage.removeItem('unified-context');
-
+      console.log('Context cleared');
     } catch (error) {
       console.error('Error clearing context:', error);
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      }));
-      throw error;
     }
-  }, [user]);
+  }, []);
 
   // ============================================================================
-  // FUNCIONES DE UTILIDAD
+  // FUNCIONES UTILITARIAS
   // ============================================================================
 
-  const setProject = useCallback(async (projectId: string, projectName: string) => {
-    const newContext: UnifiedContext = {
+  const setProject = useCallback((projectId: string, projectName: string) => {
+    const currentContext = state.context || {
+      project_id: '',
+      project_name: '',
+      area_id: '',
+      area_name: '',
+      site_id: '',
+      site_name: ''
+    };
+    
+    updateContext({
+      ...currentContext,
       project_id: projectId,
       project_name: projectName,
       area_id: '',
       area_name: '',
-      site_id: undefined,
-      site_name: undefined
-    };
-    return await updateContext(newContext);
-  }, [updateContext]);
+      site_id: '',
+      site_name: ''
+    });
+  }, [state.context, updateContext]);
 
-  const setArea = useCallback(async (areaId: string, areaName: string) => {
+  const setArea = useCallback((areaId: string, areaName: string) => {
     if (!state.context?.project_id) {
-      throw new Error('Debe seleccionar un proyecto primero');
+      console.warn('No project selected. Please select a project first.');
+      return;
     }
-
-    const newContext: UnifiedContext = {
+    
+    updateContext({
       ...state.context,
       area_id: areaId,
       area_name: areaName,
-      site_id: undefined,
-      site_name: undefined
-    };
-    return await updateContext(newContext);
+      site_id: '',
+      site_name: ''
+    });
   }, [state.context, updateContext]);
 
-  const setSite = useCallback(async (siteId: string, siteName: string) => {
+  const setSite = useCallback((siteId: string, siteName: string) => {
     if (!state.context?.project_id || !state.context?.area_id) {
-      throw new Error('Debe seleccionar un proyecto y área primero');
+      console.warn('No project or area selected. Please select them first.');
+      return;
     }
-
-    const newContext: UnifiedContext = {
+    
+    updateContext({
       ...state.context,
       site_id: siteId,
       site_name: siteName
-    };
-    return await updateContext(newContext);
+    });
   }, [state.context, updateContext]);
 
   // ============================================================================
-  // EFECTOS
+  // FUNCIONES DE DISPLAY Y UTILIDAD
   // ============================================================================
 
-  // Cargar contexto al montar el componente
-  useEffect(() => {
-    fetchContext();
-  }, [fetchContext]);
-
-  // Cargar contexto desde localStorage como fallback
-  useEffect(() => {
-    if (!user && !state.isLoading) {
-      const savedContext = localStorage.getItem('unified-context');
-      if (savedContext) {
-        try {
-          const context = JSON.parse(savedContext);
-          const hasContext = Boolean(context?.project_id && context?.area_id);
-          const isContextComplete = hasContext && Boolean(context?.site_id);
-          
-          setState({
-            context,
-            isLoading: false,
-            error: null,
-            hasContext,
-            isContextComplete
-          });
-        } catch (error) {
-          console.error('Error parsing saved context:', error);
-          localStorage.removeItem('unified-context');
-        }
-      }
+  const getContextDisplay = useCallback(() => {
+    if (!state.context) return 'Sin contexto';
+    
+    const { project_name, area_name, site_name } = state.context;
+    
+    if (site_name) {
+      return `${project_name} > ${area_name} > ${site_name}`;
+    } else if (area_name) {
+      return `${project_name} > ${area_name}`;
+    } else if (project_name) {
+      return project_name;
     }
-  }, [user, state.isLoading]);
+    
+    return 'Sin contexto';
+  }, [state.context]);
 
-  // ============================================================================
-  // RETORNO
-  // ============================================================================
+  const getContextLevel = useCallback(() => {
+    if (!state.context) return 'none';
+    
+    const { project_id, area_id, site_id } = state.context;
+    
+    if (site_id) return 'site';
+    if (area_id) return 'area';
+    if (project_id) return 'project';
+    
+    return 'none';
+  }, [state.context]);
+
+  const getContextSummary = useCallback(() => {
+    if (!state.context) return null;
+    
+    const { project_name, area_name, site_name } = state.context;
+    
+    return {
+      project: project_name,
+      area: area_name,
+      site: site_name
+    };
+  }, [state.context]);
+
+  const isContextValid = useCallback(() => {
+    return state.hasContext && !!state.context?.project_id;
+  }, [state.hasContext, state.context]);
 
   return {
-    // Estado
-    context: state.context,
-    isLoading: state.isLoading,
-    error: state.error,
-    hasContext: state.hasContext,
-    isContextComplete: state.isContextComplete,
-
-    // Acciones
+    ...state,
     fetchContext,
     updateContext,
     clearContext,
     setProject,
     setArea,
     setSite,
-
-    // Utilidades
-    getContextDisplay: () => {
-      if (!state.context) return 'Sin contexto';
-      const { project_name, area_name, site_name } = state.context;
-      if (site_name) {
-        return `${project_name} > ${area_name} > ${site_name}`;
-      }
-      return `${project_name} > ${area_name}`;
-    },
-
-    getContextLevel: () => {
-      if (!state.context) return 'none';
-      if (state.context.site_id) return 'complete';
-      if (state.context.area_id) return 'partial';
-      return 'project';
-    }
+    getContextDisplay,
+    getContextLevel,
+    getContextSummary,
+    isContextValid
   };
 }; 

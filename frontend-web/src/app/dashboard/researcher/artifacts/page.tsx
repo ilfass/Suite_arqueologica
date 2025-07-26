@@ -5,7 +5,6 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
-import ContextBanner from '../../../../components/ui/ContextBanner';
 import useInvestigatorContext from '../../../../hooks/useInvestigatorContext';
 import { useRouter } from 'next/navigation';
 
@@ -292,15 +291,6 @@ const ArtifactsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner de contexto */}
-      <ContextBanner
-        project={context.project}
-        area={context.area}
-        site={context.site}
-        projectName={projectName}
-        areaName={areaName}
-        siteName={siteName}
-      />
-      
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

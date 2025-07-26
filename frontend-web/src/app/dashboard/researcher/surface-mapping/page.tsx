@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import ContextBanner from '@/components/ui/ContextBanner';
 import useInvestigatorContext from '@/hooks/useInvestigatorContext';
 import { useRouter } from 'next/navigation';
 
@@ -163,19 +162,7 @@ const SurfaceMappingPage: React.FC = () => {
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const renderContextBanner = () => (
-    <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">🗺️ Mapeo de Superficie</h2>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <span>📋 Proyecto: {context?.project || 'No seleccionado'}</span>
-            <span>📍 Área: {context?.area || 'No seleccionada'}</span>
-            <span>🏛️ Sitio: {context?.site || 'No seleccionado'}</span>
-          </div>
-        </div>
-        <Button
-          onClick={() => router.push('/dashboard/researcher')}
+  => router.push('/dashboard/researcher')}
           className="px-4 py-2 bg-green-500 text-white hover:bg-green-600"
         >
           ← Volver al Dashboard
@@ -209,8 +196,6 @@ const SurfaceMappingPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        {renderContextBanner()}
-
         {/* Estadísticas */}
         <Card className="mb-6 p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

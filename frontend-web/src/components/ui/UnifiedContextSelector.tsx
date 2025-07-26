@@ -52,7 +52,7 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
     { id: 'area-001', name: 'Laguna La Brava', projectId: 'proj-001' },
     { id: 'area-002', name: 'Arroyo Seco', projectId: 'proj-001' },
     { id: 'area-003', name: 'Monte Hermoso', projectId: 'proj-002' },
-    { id: 'area-004', name: 'Costa Bonaerense', projectId: 'proj-003' },
+    { id: 'area-004', name: 'Costa Bonaerense', projectId: 'proj-002' },
     { id: 'area-005', name: 'Valle del Cauca Central', projectId: 'proj-004' },
     { id: 'area-006', name: 'Cordillera Occidental', projectId: 'proj-004' },
     { id: 'area-007', name: 'Desierto de Atacama Norte', projectId: 'proj-005' },
@@ -63,19 +63,39 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   const sites = [
     { id: 'site-001', name: 'Sitio Pampeano La Laguna', areaId: 'area-001' },
-    { id: 'site-002', name: 'Sitio Arroyo Seco Norte', areaId: 'area-002' },
-    { id: 'site-003', name: 'Sitio Monte Hermoso Este', areaId: 'area-003' },
-    { id: 'site-004', name: 'Sitio Costa Bonaerense Sur', areaId: 'area-004' },
-    { id: 'site-005', name: 'Sitio Valle del Cauca Central', areaId: 'area-005' },
-    { id: 'site-006', name: 'Sitio Cordillera Occidental', areaId: 'area-006' },
-    { id: 'site-007', name: 'Sitio Desierto de Atacama Norte', areaId: 'area-007' },
-    { id: 'site-008', name: 'Sitio Salar de Atacama', areaId: 'area-008' },
-    { id: 'site-009', name: 'Sitio Valle del Duero', areaId: 'area-009' },
-    { id: 'site-010', name: 'Sitio Sierra de Gredos', areaId: 'area-010' }
+    { id: 'site-002', name: 'Sitio Laguna Brava Norte', areaId: 'area-001' },
+    { id: 'site-003', name: 'Sitio Laguna Brava Sur', areaId: 'area-001' },
+    { id: 'site-004', name: 'Sitio Arroyo Seco 2', areaId: 'area-002' },
+    { id: 'site-005', name: 'Sitio Arroyo Seco Norte', areaId: 'area-002' },
+    { id: 'site-006', name: 'Sitio Arroyo Seco Sur', areaId: 'area-002' },
+    { id: 'site-007', name: 'Sitio Monte Hermoso', areaId: 'area-003' },
+    { id: 'site-008', name: 'Sitio Monte Hermoso Este', areaId: 'area-003' },
+    { id: 'site-009', name: 'Sitio Monte Hermoso Oeste', areaId: 'area-003' },
+    { id: 'site-010', name: 'Sitio Costa Bonaerense', areaId: 'area-004' },
+    { id: 'site-011', name: 'Sitio Playa Dorada', areaId: 'area-004' },
+    { id: 'site-012', name: 'Sitio Costa Sur', areaId: 'area-004' },
+    { id: 'site-013', name: 'Sitio Valle del Cauca', areaId: 'area-005' },
+    { id: 'site-014', name: 'Sitio Valle Central Norte', areaId: 'area-005' },
+    { id: 'site-015', name: 'Sitio Valle Central Sur', areaId: 'area-005' },
+    { id: 'site-016', name: 'Sitio Cordillera Occidental', areaId: 'area-006' },
+    { id: 'site-017', name: 'Sitio Cordillera Norte', areaId: 'area-006' },
+    { id: 'site-018', name: 'Sitio Cordillera Sur', areaId: 'area-006' },
+    { id: 'site-019', name: 'Sitio Desierto Atacama', areaId: 'area-007' },
+    { id: 'site-020', name: 'Sitio Atacama Norte', areaId: 'area-007' },
+    { id: 'site-021', name: 'Sitio Atacama Central', areaId: 'area-007' },
+    { id: 'site-022', name: 'Sitio Salar de Atacama', areaId: 'area-008' },
+    { id: 'site-023', name: 'Sitio Salar Norte', areaId: 'area-008' },
+    { id: 'site-024', name: 'Sitio Salar Sur', areaId: 'area-008' },
+    { id: 'site-025', name: 'Sitio Valle del Duero', areaId: 'area-009' },
+    { id: 'site-026', name: 'Sitio Duero Norte', areaId: 'area-009' },
+    { id: 'site-027', name: 'Sitio Duero Sur', areaId: 'area-009' },
+    { id: 'site-028', name: 'Sitio Sierra de Gredos', areaId: 'area-010' },
+    { id: 'site-029', name: 'Sitio Gredos Norte', areaId: 'area-010' },
+    { id: 'site-030', name: 'Sitio Gredos Sur', areaId: 'area-010' }
   ];
 
   // ============================================================================
-  // FUNCIONES DE UTILIDAD
+  // FUNCIONES UTILITARIAS
   // ============================================================================
 
   const getAreasForProject = (projectId: string) => {
@@ -92,17 +112,26 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   const handleProjectChange = async (projectId: string) => {
     try {
-      const project = projects.find(p => p.id === projectId);
-      if (!project) return;
-
       setSelectedProject(projectId);
       setSelectedArea('');
       setSelectedSite('');
-
-      await setProject(projectId, project.name);
       
-      if (onContextChange) {
-        onContextChange({ projectId, projectName: project.name });
+      if (projectId) {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+          await setProject(projectId, project.name);
+          
+          if (onContextChange) {
+            onContextChange({
+              project_id: projectId,
+              project_name: project.name,
+              area_id: '',
+              area_name: '',
+              site_id: '',
+              site_name: ''
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error setting project:', error);
@@ -111,20 +140,24 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   const handleAreaChange = async (areaId: string) => {
     try {
-      const area = areas.find(a => a.id === areaId);
-      if (!area) return;
-
       setSelectedArea(areaId);
       setSelectedSite('');
-
-      await setArea(areaId, area.name);
       
-      if (onContextChange) {
-        onContextChange({ 
-          projectId: selectedProject, 
-          areaId, 
-          areaName: area.name 
-        });
+      if (areaId) {
+        const area = areas.find(a => a.id === areaId);
+        if (area) {
+          await setArea(areaId, area.name);
+          
+          if (onContextChange) {
+            onContextChange({
+              ...context,
+              area_id: areaId,
+              area_name: area.name,
+              site_id: '',
+              site_name: ''
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error setting area:', error);
@@ -133,20 +166,21 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   const handleSiteChange = async (siteId: string) => {
     try {
-      const site = sites.find(s => s.id === siteId);
-      if (!site) return;
-
       setSelectedSite(siteId);
-
-      await setSite(siteId, site.name);
       
-      if (onContextChange) {
-        onContextChange({ 
-          projectId: selectedProject, 
-          areaId: selectedArea, 
-          siteId, 
-          siteName: site.name 
-        });
+      if (siteId) {
+        const site = sites.find(s => s.id === siteId);
+        if (site) {
+          await setSite(siteId, site.name);
+          
+          if (onContextChange) {
+            onContextChange({
+              ...context,
+              site_id: siteId,
+              site_name: site.name
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error setting site:', error);

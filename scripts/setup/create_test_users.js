@@ -15,53 +15,54 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Credenciales exactas de la guía del proyecto
 const testUsers = [
   {
-    email: 'admin@suite.com',
-    password: 'admin123456',
+    email: 'fa07fa@gmail.com',
+    password: '3por39',
     full_name: 'Administrador Sistema',
     role: 'ADMIN',
-    subscription_plan: 'INSTITUTIONAL'
+    institution: 'Suite Arqueológica'
   },
   {
-    email: 'researcher@suite.com',
-    password: 'researcher123456',
-    full_name: 'Dr. María González',
+    email: 'dr.perez@unam.mx',
+    password: 'investigador123',
+    full_name: 'Dr. Pérez',
     role: 'RESEARCHER',
-    subscription_plan: 'PROFESSIONAL'
+    institution: 'UNAM'
   },
   {
-    email: 'student@suite.com',
-    password: 'student123456',
-    full_name: 'Juan Pérez',
+    email: 'estudiante@universidad.edu',
+    password: 'estudiante123',
+    full_name: 'Estudiante Universidad',
     role: 'STUDENT',
-    subscription_plan: 'FREE'
+    institution: 'Universidad'
   },
   {
-    email: 'director@suite.com',
-    password: 'director123456',
-    full_name: 'Dr. Carlos Rodríguez',
+    email: 'director@inah.gob.mx',
+    password: 'director123',
+    full_name: 'Director INAH',
     role: 'DIRECTOR',
-    subscription_plan: 'INSTITUTIONAL'
+    institution: 'INAH'
   },
   {
-    email: 'institution@suite.com',
-    password: 'institution123456',
-    full_name: 'Museo Nacional',
+    email: 'admin@inah.gob.mx',
+    password: 'institucion123',
+    full_name: 'Administrador INAH',
     role: 'INSTITUTION',
-    subscription_plan: 'INSTITUTIONAL'
+    institution: 'INAH'
   },
   {
-    email: 'guest@suite.com',
-    password: 'guest123456',
+    email: 'invitado@example.com',
+    password: 'invitado123',
     full_name: 'Visitante Público',
     role: 'GUEST',
-    subscription_plan: 'FREE'
+    institution: 'Público'
   }
 ];
 
 async function createTestUsers() {
-  console.log('🚀 Creando usuarios de prueba...');
+  console.log('🚀 Creando usuarios de prueba con credenciales de la guía...');
   
   for (const userData of testUsers) {
     try {
@@ -84,7 +85,7 @@ async function createTestUsers() {
         continue;
       }
 
-      // Crear perfil en la tabla users
+      // Crear perfil en la tabla users (sin subscription_plan)
       const { data: userProfile, error: profileError } = await supabase
         .from('users')
         .insert([
@@ -93,7 +94,7 @@ async function createTestUsers() {
             email: userData.email,
             full_name: userData.full_name,
             role: userData.role,
-            subscription_plan: userData.subscription_plan,
+            institution: userData.institution,
             is_active: true
           }
         ])
@@ -112,13 +113,13 @@ async function createTestUsers() {
     }
   }
 
-  console.log('\n📋 Resumen de usuarios de prueba:');
-  console.log('👤 admin@suite.com / admin123456 (ADMIN)');
-  console.log('👤 researcher@suite.com / researcher123456 (RESEARCHER)');
-  console.log('👤 student@suite.com / student123456 (STUDENT)');
-  console.log('👤 director@suite.com / director123456 (DIRECTOR)');
-  console.log('👤 institution@suite.com / institution123456 (INSTITUTION)');
-  console.log('👤 guest@suite.com / guest123456 (GUEST)');
+  console.log('\n📋 Resumen de usuarios de prueba (según la guía):');
+  console.log('👤 fa07fa@gmail.com / 3por39 (ADMIN)');
+  console.log('👤 dr.perez@unam.mx / investigador123 (RESEARCHER)');
+  console.log('👤 estudiante@universidad.edu / estudiante123 (STUDENT)');
+  console.log('👤 director@inah.gob.mx / director123 (DIRECTOR)');
+  console.log('👤 admin@inah.gob.mx / institucion123 (INSTITUTION)');
+  console.log('👤 invitado@example.com / invitado123 (GUEST)');
   console.log('\n🎯 Puedes usar cualquiera de estas credenciales para probar el login');
 }
 
