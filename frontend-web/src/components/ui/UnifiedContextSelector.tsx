@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useUnifiedContext } from '../../hooks/useUnifiedContext';
+import useInvestigatorContext from '../../hooks/useInvestigatorContext';
 import Button from './Button';
 import Card from './Card';
 
@@ -19,16 +19,30 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   const {
     context,
     isLoading,
-    error,
     hasContext,
-    isContextComplete,
     setProject,
     setArea,
     setSite,
-    clearContext,
-    getContextDisplay,
-    getContextLevel
-  } = useUnifiedContext();
+    clearContext
+  } = useInvestigatorContext();
+
+  // Funciones auxiliares para compatibilidad
+  const isContextComplete = Boolean(context.project && context.area && context.site);
+  const error = null; // No hay manejo de errores en useInvestigatorContext
+  
+  const getContextDisplay = () => {
+    if (!hasContext) return 'Sin contexto';
+    let display = context.project;
+    if (context.area) display += ` > ${context.area}`;
+    if (context.site) display += ` > ${context.site}`;
+    return display;
+  };
+  
+  const getContextLevel = () => {
+    if (!hasContext) return 'none';
+    if (isContextComplete) return 'complete';
+    return 'partial';
+  };
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState('');
@@ -119,16 +133,13 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
       if (projectId) {
         const project = projects.find(p => p.id === projectId);
         if (project) {
-          await setProject(projectId, project.name);
+          setProject(project.name);
           
           if (onContextChange) {
             onContextChange({
-              project_id: projectId,
-              project_name: project.name,
-              area_id: '',
-              area_name: '',
-              site_id: '',
-              site_name: ''
+              project: project.name,
+              area: '',
+              site: ''
             });
           }
         }
@@ -146,15 +157,13 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
       if (areaId) {
         const area = areas.find(a => a.id === areaId);
         if (area) {
-          await setArea(areaId, area.name);
+          setArea(area.name);
           
           if (onContextChange) {
             onContextChange({
               ...context,
-              area_id: areaId,
-              area_name: area.name,
-              site_id: '',
-              site_name: ''
+              area: area.name,
+              site: ''
             });
           }
         }
@@ -171,13 +180,12 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
       if (siteId) {
         const site = sites.find(s => s.id === siteId);
         if (site) {
-          await setSite(siteId, site.name);
+          setSite(site.name);
           
           if (onContextChange) {
             onContextChange({
               ...context,
-              site_id: siteId,
-              site_name: site.name
+              site: site.name
             });
           }
         }
@@ -205,6 +213,23 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   const handleConfirm = () => {
     setIsOpen(false);
+    
+    // Disparar evento personalizado para notificar cambio de contexto
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('contextUpdated', {
+        detail: { source: 'selector' }
+      }));
+      console.log('🔄 Evento contextUpdated disparado');
+    }, 100);
+    
+    // Notificar el cambio de contexto al componente padre
+    if (onContextChange && context) {
+      onContextChange({
+        project: context.project,
+        area: context.area,
+        site: context.site
+      });
+    }
   };
 
   // ============================================================================
@@ -214,9 +239,17 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   // Inicializar selecciones cuando se carga el contexto
   useEffect(() => {
     if (context) {
-      setSelectedProject(context.project_id);
-      setSelectedArea(context.area_id);
-      setSelectedSite(context.site_id || '');
+      // Buscar el proyecto por nombre
+      const project = projects.find(p => p.name === context.project);
+      setSelectedProject(project?.id || '');
+      
+      // Buscar el área por nombre
+      const area = areas.find(a => a.name === context.area);
+      setSelectedArea(area?.id || '');
+      
+      // Buscar el sitio por nombre
+      const site = sites.find(s => s.name === context.site);
+      setSelectedSite(site?.id || '');
     }
   }, [context]);
 

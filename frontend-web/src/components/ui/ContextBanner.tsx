@@ -1,10 +1,18 @@
 'use client';
 
-import React from 'react';
-import { useUnifiedContext } from '../../hooks/useUnifiedContext';
+import React, { useMemo } from 'react';
+import useInvestigatorContext from '../../hooks/useInvestigatorContext';
 
 const ContextBanner: React.FC = () => {
-  const { context, hasContext, isContextComplete } = useUnifiedContext();
+  const { context, hasContext } = useInvestigatorContext();
+  
+
+  
+  // Funciones auxiliares para compatibilidad
+  const isContextComplete = useMemo(() => 
+    Boolean(context.project && context.area && context.site), 
+    [context.project, context.area, context.site]
+  );
 
   if (!hasContext) {
     return (
@@ -52,18 +60,18 @@ const ContextBanner: React.FC = () => {
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 isContextComplete ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
               }`}>
-                📋 {context.project_name || 'Sin proyecto'}
+                📋 {context.project || 'Sin proyecto'}
               </span>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 isContextComplete ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
               }`}>
-                🗺️ {context.area_name || 'Sin área'}
+                🗺️ {context.area || 'Sin área'}
               </span>
-              {context.site_name && (
+              {context.site && (
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   isContextComplete ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                 }`}>
-                  🏛️ {context.site_name}
+                  🏛️ {context.site}
                 </span>
               )}
             </div>

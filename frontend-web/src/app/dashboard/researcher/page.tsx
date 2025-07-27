@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useArchaeological } from '../../../contexts/ArchaeologicalContext';
+import useInvestigatorContext from '../../../hooks/useInvestigatorContext';
 import { ArchaeologicalContext as ArchContext } from '../../../types/archaeological';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import ContextNavigator from '../../../components/navigation/ContextNavigator';
 import UnifiedContextSelector from '../../../components/ui/UnifiedContextSelector';
+
 import ProjectCreationFormNew from '../../../components/forms/ProjectCreationFormNew';
 import AreaCreationForm from '../../../components/forms/AreaCreationForm';
 import SiteCreationForm from '../../../components/forms/SiteCreationForm';
@@ -31,6 +33,9 @@ const ResearcherDashboard: React.FC = () => {
     clearCurrentContext
   } = useArchaeological();
 
+  // Hook del contexto del investigador
+  const { context: investigatorContext, hasContext, isLoading: contextLoading } = useInvestigatorContext();
+
   // Estados para modales
   const [showNewProject, setShowNewProject] = useState(false);
   const [showNewArea, setShowNewArea] = useState(false);
@@ -47,51 +52,21 @@ const ResearcherDashboard: React.FC = () => {
   const [editingAreaId, setEditingAreaId] = useState<string | null>(null);
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
 
-  // Estado del contexto actual
-  const [currentContext, setCurrentContextState] = useState<Partial<ArchContext>>({});
-
   // Estado para colapsar/expandir estadísticas
   const [statsCollapsed, setStatsCollapsed] = useState(false);
-  const [contextLoading, setContextLoading] = useState(true);
 
   // Cargar contexto desde localStorage y refrescar usuario
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
         await refreshUser();
-        
-        // Cargar contexto guardado
-        const savedContext = localStorage.getItem('investigator-context');
-        if (savedContext) {
-          try {
-            const context = JSON.parse(savedContext);
-            setCurrentContextState(context);
-            setCurrentContext(context);
-          } catch (error) {
-            console.error('Error loading context:', error);
-          }
-        }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
-      } finally {
-        setContextLoading(false);
       }
     };
 
     initializeDashboard();
-  }, [refreshUser, setCurrentContext]);
-
-  // Guardar contexto en localStorage
-  const saveContext = (context: Partial<ArchContext>) => {
-    localStorage.setItem('investigator-context', JSON.stringify(context));
-    setCurrentContext(context as ArchContext);
-    setCurrentContextState(context);
-  };
-
-  // Manejador de cambio de contexto desde el navegador
-  const handleContextChange = (context: Partial<ArchContext>) => {
-    saveContext(context);
-  };
+  }, [refreshUser]);
 
   // Manejadores de creación
   const handleAddProject = (formData: any) => {
@@ -110,7 +85,7 @@ const ResearcherDashboard: React.FC = () => {
     const newArea = {
       id: `area-${Date.now()}`,
       ...formData,
-      projectId: currentContext.projectId,
+      projectId: investigatorContext.project,
       sites: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -123,8 +98,8 @@ const ResearcherDashboard: React.FC = () => {
     const newSite = {
       id: `site-${Date.now()}`,
       ...formData,
-      projectId: currentContext.projectId,
-      areaId: currentContext.areaId,
+      projectId: investigatorContext.project,
+      areaId: investigatorContext.area,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -136,9 +111,9 @@ const ResearcherDashboard: React.FC = () => {
     const newFieldworkSession = {
       id: `fieldwork-${Date.now()}`,
       ...formData,
-      projectId: currentContext.projectId,
-      areaId: currentContext.areaId,
-      siteId: currentContext.siteId,
+      projectId: investigatorContext.project,
+      areaId: investigatorContext.area,
+      siteId: investigatorContext.site,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -150,10 +125,10 @@ const ResearcherDashboard: React.FC = () => {
     const newFinding = {
       id: `finding-${Date.now()}`,
       ...formData,
-      projectId: currentContext.projectId,
-      areaId: currentContext.areaId,
-      siteId: currentContext.siteId,
-      fieldworkSessionId: currentContext.fieldworkSessionId,
+      projectId: investigatorContext.project,
+      areaId: investigatorContext.area,
+      siteId: investigatorContext.site,
+      fieldworkSessionId: '', // Se puede agregar después
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -190,12 +165,12 @@ const ResearcherDashboard: React.FC = () => {
   const handleNavigation = (path: string) => {
     if (path === '/mapping') {
       const context = {
-        projectId: currentContext.projectId,
-        projectName: currentContext.projectName,
-        areaId: currentContext.areaId,
-        areaName: currentContext.areaName,
-        siteId: currentContext.siteId,
-        siteName: currentContext.siteName
+        projectId: investigatorContext.project,
+        projectName: investigatorContext.project,
+        areaId: investigatorContext.area,
+        areaName: investigatorContext.area,
+        siteId: investigatorContext.site,
+        siteName: investigatorContext.site
       };
       
       const params = new URLSearchParams();
@@ -205,13 +180,20 @@ const ResearcherDashboard: React.FC = () => {
       
       window.location.href = `/dashboard/researcher/mapping?${params.toString()}`;
     } else if (path === '/chronology') {
-      window.location.href = `/dashboard/researcher/chronology?projectId=${currentContext.projectId}&areaId=${currentContext.areaId}&siteId=${currentContext.siteId}`;
+      window.location.href = `/dashboard/researcher/chronology?projectId=${investigatorContext.project}&areaId=${investigatorContext.area}&siteId=${investigatorContext.site}`;
     } else if (path === '/laboratory') {
-      window.location.href = `/dashboard/researcher/laboratory?projectId=${currentContext.projectId}&areaId=${currentContext.areaId}&siteId=${currentContext.siteId}`;
+      window.location.href = `/dashboard/researcher/laboratory?projectId=${investigatorContext.project}&areaId=${investigatorContext.area}&siteId=${investigatorContext.site}`;
     }
     else {
       window.location.href = `/dashboard/researcher${path}`;
     }
+  };
+
+  // Función para manejar cambios de contexto desde el selector
+  const handleContextChange = (newContext: any) => {
+    console.log('🔄 Contexto cambiado desde selector:', newContext);
+    // El contexto ya se actualiza automáticamente a través del hook useInvestigatorContext
+    // Esta función es solo para logging y debugging
   };
 
   // Obtener datos filtrados
@@ -232,78 +214,130 @@ const ResearcherDashboard: React.FC = () => {
     chronologicalData: state.chronologicalData.length
   };
 
+  // Lógica de contexto para habilitación de herramientas
+  const hasMinimalContext = Boolean(investigatorContext.project && investigatorContext.area);
+  const hasCompleteContext = Boolean(investigatorContext.project && investigatorContext.area && investigatorContext.site);
+  
+  // Debug: Log del contexto actual
+  console.log('🔍 Contexto actual:', investigatorContext);
+  console.log('🔍 hasMinimalContext:', hasMinimalContext);
+  console.log('🔍 hasCompleteContext:', hasCompleteContext);
+  
+  // Herramientas que requieren contexto mínimo (proyecto + área)
+  const requiresMinimalContext = ['Trabajo de Campo', 'Hallazgos', 'Muestras', 'Laboratorio', 'Cronología', 'Reportes', 'Exportar Datos'];
+  
+  // Herramientas que requieren contexto completo (proyecto + área + sitio)
+  const requiresCompleteContext = ['Mapeo SIG Integrado'];
+
   // Herramientas de investigación
   const researchTools = [
     {
       name: 'Mapeo SIG Integrado',
-      description: currentContext.projectId && currentContext.areaId && currentContext.siteId 
-        ? `Sistema SIG para ${currentContext.siteName}`
+      description: hasCompleteContext 
+        ? `Sistema SIG para ${investigatorContext.site}`
         : 'Seleccione proyecto, área y sitio para acceder',
       icon: '🗺️',
-      color: currentContext.projectId && currentContext.areaId && currentContext.siteId ? 'bg-green-500' : 'bg-gray-400',
+      color: hasCompleteContext ? 'bg-green-500' : 'bg-gray-400',
       path: '/mapping',
-      examples: currentContext.projectId && currentContext.areaId && currentContext.siteId 
+      examples: hasCompleteContext 
         ? ['Visualizar sitios', 'Medir distancias', 'Exportar datos']
         : ['Requiere contexto completo']
     },
     {
       name: 'Trabajo de Campo',
-      description: 'Registro de actividades de excavación y prospección',
+      description: hasMinimalContext 
+        ? 'Registro de actividades de excavación y prospección'
+        : 'Seleccione proyecto y área para acceder',
       icon: '🏕️',
-      color: 'bg-blue-500',
+      color: hasMinimalContext ? 'bg-blue-500' : 'bg-gray-400',
       path: '/fieldwork',
-      examples: ['Excavaciones', 'Prospecciones', 'Registro de campo']
+      examples: hasMinimalContext 
+        ? ['Excavaciones', 'Prospecciones', 'Registro de campo']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Hallazgos',
-      description: 'Catálogo de artefactos, estructuras y ecofactos',
+      description: hasMinimalContext 
+        ? 'Catálogo de artefactos, estructuras y ecofactos'
+        : 'Seleccione proyecto y área para acceder',
       icon: '🔍',
-      color: 'bg-purple-500',
+      color: hasMinimalContext ? 'bg-purple-500' : 'bg-gray-400',
       path: '/findings',
-      examples: ['Artefactos líticos', 'Cerámica', 'Estructuras']
+      examples: hasMinimalContext 
+        ? ['Artefactos líticos', 'Cerámica', 'Estructuras']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Muestras',
-      description: 'Gestión de muestras para análisis de laboratorio',
+      description: hasMinimalContext 
+        ? 'Gestión de muestras para análisis de laboratorio'
+        : 'Seleccione proyecto y área para acceder',
       icon: '🧪',
-      color: 'bg-orange-500',
+      color: hasMinimalContext ? 'bg-orange-500' : 'bg-gray-400',
       path: '/samples',
-      examples: ['Carbón', 'Suelos', 'Material orgánico']
+      examples: hasMinimalContext 
+        ? ['Carbón', 'Suelos', 'Material orgánico']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Laboratorio',
-      description: 'Análisis y procesamiento de materiales',
+      description: hasMinimalContext 
+        ? 'Análisis y procesamiento de materiales'
+        : 'Seleccione proyecto y área para acceder',
       icon: '🔬',
-      color: 'bg-red-500',
+      color: hasMinimalContext ? 'bg-red-500' : 'bg-gray-400',
       path: '/laboratory',
-      examples: ['Análisis cerámico', 'Datación', 'Estudios especializados']
+      examples: hasMinimalContext 
+        ? ['Análisis cerámico', 'Datación', 'Estudios especializados']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Cronología',
-      description: 'Gestión de datos cronológicos y dataciones',
+      description: hasMinimalContext 
+        ? 'Gestión de datos cronológicos y dataciones'
+        : 'Seleccione proyecto y área para acceder',
       icon: '⏰',
-      color: 'bg-indigo-500',
+      color: hasMinimalContext ? 'bg-indigo-500' : 'bg-gray-400',
       path: '/chronology',
-      examples: ['Dataciones radiocarbónicas', 'Secuencias temporales']
+      examples: hasMinimalContext 
+        ? ['Dataciones radiocarbónicas', 'Secuencias temporales']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Reportes',
-      description: 'Generación de informes y documentación',
+      description: hasMinimalContext 
+        ? 'Generación de informes y documentación'
+        : 'Seleccione proyecto y área para acceder',
       icon: '📊',
-      color: 'bg-teal-500',
+      color: hasMinimalContext ? 'bg-teal-500' : 'bg-gray-400',
       path: '/reports',
-      examples: ['Informes de campo', 'Catálogos', 'Publicaciones']
+      examples: hasMinimalContext 
+        ? ['Informes de campo', 'Catálogos', 'Publicaciones']
+        : ['Requiere proyecto y área']
     },
     {
       name: 'Exportar Datos',
-      description: 'Exportación de datos en diferentes formatos',
+      description: hasMinimalContext 
+        ? 'Exportación de datos en diferentes formatos'
+        : 'Seleccione proyecto y área para acceder',
       icon: '📤',
-      color: 'bg-yellow-500',
+      color: hasMinimalContext ? 'bg-yellow-500' : 'bg-gray-400',
       path: '/export',
-      examples: ['JSON', 'CSV', 'PDF', 'Shapefile']
+      examples: hasMinimalContext 
+        ? ['JSON', 'CSV', 'PDF', 'Shapefile']
+        : ['Requiere proyecto y área']
     }
   ];
 
+  // Debug: Log del estado de carga
+  console.log('🔍 Estados de carga:', { authLoading, contextLoading });
+  console.log('🔍 Contexto del investigador:', investigatorContext);
+  
+  // Forzar re-render cuando el contexto cambie
+  useEffect(() => {
+    console.log('🔄 Contexto actualizado:', investigatorContext);
+  }, [investigatorContext]);
+  
   if (authLoading || contextLoading) {
     return <Loader message="Cargando información del usuario..." />;
   }
@@ -352,7 +386,8 @@ const ResearcherDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        {/* Banner de Contexto */}
+
+        
         {/* Selector de Contexto Unificado */}
         <Card className="mb-6 p-6" data-testid="unified-context-selector">
           <div className="flex items-center justify-between mb-4">
@@ -378,7 +413,7 @@ const ResearcherDashboard: React.FC = () => {
               </Button>
             </div>
           </div>
-          <UnifiedContextSelector />
+          <UnifiedContextSelector onContextChange={handleContextChange} />
         </Card>
 
         {/* Estadísticas - ahora horizontal y full width */}
@@ -444,40 +479,54 @@ const ResearcherDashboard: React.FC = () => {
                 <Button onClick={() => handleNavigation('/reports')} className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">Ver Informes</Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {researchTools.map((tool, index) => (
-                  <div
-                    key={index}
-                    data-testid={`tool-${tool.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                      tool.color === 'bg-gray-400' ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                    }`}
-                    onClick={() => {
-                      if (tool.color !== 'bg-gray-400') {
-                        handleNavigation(tool.path);
-                      }
-                    }}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className={`text-2xl ${tool.color === 'bg-gray-400' ? 'text-gray-400' : ''}`}>
-                        {tool.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800 mb-1">{tool.name}</h4>
-                        <p className="text-sm text-gray-600 mb-2">{tool.description}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {tool.examples.map((example, i) => (
-                            <span
-                              key={i}
-                              className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
-                            >
-                              {example}
-                            </span>
-                          ))}
+                {researchTools.map((tool, index) => {
+                  // Lógica de habilitación basada en contexto
+                  const isMappingTool = tool.name === 'Mapeo SIG Integrado';
+                  const isEnabled = isMappingTool 
+                    ? hasCompleteContext 
+                    : (requiresMinimalContext.includes(tool.name) ? hasMinimalContext : true);
+                  
+                  // Debug: Log de habilitación por herramienta
+                  console.log(`🔧 ${tool.name}:`, {
+                    isMappingTool,
+                    requiresMinimal: requiresMinimalContext.includes(tool.name),
+                    hasMinimalContext,
+                    hasCompleteContext,
+                    isEnabled
+                  });
+                  return (
+                    <div
+                      key={index}
+                      data-testid={`tool-${tool.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                        isEnabled ? 'hover:scale-105' : 'opacity-50 cursor-not-allowed'
+                      }`}
+                      onClick={() => {
+                        if (isEnabled) {
+                          handleNavigation(tool.path);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className={`text-2xl ${!isEnabled ? 'text-gray-400' : ''}`}>{tool.icon}</div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800 mb-1">{tool.name}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{tool.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {tool.examples.map((example, i) => (
+                              <span
+                                key={i}
+                                className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                              >
+                                {example}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>
@@ -541,7 +590,7 @@ const ResearcherDashboard: React.FC = () => {
           isOpen={showNewFinding}
           onClose={() => setShowNewFinding(false)}
           onSubmit={handleAddFinding}
-          context={currentContext.projectId && currentContext.areaId && currentContext.siteId ? (currentContext as any) : undefined}
+          context={investigatorContext.project && investigatorContext.area && investigatorContext.site ? (investigatorContext as any) : undefined}
         />
       )}
 
