@@ -1,15 +1,30 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import useInvestigatorContext from '../../hooks/useInvestigatorContext';
-import Button from './Button';
+import { useAuth } from '../../contexts/AuthContext';
 import Card from './Card';
-
-// ============================================================================
-// COMPONENTE SELECTOR DE CONTEXTO UNIFICADO
-// ============================================================================
 
 interface UnifiedContextSelectorProps {
   className?: string;
   onContextChange?: (context: any) => void;
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+interface Area {
+  id: string;
+  name: string;
+  project_id: string;
+}
+
+interface Site {
+  id: string;
+  name: string;
+  area_id: string;
 }
 
 const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({ 
@@ -25,10 +40,19 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
     setSite,
     clearContext
   } = useInvestigatorContext();
+  const { user } = useAuth();
+
+  // Estados para los datos del backend
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
 
   // Funciones auxiliares para compatibilidad
   const isContextComplete = Boolean(context.project && context.area && context.site);
-  const error = null; // No hay manejo de errores en useInvestigatorContext
+  const errorContext = null; // No hay manejo de errores en useInvestigatorContext
   
   const getContextDisplay = () => {
     if (!hasContext) return 'Sin contexto';
@@ -50,75 +74,177 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   const [selectedSite, setSelectedSite] = useState('');
 
   // ============================================================================
-  // DATOS MOCK (en el futuro vendrán del backend)
+  // FUNCIONES PARA CARGAR DATOS DEL BACKEND
   // ============================================================================
 
-  const projects = [
-    { id: 'proj-001', name: 'Proyecto Cazadores Recolectores - La Laguna' },
-    { id: 'proj-002', name: 'Estudio de Poblamiento Pampeano' },
-    { id: 'proj-003', name: 'Arqueología de la Llanura Bonaerense' },
-    { id: 'proj-004', name: 'Arqueología Prehispánica del Valle del Cauca' },
-    { id: 'proj-005', name: 'Sitios Arqueológicos del Desierto de Atacama' },
-    { id: 'proj-006', name: 'Arqueología Medieval de Castilla y León' }
-  ];
+  // Cargar proyectos del usuario autenticado
+  const loadProjects = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
 
-  const areas = [
-    { id: 'area-001', name: 'Laguna La Brava', projectId: 'proj-001' },
-    { id: 'area-002', name: 'Arroyo Seco', projectId: 'proj-001' },
-    { id: 'area-003', name: 'Monte Hermoso', projectId: 'proj-002' },
-    { id: 'area-004', name: 'Costa Bonaerense', projectId: 'proj-002' },
-    { id: 'area-005', name: 'Valle del Cauca Central', projectId: 'proj-004' },
-    { id: 'area-006', name: 'Cordillera Occidental', projectId: 'proj-004' },
-    { id: 'area-007', name: 'Desierto de Atacama Norte', projectId: 'proj-005' },
-    { id: 'area-008', name: 'Salar de Atacama', projectId: 'proj-005' },
-    { id: 'area-009', name: 'Valle del Duero', projectId: 'proj-006' },
-    { id: 'area-010', name: 'Sierra de Gredos', projectId: 'proj-006' }
-  ];
+      const response = await fetch('http://localhost:4000/api/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  const sites = [
-    { id: 'site-001', name: 'Sitio Pampeano La Laguna', areaId: 'area-001' },
-    { id: 'site-002', name: 'Sitio Laguna Brava Norte', areaId: 'area-001' },
-    { id: 'site-003', name: 'Sitio Laguna Brava Sur', areaId: 'area-001' },
-    { id: 'site-004', name: 'Sitio Arroyo Seco 2', areaId: 'area-002' },
-    { id: 'site-005', name: 'Sitio Arroyo Seco Norte', areaId: 'area-002' },
-    { id: 'site-006', name: 'Sitio Arroyo Seco Sur', areaId: 'area-002' },
-    { id: 'site-007', name: 'Sitio Monte Hermoso', areaId: 'area-003' },
-    { id: 'site-008', name: 'Sitio Monte Hermoso Este', areaId: 'area-003' },
-    { id: 'site-009', name: 'Sitio Monte Hermoso Oeste', areaId: 'area-003' },
-    { id: 'site-010', name: 'Sitio Costa Bonaerense', areaId: 'area-004' },
-    { id: 'site-011', name: 'Sitio Playa Dorada', areaId: 'area-004' },
-    { id: 'site-012', name: 'Sitio Costa Sur', areaId: 'area-004' },
-    { id: 'site-013', name: 'Sitio Valle del Cauca', areaId: 'area-005' },
-    { id: 'site-014', name: 'Sitio Valle Central Norte', areaId: 'area-005' },
-    { id: 'site-015', name: 'Sitio Valle Central Sur', areaId: 'area-005' },
-    { id: 'site-016', name: 'Sitio Cordillera Occidental', areaId: 'area-006' },
-    { id: 'site-017', name: 'Sitio Cordillera Norte', areaId: 'area-006' },
-    { id: 'site-018', name: 'Sitio Cordillera Sur', areaId: 'area-006' },
-    { id: 'site-019', name: 'Sitio Desierto Atacama', areaId: 'area-007' },
-    { id: 'site-020', name: 'Sitio Atacama Norte', areaId: 'area-007' },
-    { id: 'site-021', name: 'Sitio Atacama Central', areaId: 'area-007' },
-    { id: 'site-022', name: 'Sitio Salar de Atacama', areaId: 'area-008' },
-    { id: 'site-023', name: 'Sitio Salar Norte', areaId: 'area-008' },
-    { id: 'site-024', name: 'Sitio Salar Sur', areaId: 'area-008' },
-    { id: 'site-025', name: 'Sitio Valle del Duero', areaId: 'area-009' },
-    { id: 'site-026', name: 'Sitio Duero Norte', areaId: 'area-009' },
-    { id: 'site-027', name: 'Sitio Duero Sur', areaId: 'area-009' },
-    { id: 'site-028', name: 'Sitio Sierra de Gredos', areaId: 'area-010' },
-    { id: 'site-029', name: 'Sitio Gredos Norte', areaId: 'area-010' },
-    { id: 'site-030', name: 'Sitio Gredos Sur', areaId: 'area-010' }
-  ];
+      if (!response.ok) {
+        throw new Error(`Error al cargar proyectos: ${response.status}`);
+      }
+
+              const data = await response.json();
+        console.log('📋 Proyectos cargados (Unified):', data.data);
+        setProjects(data.data || []);
+        setHasLoadedProjects(true);
+      } catch (err) {
+        console.error('❌ Error cargando proyectos (Unified):', err);
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+  };
+
+  // Cargar áreas del proyecto seleccionado
+  const loadAreas = async (projectId: string) => {
+    if (!user || !projectId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+
+      const response = await fetch('http://localhost:4000/api/areas', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar áreas: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🗺️ Áreas cargadas (Unified):', data.data);
+      
+      // Filtrar áreas por proyecto
+      const projectAreas = data.data.filter((area: Area) => area.project_id === projectId);
+      setAreas(projectAreas);
+    } catch (err) {
+      console.error('❌ Error cargando áreas (Unified):', err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setAreas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar sitios del área seleccionada
+  const loadSites = async (areaId: string) => {
+    if (!user || !areaId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+
+      const response = await fetch('http://localhost:4000/api/sites', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar sitios: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🏛️ Sitios cargados (Unified):', data.data);
+      
+      // Filtrar sitios por área
+      const areaSites = data.data.filter((site: Site) => site.area_id === areaId);
+      setSites(areaSites);
+    } catch (err) {
+      console.error('❌ Error cargando sitios (Unified):', err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setSites([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ============================================================================
   // FUNCIONES UTILITARIAS
   // ============================================================================
 
   const getAreasForProject = (projectId: string) => {
-    return areas.filter(area => area.projectId === projectId);
+    return areas.filter(area => area.project_id === projectId);
   };
 
   const getSitesForArea = (areaId: string) => {
-    return sites.filter(site => site.areaId === areaId);
+    return sites.filter(site => site.area_id === areaId);
   };
+
+  // ============================================================================
+  // EFECTOS
+  // ============================================================================
+
+  // Cargar datos iniciales cuando se abre el selector
+  useEffect(() => {
+    if (isOpen && user && !loading && !hasLoadedProjects) {
+      loadProjects();
+    }
+  }, [isOpen, user]);
+
+  // Cargar áreas cuando se selecciona un proyecto
+  useEffect(() => {
+    if (selectedProject && user) {
+      loadAreas(selectedProject);
+    }
+  }, [selectedProject, user]);
+
+  // Cargar sitios cuando se selecciona un área
+  useEffect(() => {
+    if (selectedArea && user) {
+      loadSites(selectedArea);
+    }
+  }, [selectedArea, user]);
+
+  // Inicializar selecciones cuando se carga el contexto
+  useEffect(() => {
+    if (context) {
+      // Buscar el proyecto por nombre
+      const project = projects.find(p => p.name === context.project);
+      setSelectedProject(project?.id || '');
+      
+      // Buscar el área por nombre
+      const area = areas.find(a => a.name === context.area);
+      setSelectedArea(area?.id || '');
+      
+      // Buscar el sitio por nombre
+      const site = sites.find(s => s.name === context.site);
+      setSelectedSite(site?.id || '');
+    }
+  }, [context, projects, areas, sites]);
 
   // ============================================================================
   // MANEJADORES DE EVENTOS
@@ -233,27 +359,6 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   };
 
   // ============================================================================
-  // EFECTOS
-  // ============================================================================
-
-  // Inicializar selecciones cuando se carga el contexto
-  useEffect(() => {
-    if (context) {
-      // Buscar el proyecto por nombre
-      const project = projects.find(p => p.name === context.project);
-      setSelectedProject(project?.id || '');
-      
-      // Buscar el área por nombre
-      const area = areas.find(a => a.name === context.area);
-      setSelectedArea(area?.id || '');
-      
-      // Buscar el sitio por nombre
-      const site = sites.find(s => s.name === context.site);
-      setSelectedSite(site?.id || '');
-    }
-  }, [context]);
-
-  // ============================================================================
   // RENDERIZADO
   // ============================================================================
 
@@ -266,44 +371,87 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
     );
   }
 
+  // Si no hay usuario autenticado, mostrar mensaje
+  if (!user) {
+    return (
+      <div className={`text-center p-4 ${className}`}>
+        <p className="text-gray-500">Debe iniciar sesión para seleccionar contexto</p>
+      </div>
+    );
+  }
+
+  // Si hay error, mostrar mensaje
   if (error) {
     return (
-      <div className={`text-red-600 text-sm ${className}`}>
-        Error: {error}
+      <div className={`text-center p-4 ${className}`}>
+        <p className="text-red-500">Error: {error}</p>
+        <button 
+          onClick={() => {
+            setError(null);
+            if (isOpen) loadProjects();
+          }}
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
 
   return (
     <div className={className}>
-      {/* Botón principal */}
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      {/* Botón para abrir el selector */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${
+          hasContext
+            ? 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100'
+            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+        }`}
       >
         <span>📍</span>
-        <span className="text-sm">
+        <span className="text-sm font-medium">
           {hasContext ? getContextDisplay() : 'Seleccionar Contexto'}
         </span>
         {hasContext && (
           <span className={`text-xs px-2 py-1 rounded-full ${
             isContextComplete 
               ? 'bg-green-200 text-green-800' 
-              : 'bg-yellow-200 text-yellow-800'
+              : 'bg-blue-200 text-blue-800'
           }`}>
             {isContextComplete ? 'Completo' : 'Parcial'}
           </span>
         )}
-      </Button>
+      </button>
 
-      {/* Modal de selección */}
+      {/* Modal del selector */}
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4 p-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Seleccionar Contexto
-              </h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Seleccionar Contexto
+                </h3>
+                <button
+                  onClick={() => {
+                    setHasLoadedProjects(false);
+                    setError(null);
+                    loadProjects();
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                  disabled={loading}
+                >
+                  {loading ? '🔄' : '🔄 Recargar'}
+                </button>
+              </div>
+
+              {loading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Cargando datos...</p>
+                </div>
+              )}
 
               {/* Proyecto */}
               <div>
@@ -313,7 +461,10 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                 <select
                   value={selectedProject}
                   onChange={(e) => handleProjectChange(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                  className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
                 >
                   <option value="">Seleccionar proyecto...</option>
                   {projects.map(project => (
@@ -322,6 +473,9 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                     </option>
                   ))}
                 </select>
+                {projects.length === 0 && !loading && (
+                  <p className="text-sm text-gray-500 mt-1">No hay proyectos disponibles</p>
+                )}
               </div>
 
               {/* Área */}
@@ -333,7 +487,10 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                   <select
                     value={selectedArea}
                     onChange={(e) => handleAreaChange(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={loading}
+                    className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                   >
                     <option value="">Seleccionar área...</option>
                     {getAreasForProject(selectedProject).map(area => (
@@ -342,6 +499,9 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                       </option>
                     ))}
                   </select>
+                  {getAreasForProject(selectedProject).length === 0 && !loading && (
+                    <p className="text-sm text-gray-500 mt-1">No hay áreas disponibles para este proyecto</p>
+                  )}
                 </div>
               )}
 
@@ -354,40 +514,49 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                   <select
                     value={selectedSite}
                     onChange={(e) => handleSiteChange(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={loading}
+                    className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <option value="">Sin sitio específico</option>
+                    <option value="">Seleccionar sitio (opcional)...</option>
                     {getSitesForArea(selectedArea).map(site => (
                       <option key={site.id} value={site.id}>
                         {site.name}
                       </option>
                     ))}
                   </select>
+                  {getSitesForArea(selectedArea).length === 0 && !loading && (
+                    <p className="text-sm text-gray-500 mt-1">No hay sitios disponibles para esta área</p>
+                  )}
                 </div>
               )}
 
               {/* Botones */}
-              <div className="flex space-x-2 pt-4">
-                <Button
-                  onClick={handleConfirm}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={handleClearContext}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
-                  Confirmar
-                </Button>
-                {hasContext && (
-                  <Button
-                    onClick={handleClearContext}
-                    className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Limpiar
-                  </Button>
-                )}
-                <Button
+                  Limpiar
+                </button>
+                <button
                   onClick={() => setIsOpen(false)}
-                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors"
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                 >
                   Cancelar
-                </Button>
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={!selectedProject || !selectedArea}
+                  className={`px-4 py-2 rounded ${
+                    selectedProject && selectedArea
+                      ? 'bg-blue-500 text-white hover:bg-blue-600'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Confirmar
+                </button>
               </div>
             </div>
           </Card>

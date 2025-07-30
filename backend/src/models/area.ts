@@ -11,10 +11,14 @@ export const AreaModel = {
     if (error) throw new Error(error.message);
     return data;
   },
-  async getAll(): Promise<Area[]> {
-    const { data, error } = await supabase
-      .from('areas')
-      .select('*');
+  async getAll(userId?: string): Promise<Area[]> {
+    let query = supabase.from('areas').select('*');
+    
+    if (userId) {
+      query = query.eq('created_by', userId);
+    }
+    
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
     return data || [];
   },

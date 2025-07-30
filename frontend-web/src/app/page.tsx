@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '../components/ui/Button';
+import DevelopmentBanner from '../components/ui/DevelopmentBanner';
 
 export default function Home() {
   const router = useRouter();
@@ -32,6 +33,27 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <DevelopmentBanner 
+          title="⚠️ Modo Desarrollo Activo - Suite Arqueológica"
+          className="mb-8"
+        >
+          <p className="mb-2">
+            <strong>Recordatorio importante para producción:</strong>
+          </p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Configurar correctamente el servicio de email en Supabase</li>
+            <li>Ajustar los límites de rate limiting según las necesidades</li>
+            <li>Verificar la configuración de autenticación</li>
+            <li>Revisar la configuración de seguridad</li>
+            <li>Configurar variables de entorno de producción</li>
+            <li>Habilitar HTTPS</li>
+            <li>Configurar logs y monitoreo</li>
+          </ul>
+          <p className="mt-2 text-xs">
+            <strong>Nota:</strong> Este banner solo aparece en modo desarrollo y no será visible en producción.
+          </p>
+        </DevelopmentBanner>
+        
         <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Plataforma Integral para la

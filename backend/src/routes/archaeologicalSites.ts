@@ -44,7 +44,12 @@ router.get('/search/text', ArchaeologicalSiteController.searchSitesByText);
 router.get('/statistics', ArchaeologicalSiteController.getSiteStatistics);
 router.get('/export', ArchaeologicalSiteController.exportSites);
 router.get('/:id', ArchaeologicalSiteController.getSiteById);
-router.get('/', ArchaeologicalSiteController.getAllSites);
+
+// Rutas que requieren autenticación
+router.get('/', 
+  AuthMiddleware.authenticate, 
+  ArchaeologicalSiteController.getAllSites
+);
 
 // Rutas protegidas
 router.post('/', 

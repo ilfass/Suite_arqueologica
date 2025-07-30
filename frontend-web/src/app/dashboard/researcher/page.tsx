@@ -18,6 +18,7 @@ import AreaEditForm from '../../../components/forms/AreaEditForm';
 import SiteEditForm from '../../../components/forms/SiteEditForm';
 import FieldworkSessionForm from '../../../components/forms/FieldworkSessionForm';
 import FindingForm from '../../../components/forms/FindingForm';
+import ReportForm, { ReportFormData } from '../../../components/forms/ReportForm';
 import Loader from '../../../components/ui/Loader';
 
 const ResearcherDashboard: React.FC = () => {
@@ -136,6 +137,21 @@ const ResearcherDashboard: React.FC = () => {
     setShowNewFinding(false);
   };
 
+  const handleAddReport = (formData: ReportFormData) => {
+    const newReport = {
+      id: `report-${Date.now()}`,
+      ...formData,
+      projectId: investigatorContext.project,
+      areaId: investigatorContext.area,
+      siteId: investigatorContext.site,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    // Aquí se podría dispatch a un estado de informes o enviar al backend
+    console.log('📋 Nuevo informe creado:', newReport);
+    setShowNewReport(false);
+  };
+
   // Manejadores de edición
   const handleEditProject = (formData: any) => {
     if (editingProjectId) {
@@ -202,17 +218,69 @@ const ResearcherDashboard: React.FC = () => {
   const availableFieldworkSessions = state.fieldworkSessions;
   const availableFindings = state.findings;
 
-  // Estadísticas
-  const stats = {
-    projects: state.projects.length,
-    areas: availableAreas.length,
-    sites: availableSites.length,
-    fieldworkSessions: availableFieldworkSessions.length,
-    findings: availableFindings.length,
-    samples: state.samples.length,
-    laboratoryAnalyses: state.laboratoryAnalyses.length,
-    chronologicalData: state.chronologicalData.length
-  };
+  // Estadísticas - Inicialmente en 0 hasta que se carguen los datos reales
+  const [stats, setStats] = useState({
+    projects: 0,
+    areas: 0,
+    sites: 0,
+    fieldworkSessions: 0,
+    findings: 0,
+    samples: 0,
+    laboratoryAnalyses: 0,
+    chronologicalData: 0
+  });
+
+  // Cargar estadísticas reales del backend
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const [projectsRes, areasRes, sitesRes] = await Promise.all([
+          fetch('http://localhost:4000/api/projects', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('http://localhost:4000/api/areas', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('http://localhost:4000/api/sites', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+        ]);
+
+        const projects = projectsRes.ok ? await projectsRes.json() : { data: [] };
+        const areas = areasRes.ok ? await areasRes.json() : { data: [] };
+        const sites = sitesRes.ok ? await sitesRes.json() : { data: [] };
+
+        setStats({
+          projects: projects.data?.length || 0,
+          areas: areas.data?.length || 0,
+          sites: sites.data?.length || 0,
+          fieldworkSessions: 0, // TODO: Implementar API
+          findings: 0, // TODO: Implementar API
+          samples: 0, // TODO: Implementar API
+          laboratoryAnalyses: 0, // TODO: Implementar API
+          chronologicalData: 0 // TODO: Implementar API
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, [user]);
 
   // Lógica de contexto para habilitación de herramientas
   const hasMinimalContext = Boolean(investigatorContext.project && investigatorContext.area);
@@ -477,6 +545,8 @@ const ResearcherDashboard: React.FC = () => {
                 <Button onClick={() => setShowNewFinding(true)} className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">+ Nuevo Hallazgo</Button>
                 <Button onClick={() => setShowNewReport(true)} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Nuevo Informe</Button>
                 <Button onClick={() => handleNavigation('/reports')} className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">Ver Informes</Button>
+                <Button onClick={() => window.open(`/public/investigator/${user?.id || 'current'}`, '_blank')} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">🌐 Mi Vidriera</Button>
+                <Button onClick={() => handleNavigation('/public-profile')} className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">⚙️ Configurar Vidriera</Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {researchTools.map((tool, index) => {
@@ -533,54 +603,43 @@ const ResearcherDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Modales - Simplificados por ahora */}
+      {/* Modales de creación */}
       {showNewProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Nuevo Proyecto</h3>
-            <p className="text-gray-600 mb-4">Funcionalidad de creación de proyectos en desarrollo.</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                onClick={() => setShowNewProject(false)}
-                className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600"
-              >
-                Cerrar
-              </Button>
-            </div>
+          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <ProjectCreationFormNew
+              onSubmit={handleAddProject}
+              onCancel={() => setShowNewProject(false)}
+              loading={false}
+            />
           </div>
         </div>
       )}
 
       {showNewArea && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Nueva Área</h3>
-            <p className="text-gray-600 mb-4">Funcionalidad de creación de áreas en desarrollo.</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                onClick={() => setShowNewArea(false)}
-                className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600"
-              >
-                Cerrar
-              </Button>
-            </div>
+          <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <AreaCreationForm
+              onSubmit={handleAddArea}
+              onCancel={() => setShowNewArea(false)}
+              projectId={investigatorContext.project}
+              projectName={investigatorContext.project || 'Proyecto'}
+            />
           </div>
         </div>
       )}
 
       {showNewSite && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Nuevo Sitio</h3>
-            <p className="text-gray-600 mb-4">Funcionalidad de creación de sitios en desarrollo.</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                onClick={() => setShowNewSite(false)}
-                className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600"
-              >
-                Cerrar
-              </Button>
-            </div>
+          <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <SiteCreationForm
+              onSubmit={handleAddSite}
+              onCancel={() => setShowNewSite(false)}
+              projectId={investigatorContext.project}
+              projectName={investigatorContext.project || 'Proyecto'}
+              areaId={investigatorContext.area}
+              areaName={investigatorContext.area || 'Área'}
+            />
           </div>
         </div>
       )}
@@ -595,16 +654,12 @@ const ResearcherDashboard: React.FC = () => {
       )}
 
       {showNewReport && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Nuevo Informe</h3>
-            {/* Aquí puedes agregar el formulario de informe o un placeholder */}
-            <p className="text-gray-600 mb-4">Funcionalidad de creación de informes en desarrollo.</p>
-            <div className="flex justify-end space-x-2">
-              <Button onClick={() => setShowNewReport(false)} className="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600">Cerrar</Button>
-            </div>
-          </div>
-        </div>
+        <ReportForm
+          isOpen={showNewReport}
+          onClose={() => setShowNewReport(false)}
+          onSubmit={handleAddReport}
+          context={investigatorContext.project && investigatorContext.area && investigatorContext.site ? (investigatorContext as any) : undefined}
+        />
       )}
     </div>
   );

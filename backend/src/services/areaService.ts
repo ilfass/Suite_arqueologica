@@ -6,8 +6,8 @@ export class AreaService {
     return await AreaModel.create({ ...areaData, created_by: userId });
   }
 
-  static async getAllAreas(): Promise<Area[]> {
-    return await AreaModel.getAll();
+  static async getAllAreas(userId?: string): Promise<Area[]> {
+    return await AreaModel.getAll(userId);
   }
 
   static async getAreaById(id: string): Promise<Area | null> {

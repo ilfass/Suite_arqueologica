@@ -45,7 +45,12 @@ const FindingForm: React.FC<FindingFormProps> = ({
     fieldworkSessionId: context?.fieldworkSessionId || '',
     siteId: context?.siteId || '',
     areaId: context?.areaId || '',
-    projectId: context?.projectId || ''
+    projectId: context?.projectId || '',
+    conservationTreatment: '',
+    analyses: [],
+    currentLocation: '',
+    conservationNotes: '',
+    associatedDocuments: []
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -62,13 +67,13 @@ const FindingForm: React.FC<FindingFormProps> = ({
         areaId: context.areaId || '',
         projectId: context.projectId || ''
       }));
-    } else if (unifiedContext.project_id) {
+    } else if (unifiedContext?.project_id) {
       // Usar contexto unificado si está disponible
       setFormData(prev => ({
         ...prev,
-        projectId: unifiedContext.project_id || '',
-        areaId: unifiedContext.area_id || '',
-        siteId: unifiedContext.site_id || ''
+        projectId: unifiedContext?.project_id || '',
+        areaId: unifiedContext?.area_id || '',
+        siteId: unifiedContext?.site_id || ''
       }));
     }
   }, [initialData, context, unifiedContext]);
@@ -159,11 +164,71 @@ const FindingForm: React.FC<FindingFormProps> = ({
     }
   };
 
+  // Funciones para manejar documentación asociada
+  const addDocument = () => {
+    const newDocument = {
+      title: '',
+      authorRole: 'author' as const,
+      isPublished: false,
+      publicationLink: '',
+      notes: ''
+    };
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: [...prev.associatedDocuments, newDocument]
+    }));
+  };
+
+  const removeDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: prev.associatedDocuments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateDocument = (index: number, field: keyof FindingFormData['associatedDocuments'][0], value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: prev.associatedDocuments.map((doc, i) => 
+        i === index ? { ...doc, [field]: value } : doc
+      )
+    }));
+  };
+
   if (!isOpen) return null;
 
+  console.log('🔍 FindingForm renderizando con isOpen:', isOpen);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        padding: '1rem'
+      }}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-md border border-gray-200 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e5e7eb',
+          width: '100%',
+          maxWidth: '896px',
+          maxHeight: '90vh',
+          overflow: 'auto'
+        }}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
@@ -221,10 +286,15 @@ const FindingForm: React.FC<FindingFormProps> = ({
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="artifact">Artefacto</option>
-                    <option value="feature">Estructura/Elemento</option>
-                    <option value="ecofact">Ecofacto</option>
-                    <option value="structure">Estructura</option>
+                    <option value="artifact">Artefacto (Objeto manufacturado)</option>
+                    <option value="feature">Elemento/Feature (Estructura no móvil)</option>
+                    <option value="ecofact">Ecofacto (Material orgánico no modificado)</option>
+                    <option value="structure">Estructura (Construcción arquitectónica)</option>
+                    <option value="sample">Muestra (Para análisis)</option>
+                    <option value="human_remains">Restos Humanos</option>
+                    <option value="faunal">Fauna</option>
+                    <option value="floral">Flora</option>
+                    <option value="geological">Geológico</option>
                   </select>
                 </div>
 
@@ -462,6 +532,110 @@ const FindingForm: React.FC<FindingFormProps> = ({
               </div>
             </div>
 
+            {/* Sección 4.5: Análisis y Conservación */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">🔬 Análisis y Conservación</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Estado de Conservación
+                  </label>
+                  <select
+                    value={formData.condition}
+                    onChange={(e) => handleInputChange('condition', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Seleccionar estado</option>
+                    <option value="excellent">Excelente - Sin alteraciones</option>
+                    <option value="good">Bueno - Alteraciones menores</option>
+                    <option value="fair">Regular - Alteraciones moderadas</option>
+                    <option value="poor">Pobre - Alteraciones severas</option>
+                    <option value="fragmentary">Fragmentario - Muy deteriorado</option>
+                    <option value="unstable">Inestable - Requiere intervención</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tratamiento de Conservación
+                  </label>
+                  <select
+                    value={formData.conservationTreatment || ''}
+                    onChange={(e) => handleInputChange('conservationTreatment', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Seleccionar tratamiento</option>
+                    <option value="none">Ninguno requerido</option>
+                    <option value="cleaning">Limpieza básica</option>
+                    <option value="consolidation">Consolidación</option>
+                    <option value="restoration">Restauración</option>
+                    <option value="stabilization">Estabilización</option>
+                    <option value="specialized">Tratamiento especializado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Análisis Realizados
+                  </label>
+                  <div className="space-y-2">
+                    {['Radiocarbono', 'Termoluminiscencia', 'Análisis de composición', 'Análisis de uso', 'Análisis de residuos', 'Análisis de ADN'].map((analysis) => (
+                      <label key={analysis} className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          className="mr-2"
+                          checked={formData.analyses?.includes(analysis) || false}
+                          onChange={(e) => {
+                            const currentAnalyses = formData.analyses || [];
+                            if (e.target.checked) {
+                              handleInputChange('analyses', [...currentAnalyses, analysis]);
+                            } else {
+                              handleInputChange('analyses', currentAnalyses.filter(a => a !== analysis));
+                            }
+                          }}
+                        />
+                        {analysis}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ubicación Actual
+                  </label>
+                  <select
+                    value={formData.currentLocation || ''}
+                    onChange={(e) => handleInputChange('currentLocation', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Seleccionar ubicación</option>
+                    <option value="field">En campo</option>
+                    <option value="laboratory">En laboratorio</option>
+                    <option value="storage">En almacén</option>
+                    <option value="museum">En museo</option>
+                    <option value="exhibition">En exhibición</option>
+                    <option value="loan">En préstamo</option>
+                    <option value="lost">Perdido</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notas de Conservación
+                </label>
+                <textarea
+                  value={formData.conservationNotes || ''}
+                  onChange={(e) => handleInputChange('conservationNotes', e.target.value)}
+                  placeholder="Notas específicas sobre conservación, tratamientos aplicados, recomendaciones futuras..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+            </div>
+
             {/* Sección 5: Documentación */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">📸 Documentación</h3>
@@ -535,6 +709,116 @@ const FindingForm: React.FC<FindingFormProps> = ({
               </div>
             </div>
 
+            {/* Sección 6: Documentación Asociada */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">📚 Documentación Asociada</h3>
+                <Button
+                  type="button"
+                  onClick={addDocument}
+                  className="px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 text-sm"
+                >
+                  + Agregar Documento
+                </Button>
+              </div>
+              
+              {formData.associatedDocuments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No hay documentos asociados</p>
+                  <p className="text-sm">Haz clic en "Agregar Documento" para comenzar</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {formData.associatedDocuments.map((doc, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-medium text-gray-800">Documento {index + 1}</h4>
+                        <Button
+                          type="button"
+                          onClick={() => removeDocument(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          ✕ Eliminar
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Título del Documento *
+                          </label>
+                          <input
+                            type="text"
+                            value={doc.title}
+                            onChange={(e) => updateDocument(index, 'title', e.target.value)}
+                            placeholder="Título del artículo, informe, etc."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Tu Rol en el Documento
+                          </label>
+                          <select
+                            value={doc.authorRole}
+                            onChange={(e) => updateDocument(index, 'authorRole', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="author">Autor Principal</option>
+                            <option value="coauthor">Co-autor</option>
+                            <option value="other">Otro (especificar en notas)</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <label className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={doc.isPublished}
+                            onChange={(e) => updateDocument(index, 'isPublished', e.target.checked)}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            ¿Está publicado?
+                          </span>
+                        </label>
+                      </div>
+                      
+                      {doc.isPublished && (
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Enlace de Publicación
+                          </label>
+                          <input
+                            type="url"
+                            value={doc.publicationLink || ''}
+                            onChange={(e) => updateDocument(index, 'publicationLink', e.target.value)}
+                            placeholder="https://doi.org/... o URL de la publicación"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Notas Adicionales
+                        </label>
+                        <textarea
+                          value={doc.notes || ''}
+                          onChange={(e) => updateDocument(index, 'notes', e.target.value)}
+                          placeholder="Información adicional sobre el documento, co-autores, revista, etc."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Botones de Acción */}
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button
@@ -553,7 +837,7 @@ const FindingForm: React.FC<FindingFormProps> = ({
             </div>
           </form>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

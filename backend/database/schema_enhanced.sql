@@ -7,15 +7,59 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- ========================================
--- TABLA DE USUARIOS (sin cambios)
+-- TABLA DE USUARIOS (ACTUALIZADA CON CAMPOS ESPECÍFICOS POR ROL)
 -- ========================================
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    
+    -- CAMPOS COMUNES PARA TODOS LOS ROLES
     email TEXT UNIQUE NOT NULL,
-    full_name TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('RESEARCHER', 'STUDENT', 'COORDINATOR', 'INSTITUTION', 'GUEST')),
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    country TEXT NOT NULL,
+    province TEXT NOT NULL,
+    city TEXT NOT NULL,
+    phone TEXT,
+    role TEXT NOT NULL CHECK (role IN ('DIRECTOR', 'RESEARCHER', 'STUDENT', 'INSTITUTION', 'GUEST')),
     subscription_plan TEXT NOT NULL DEFAULT 'FREE' CHECK (subscription_plan IN ('FREE', 'PROFESSIONAL', 'INSTITUTIONAL')),
-    institution TEXT,
+    
+    -- CAMPOS ESPECÍFICOS PARA INSTITUCIÓN
+    institution_name TEXT, -- Solo para rol INSTITUTION
+    institution_address TEXT, -- Solo para rol INSTITUTION
+    institution_website TEXT, -- Solo para rol INSTITUTION
+    institution_department TEXT, -- Solo para rol INSTITUTION
+    institution_email TEXT, -- Solo para rol INSTITUTION
+    institution_alternative_email TEXT, -- Solo para rol INSTITUTION
+    
+    -- CAMPOS ESPECÍFICOS PARA DIRECTOR
+    director_document_id TEXT, -- DNI/INE/Cedula/pasaporte/etc
+    director_highest_degree TEXT, -- Título máximo alcanzado
+    director_discipline TEXT, -- Disciplina principal
+    director_formation_institution TEXT, -- Institución de formación
+    director_current_institution TEXT, -- Institución actual de pertenencia
+    director_current_position TEXT, -- Cargo actual / posición
+    director_cv_link TEXT, -- CV / link a ORCID / link a CONICET o academia.edu
+    
+    -- CAMPOS ESPECÍFICOS PARA INVESTIGADOR
+    researcher_document_id TEXT, -- DNI/INE/Cedula/pasaporte/etc
+    researcher_career TEXT, -- Carrera / Programa académico
+    researcher_year TEXT, -- Año en curso
+    researcher_formation_institution TEXT, -- Institución de formación
+    researcher_role TEXT, -- Rol (ej: pasante, tesista, ayudante, becario, etc.)
+    researcher_area TEXT, -- Area de investigacion (opcional)
+    researcher_director_id UUID REFERENCES public.users(id), -- Director que lo dirige
+    
+    -- CAMPOS ESPECÍFICOS PARA ESTUDIANTE
+    student_document_id TEXT, -- DNI/INE/Cedula/pasaporte/etc
+    student_highest_degree TEXT, -- Título máximo alcanzado
+    student_discipline TEXT, -- Disciplina principal
+    student_formation_institution TEXT, -- Institución de formación
+    student_current_institution TEXT, -- Institución actual de pertenencia
+    student_current_position TEXT, -- Cargo actual / posición
+    student_cv_link TEXT, -- CV / link a ORCID / link a CONICET o academia.edu
+    
+    -- CAMPOS GENERALES (mantenidos para compatibilidad)
+    institution TEXT, -- Campo general de institución
     phone TEXT,
     address TEXT,
     website TEXT,
@@ -24,6 +68,12 @@ CREATE TABLE IF NOT EXISTS public.users (
     academic_degree TEXT,
     research_interests TEXT[],
     professional_affiliations TEXT[],
+    
+    -- TÉRMINOS Y CONDICIONES
+    terms_accepted BOOLEAN DEFAULT FALSE,
+    terms_accepted_at TIMESTAMP WITH TIME ZONE,
+    
+    -- METADATOS
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

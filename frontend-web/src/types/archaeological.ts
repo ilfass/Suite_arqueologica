@@ -250,7 +250,7 @@ export interface FieldworkFormData {
 
 export interface FindingFormData {
   name: string;
-  type: 'artifact' | 'feature' | 'ecofact' | 'structure';
+  type: 'artifact' | 'feature' | 'ecofact' | 'structure' | 'sample' | 'human_remains' | 'faunal' | 'floral' | 'geological';
   material: string;
   description: string;
   coordinates: [number, number];
@@ -272,6 +272,19 @@ export interface FindingFormData {
   siteId: string;
   areaId: string;
   projectId: string;
+  // Análisis y conservación
+  conservationTreatment?: string;
+  analyses?: string[];
+  currentLocation?: string;
+  conservationNotes?: string;
+  // Documentación asociada
+  associatedDocuments: {
+    title: string;
+    authorRole: 'author' | 'coauthor' | 'other';
+    isPublished: boolean;
+    publicationLink?: string;
+    notes?: string;
+  }[];
 }
 
 export interface SampleFormData {

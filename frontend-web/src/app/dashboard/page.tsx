@@ -31,21 +31,43 @@ export default function DashboardPage() {
     try {
       setLoadingStats(true);
       
-      // Fetch stats from API
+      // Obtener token de autenticación
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.error('No hay token de autenticación');
+        return;
+      }
+      
+      // Fetch stats from API con autenticación
       const [sitesRes, objectsRes, excavationsRes] = await Promise.all([
-        fetch('/api/sites'),
-        fetch('/api/objects'),
-        fetch('/api/excavations')
+        fetch('http://localhost:4000/api/sites', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('http://localhost:4000/api/objects', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('http://localhost:4000/api/excavations', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
       ]);
 
-      const sites = sitesRes.ok ? await sitesRes.json() : [];
-      const objects = objectsRes.ok ? await objectsRes.json() : [];
-      const excavations = excavationsRes.ok ? await excavationsRes.json() : [];
+      const sites = sitesRes.ok ? await sitesRes.json() : { data: [] };
+      const objects = objectsRes.ok ? await objectsRes.json() : { data: [] };
+      const excavations = excavationsRes.ok ? await excavationsRes.json() : { data: [] };
 
       setStats({
-        sites: sites.length || 0,
-        objects: objects.length || 0,
-        excavations: excavations.length || 0,
+        sites: sites.data?.length || 0,
+        objects: objects.data?.length || 0,
+        excavations: excavations.data?.length || 0,
         projects: 0 // TODO: Implement projects API
       });
     } catch (error) {

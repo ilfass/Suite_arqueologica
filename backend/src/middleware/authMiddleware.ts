@@ -43,48 +43,33 @@ export class AuthMiddleware {
 
       // Verificar el token JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+      console.log('🔍 Token decodificado:', { id: decoded.id, email: decoded.email, role: decoded.role });
 
       // Verificar que el usuario existe en la base de datos
+      console.log('🔍 Buscando usuario con ID:', decoded.id);
       const { data: user, error } = await supabase
         .from('users')
-        .select('id, email, first_name, last_name, role, subscription_plan')
+        .select('id, email, first_name, last_name, role')
         .eq('id', decoded.id)
         .single();
+      
+      console.log('🔍 Resultado de la consulta:', { user, error });
 
       if (error || !user) {
-        // Si el usuario no existe en la tabla users, crear perfil temporal
-        console.log('🔧 Usuario no encontrado en middleware, creando perfil temporal...');
-        console.log('🆔 ID del usuario:', decoded.id);
-        console.log('📧 Email del usuario:', decoded.email);
-
-        // Crear perfil temporal basado en el token decodificado
-        const tempUser = {
-          id: decoded.id,
-          email: decoded.email,
-          first_name: decoded.email?.split('@')[0] || 'Usuario',
-          last_name: '',
-          role: decoded.role,
-          subscription_plan: 'FREE'
-        };
-
-        console.log('✅ Perfil temporal creado en middleware para:', tempUser.email);
-        
-        // Usar el perfil temporal
-        req.user = {
-          id: tempUser.id,
-          email: tempUser.email,
-          role: tempUser.role as UserRole,
-          fullName: `${tempUser.first_name} ${tempUser.last_name}`.trim(),
-        };
-      } else {
-        // Agregar el usuario al request
-        req.user = {
-          id: user.id,
-          email: user.email,
-          role: user.role as UserRole,
-          fullName: `${user.first_name} ${user.last_name}`.trim(),
-        };
+        console.log('❌ Usuario no encontrado en la base de datos:', decoded.id);
+        console.log('❌ Error de Supabase:', error);
+        throw new AppError('Usuario no encontrado', 401);
       }
+
+      console.log('✅ Usuario encontrado en la base de datos:', user.id);
+
+      // Agregar el usuario al request
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role as UserRole,
+        fullName: `${user.first_name} ${user.last_name}`.trim(),
+      };
 
       next();
     } catch (error) {

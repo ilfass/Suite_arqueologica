@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import ContextBanner from '@/components/ui/ContextBanner';
 import useInvestigatorContext from '@/hooks/useInvestigatorContext';
 
 interface Task {
@@ -200,6 +201,7 @@ const TasksPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Banner de contexto */}
       {hasContext && (
+        <ContextBanner />
         )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

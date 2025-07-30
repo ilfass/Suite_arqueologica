@@ -27,6 +27,14 @@ interface AreaFormData {
   protectionMeasures: string;
   documentationLevel: string;
   priorityLevel: string;
+  // Documentación asociada
+  associatedDocuments: {
+    title: string;
+    authorRole: 'author' | 'coauthor' | 'other';
+    isPublished: boolean;
+    publicationLink?: string;
+    notes?: string;
+  }[];
 }
 
 interface AreaCreationFormProps {
@@ -94,7 +102,8 @@ const AreaCreationForm: React.FC<AreaCreationFormProps> = ({
     currentThreats: [],
     protectionMeasures: '',
     documentationLevel: '',
-    priorityLevel: ''
+    priorityLevel: '',
+    associatedDocuments: []
   });
 
   const handleInputChange = (field: keyof AreaFormData, value: any) => {
@@ -122,6 +131,37 @@ const AreaCreationForm: React.FC<AreaCreationFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  // Funciones para manejar documentación asociada
+  const addDocument = () => {
+    const newDocument = {
+      title: '',
+      authorRole: 'author' as const,
+      isPublished: false,
+      publicationLink: '',
+      notes: ''
+    };
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: [...prev.associatedDocuments, newDocument]
+    }));
+  };
+
+  const removeDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: prev.associatedDocuments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateDocument = (index: number, field: keyof AreaFormData['associatedDocuments'][0], value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      associatedDocuments: prev.associatedDocuments.map((doc, i) => 
+        i === index ? { ...doc, [field]: value } : doc
+      )
+    }));
   };
 
   return (
@@ -534,6 +574,116 @@ const AreaCreationForm: React.FC<AreaCreationFormProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
               />
+            </div>
+
+            {/* Sección de Documentación Asociada */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">📚 Documentación Asociada</h3>
+                <Button
+                  type="button"
+                  onClick={addDocument}
+                  className="px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 text-sm"
+                >
+                  + Agregar Documento
+                </Button>
+              </div>
+              
+              {formData.associatedDocuments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No hay documentos asociados</p>
+                  <p className="text-sm">Haz clic en "Agregar Documento" para comenzar</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {formData.associatedDocuments.map((doc, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-medium text-gray-800">Documento {index + 1}</h4>
+                        <Button
+                          type="button"
+                          onClick={() => removeDocument(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          ✕ Eliminar
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Título del Documento *
+                          </label>
+                          <input
+                            type="text"
+                            value={doc.title}
+                            onChange={(e) => updateDocument(index, 'title', e.target.value)}
+                            placeholder="Título del artículo, informe, etc."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Tu Rol en el Documento
+                          </label>
+                          <select
+                            value={doc.authorRole}
+                            onChange={(e) => updateDocument(index, 'authorRole', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="author">Autor Principal</option>
+                            <option value="coauthor">Co-autor</option>
+                            <option value="other">Otro (especificar en notas)</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <label className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={doc.isPublished}
+                            onChange={(e) => updateDocument(index, 'isPublished', e.target.checked)}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            ¿Está publicado?
+                          </span>
+                        </label>
+                      </div>
+                      
+                      {doc.isPublished && (
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Enlace de Publicación
+                          </label>
+                          <input
+                            type="url"
+                            value={doc.publicationLink || ''}
+                            onChange={(e) => updateDocument(index, 'publicationLink', e.target.value)}
+                            placeholder="https://doi.org/... o URL de la publicación"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Notas Adicionales
+                        </label>
+                        <textarea
+                          value={doc.notes || ''}
+                          onChange={(e) => updateDocument(index, 'notes', e.target.value)}
+                          placeholder="Información adicional sobre el documento, co-autores, revista, etc."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </form>

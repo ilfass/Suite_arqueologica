@@ -11,6 +11,9 @@ import excavationRoutes from './routes/excavations';
 import projectRoutes from './routes/projects';
 import researcherRoutes from './routes/researchers';
 import contextRoutes from './routes/context';
+import areaRoutes from './routes/areas';
+import investigatorRoutes from './routes/investigators';
+import findingsRoutes from './routes/findings';
 
 const app = express();
 
@@ -30,12 +33,15 @@ app.use(AuthMiddleware.rateLimit(1000, 60000)); // 1000 requests per minute
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', archaeologicalSiteRoutes);
+app.use('/api/areas', areaRoutes);
 app.use('/api/objects', objectRoutes);
 app.use('/api/artifacts', objectRoutes); // Alias para compatibilidad con frontend
 app.use('/api/excavations', excavationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/researchers', researcherRoutes);
 app.use('/api/context', contextRoutes);
+app.use('/api/investigators', investigatorRoutes);
+app.use('/api/findings', findingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -92,4 +98,20 @@ app.listen(PORT, () => {
   console.log(`📋 Projects endpoints: http://localhost:${PORT}/api/projects`);
   console.log(`👨‍🔬 Researchers endpoints: http://localhost:${PORT}/api/researchers`);
   console.log(`🎯 Context endpoints: http://localhost:${PORT}/api/context`);
+  
+  // Banner de desarrollo
+  if (process.env.NODE_ENV === 'development') {
+    console.log('\n' + '='.repeat(80));
+    console.log('⚠️  MODO DESARROLLO ACTIVO');
+    console.log('='.repeat(80));
+    console.log('📋 RECORDATORIOS PARA PRODUCCIÓN:');
+    console.log('   • Configurar servicio de email en Supabase');
+    console.log('   • Ajustar límites de rate limiting');
+    console.log('   • Verificar configuración de autenticación');
+    console.log('   • Revisar configuración de seguridad');
+    console.log('   • Configurar variables de entorno de producción');
+    console.log('   • Habilitar HTTPS');
+    console.log('   • Configurar logs y monitoreo');
+    console.log('='.repeat(80) + '\n');
+  }
 }); 

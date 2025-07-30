@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string, role: User['role'], institution?: string, specialization?: string, is_public_researcher?: boolean) => Promise<void>;
+  register: (registerData: any) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
@@ -77,8 +77,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { user: loggedInUser, token } = await apiClient.login({ email, password });
+      
+      // En modo desarrollo, usar el endpoint de desarrollo
+      let loginResponse;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Usando login de desarrollo...');
+        loginResponse = await apiClient.loginDev({ email, password });
+      } else {
+        loginResponse = await apiClient.login({ email, password });
+      }
+      
+      const { user: loggedInUser, token } = loginResponse;
       apiClient.setToken(token);
+      
       // Normalizar el campo role a mayúsculas y ajustar campos del backend
       const normalizedUser = { 
         ...loggedInUser, 
@@ -97,18 +108,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (email: string, password: string, fullName: string, role: User['role'], institution?: string, specialization?: string, is_public_researcher?: boolean) => {
+  const register = async (registerData: any) => {
     try {
       setLoading(true);
-      const { user: newUser, token } = await apiClient.register({ 
-        email, 
-        password, 
-        fullName, 
-        role,
-        institution,
-        specialization,
-        is_public_researcher
-      });
+      const { user: newUser, token } = await apiClient.register(registerData);
       apiClient.setToken(token);
       setUser(newUser);
     } catch (error) {

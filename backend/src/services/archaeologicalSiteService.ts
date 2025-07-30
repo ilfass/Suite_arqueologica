@@ -50,12 +50,18 @@ export class ArchaeologicalSiteService {
       cultural_period?: string;
       limit?: number;
       offset?: number;
-    } = {}
+    } = {},
+    userId?: string
   ): Promise<{ sites: ArchaeologicalSite[]; total: number }> {
     try {
       let query = supabase
         .from('archaeological_sites')
         .select('*', { count: 'exact' });
+
+      // Filtrar por usuario si se proporciona
+      if (userId) {
+        query = query.eq('created_by', userId);
+      }
 
       // Aplicar filtros
       if (filters.status) {

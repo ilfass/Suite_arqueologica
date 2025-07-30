@@ -24,13 +24,41 @@ export interface LoginResponse {
 }
 
 export interface RegisterData {
+  // Campos comunes
   email: string;
   password: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
+  country: string;
+  province: string;
+  city: string;
+  phone?: string;
   role: User['role'];
-  institution?: string;
-  specialization?: string;
-  is_public_researcher?: boolean;
+  termsAccepted: boolean;
+  
+  // Campos específicos para INSTITUTION
+  institutionName?: string;
+  institutionAddress?: string;
+  institutionWebsite?: string;
+  institutionDepartment?: string;
+  institutionEmail?: string;
+  institutionAlternativeEmail?: string;
+  
+  // Campos específicos para DIRECTOR
+  documentId?: string;
+  highestDegree?: string;
+  discipline?: string;
+  formationInstitution?: string;
+  currentInstitution?: string;
+  currentPosition?: string;
+  cvLink?: string;
+  
+  // Campos específicos para RESEARCHER
+  career?: string;
+  year?: string;
+  researcherRole?: string;
+  researchArea?: string;
+  directorId?: string;
 }
 
 export interface LoginData {
@@ -89,14 +117,55 @@ class ApiClient {
     }
   }
 
+  // Método de login para desarrollo que evita problemas de autenticación
+  async loginDev(data: LoginData): Promise<LoginResponse> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login-dev`, data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Login dev error:', error);
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      throw new Error('Error en login de desarrollo. Por favor, intenta nuevamente.');
+    }
+  }
+
   async register(data: RegisterData): Promise<LoginResponse> {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, data);
       // El backend devuelve { success: true, data: { user, token } }
       return response.data.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Register error:', error);
-      throw error;
+      
+      // Manejar errores específicos
+      if (error.response?.status === 429 || 
+          (error.response?.data?.error?.message && 
+           error.response.data.error.message.includes('rate limit'))) {
+        throw new Error('Se ha excedido el límite de envío de emails de confirmación. Por favor, espera unos minutos antes de intentar nuevamente o usa un email diferente.');
+      }
+      
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error('Datos de registro inválidos. Por favor, verifica que todos los campos requeridos estén completos.');
+      }
+      
+      throw new Error('Error al registrar usuario. Por favor, intenta nuevamente.');
+    }
+  }
+
+  // Método alternativo para desarrollo que evita rate limits
+  async registerDev(data: RegisterData): Promise<LoginResponse> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register-dev`, data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Register dev error:', error);
+      throw new Error('Error en registro de desarrollo. Por favor, intenta nuevamente.');
     }
   }
 

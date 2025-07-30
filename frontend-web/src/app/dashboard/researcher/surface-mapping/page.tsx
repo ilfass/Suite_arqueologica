@@ -162,15 +162,6 @@ const SurfaceMappingPage: React.FC = () => {
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  => router.push('/dashboard/researcher')}
-          className="px-4 py-2 bg-green-500 text-white hover:bg-green-600"
-        >
-          ← Volver al Dashboard
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

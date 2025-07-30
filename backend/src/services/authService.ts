@@ -29,44 +29,146 @@ export class AuthService {
   /**
    * Registrar nuevo usuario
    */
-  static async register(email: string, password: string, fullName: string, role: UserRole): Promise<{ user: User; token: string }> {
+  static async register(registerData: any, skipEmailConfirmation: boolean = false): Promise<{ user: User; token: string }> {
     try {
-      // Registrar usuario en Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        country,
+        province,
+        city,
+        phone,
+        role,
+        termsAccepted,
+        // Campos específicos para INSTITUTION
+        institutionName,
+        institutionAddress,
+        institutionWebsite,
+        institutionDepartment,
+        institutionEmail,
+        institutionAlternativeEmail,
+        // Campos específicos para DIRECTOR
+        documentId,
+        highestDegree,
+        discipline,
+        formationInstitution,
+        currentInstitution,
+        currentPosition,
+        cvLink,
+        // Campos específicos para RESEARCHER
+        career,
+        year,
+        researcherRole,
+        researchArea,
+        directorId,
+      } = registerData;
+
+      let authData: any = null;
+      let authError: any = null;
+
+      if (skipEmailConfirmation && process.env.NODE_ENV === 'development') {
+        // En desarrollo, crear usuario directamente sin confirmación de email
+        const { data, error } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+        });
+        authData = { user: data.user };
+        authError = error;
+      } else {
+        // Registro normal con confirmación de email
+        const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
+        authData = data;
+        authError = error;
+      }
 
-      if (authError) throw new AppError(authError.message, 400);
+      if (authError) {
+        // Manejar específicamente el rate limit de email
+        if (authError.message.includes('rate limit') || authError.message.includes('too many requests')) {
+          throw new AppError('Se ha excedido el límite de envío de emails de confirmación. Por favor, espera unos minutos antes de intentar nuevamente o usa un email diferente.', 429);
+        }
+        throw new AppError(authError.message, 400);
+      }
 
       if (!authData.user) throw new AppError('Error creating user', 500);
 
+      // Preparar datos del usuario según el rol
+      const userData: any = {
+        id: authData.user.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        country,
+        province,
+        city,
+        phone,
+        role,
+        terms_accepted: termsAccepted,
+        terms_accepted_at: termsAccepted ? new Date().toISOString() : null,
+        is_active: true,
+      };
+
+      // Agregar campos específicos según el rol
+      switch (role) {
+        case 'INSTITUTION':
+          userData.institution_name = institutionName;
+          userData.institution_address = institutionAddress;
+          userData.institution_website = institutionWebsite;
+          userData.institution_department = institutionDepartment;
+          userData.institution_email = institutionEmail;
+          userData.institution_alternative_email = institutionAlternativeEmail;
+          break;
+        
+        case 'DIRECTOR':
+          userData.director_document_id = documentId;
+          userData.director_highest_degree = highestDegree;
+          userData.director_discipline = discipline;
+          userData.director_formation_institution = formationInstitution;
+          userData.director_current_institution = currentInstitution;
+          userData.director_current_position = currentPosition;
+          userData.director_cv_link = cvLink;
+          break;
+        
+        case 'RESEARCHER':
+          userData.researcher_document_id = documentId;
+          userData.researcher_career = career;
+          userData.researcher_year = year;
+          userData.researcher_formation_institution = formationInstitution;
+          userData.researcher_role = researcherRole;
+          userData.researcher_area = researchArea;
+          userData.researcher_director_id = directorId;
+          break;
+        
+        case 'STUDENT':
+          userData.student_document_id = documentId;
+          userData.student_highest_degree = highestDegree;
+          userData.student_discipline = discipline;
+          userData.student_formation_institution = formationInstitution;
+          userData.student_current_institution = currentInstitution;
+          userData.student_current_position = currentPosition;
+          userData.student_cv_link = cvLink;
+          break;
+      }
+
       // Crear perfil de usuario en la base de datos
-      const { data: userData, error: userError } = await supabase
+      const { data: createdUser, error: userError } = await supabase
         .from('users')
-        .insert([
-          {
-            id: authData.user.id,
-            email,
-            first_name: fullName.split(' ')[0] || fullName,
-            last_name: fullName.split(' ').slice(1).join(' ') || '',
-            role,
-            is_active: true,
-            specialization: 'Arqueología',
-            academic_degree: 'Doctorado',
-            institution: 'Universidad Nacional de La Plata'
-          },
-        ])
+        .insert([userData])
         .select()
         .single();
 
       if (userError) throw new AppError(userError.message, 400);
 
       // Generar token JWT
-      const token = this.generateToken(userData);
+      const token = this.generateToken(createdUser);
 
       return {
-        user: userData,
+        user: createdUser,
         token,
       };
     } catch (error) {

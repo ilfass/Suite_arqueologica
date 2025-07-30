@@ -42,12 +42,24 @@ describe('AuthService', () => {
         error: null,
       });
 
-      const result = await AuthService.register(
-        'test@example.com',
-        'password123',
-        'Test User',
-        UserRole.RESEARCHER
-      );
+      const result = await AuthService.register({
+        email: 'test@example.com',
+        password: 'password123',
+        firstName: 'Test',
+        lastName: 'User',
+        country: 'Argentina',
+        province: 'Buenos Aires',
+        city: 'Tandil',
+        role: UserRole.RESEARCHER,
+        termsAccepted: true,
+        documentId: '12345678',
+        highestDegree: 'PhD',
+        discipline: 'Arqueología',
+        formationInstitution: 'Universidad Nacional',
+        currentInstitution: 'CONICET',
+        currentPosition: 'Investigador',
+        cvLink: 'https://example.com/cv',
+      });
 
       expect(result).toEqual(mockUser);
       expect(supabase.auth.signUp).toHaveBeenCalledWith({
@@ -63,7 +75,17 @@ describe('AuthService', () => {
       });
 
       await expect(
-        AuthService.register('test@example.com', 'password123', 'Test User', UserRole.RESEARCHER)
+        AuthService.register({
+          email: 'test@example.com',
+          password: 'password123',
+          firstName: 'Test',
+          lastName: 'User',
+          country: 'Argentina',
+          province: 'Buenos Aires',
+          city: 'Tandil',
+          role: UserRole.RESEARCHER,
+          termsAccepted: true,
+        })
       ).rejects.toThrow('Registration failed');
     });
   });

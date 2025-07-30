@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ArchaeologicalSiteService } from '../services/archaeologicalSiteService';
 import { catchAsync } from '../utils/catchAsync';
+import { AppError } from '../utils/appError';
 
 export class ArchaeologicalSiteController {
   static createSite = catchAsync(
@@ -39,6 +40,12 @@ export class ArchaeologicalSiteController {
 
   static getAllSites = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
+      const userId = (req as any).user?.id;
+      
+      if (!userId) {
+        return next(new AppError('Usuario no autenticado', 401));
+      }
+
       const filters = {
         status: req.query.status as any,
         site_type: req.query.site_type as any,
@@ -48,7 +55,7 @@ export class ArchaeologicalSiteController {
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
       };
 
-      const result = await ArchaeologicalSiteService.getAllSites(filters);
+      const result = await ArchaeologicalSiteService.getAllSites(filters, userId);
 
       res.status(200).json({
         success: true,

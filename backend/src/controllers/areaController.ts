@@ -10,7 +10,13 @@ export class AreaController {
   });
 
   static getAllAreas = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const areas = await AreaService.getAllAreas();
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
+    }
+
+    const areas = await AreaService.getAllAreas(userId);
     res.status(200).json({ success: true, data: areas });
   });
 

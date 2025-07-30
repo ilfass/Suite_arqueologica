@@ -22,8 +22,13 @@ const validateRequest = (req: any, res: any, next: any) => {
 const registerValidation = [
   body('email').isEmail().withMessage('Email válido requerido'),
   body('password').isLength({ min: 8 }).withMessage('Contraseña debe tener al menos 8 caracteres'),
-  body('fullName').notEmpty().withMessage('Nombre completo requerido'),
-  body('role').isIn(['ADMIN', 'DIRECTOR', 'RESEARCHER', 'STUDENT', 'COORDINATOR', 'INSTITUTION', 'GUEST']).withMessage('Rol válido requerido'),
+  body('firstName').notEmpty().withMessage('Nombre requerido'),
+  body('lastName').notEmpty().withMessage('Apellido requerido'),
+  body('country').notEmpty().withMessage('País requerido'),
+  body('province').notEmpty().withMessage('Provincia requerida'),
+  body('city').notEmpty().withMessage('Ciudad requerida'),
+  body('role').isIn(['DIRECTOR', 'RESEARCHER', 'STUDENT', 'INSTITUTION', 'GUEST']).withMessage('Rol válido requerido'),
+  body('termsAccepted').isBoolean().withMessage('Debe aceptar los términos y condiciones'),
   validateRequest,
 ];
 
@@ -53,7 +58,9 @@ const requestResetValidation = [
 
 // Rutas públicas
 router.post('/register', registerValidation, authController.register);
+router.post('/register-dev', registerValidation, authController.registerDev);
 router.post('/login', AuthMiddleware.rateLimit(1000, 900000), loginValidation, authController.login);
+router.post('/login-dev', loginValidation, authController.loginDev);
 router.post('/logout', authController.logout);
 router.post('/request-reset', requestResetValidation, authController.requestPasswordReset);
 router.get('/verify-reset/:token', authController.verifyResetToken);

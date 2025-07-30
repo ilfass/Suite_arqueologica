@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useUnifiedContext } from '@/hooks/useUnifiedContext';
+import FindingForm from '@/components/forms/FindingForm';
 
 interface Finding {
   id: string;
@@ -32,34 +33,6 @@ const FindingsPage: React.FC = () => {
   const router = useRouter();
   const { context, hasContext, isLoading } = useUnifiedContext();
   
-  // Debug del contexto
-  console.log('🔍 Findings Page - Context:', context);
-  console.log('🔍 Findings Page - Has Context:', hasContext);
-  console.log('🔍 Findings Page - Is Loading:', isLoading);
-  
-  // Función global para testing (solo en desarrollo)
-  if (typeof window !== 'undefined') {
-    (window as any).setTestContext = () => {
-      const testContext = {
-        project_id: 'proj-test-001',
-        project_name: 'Proyecto Cazadores Recolectores - La Laguna',
-        area_id: 'area-test-001',
-        area_name: 'Laguna La Brava',
-        site_id: 'site-test-001',
-        site_name: 'Sitio Pampeano La Laguna'
-      };
-      localStorage.setItem('unified-context', JSON.stringify(testContext));
-      console.log('🔧 Contexto de prueba establecido:', testContext);
-      window.location.reload();
-    };
-    
-    (window as any).clearTestContext = () => {
-      localStorage.removeItem('unified-context');
-      console.log('🗑️ Contexto de prueba eliminado');
-      window.location.reload();
-    };
-  }
-  
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'analyzed' | 'documented' | 'archived'>('all');
@@ -75,27 +48,28 @@ const FindingsPage: React.FC = () => {
   });
   const [newFinding, setNewFinding] = useState({
     name: '',
-    type: 'lithic' as string,
+    type: 'artifact' as const,
     material: '',
     description: '',
     coordinates: [0, 0] as [number, number],
     depth: 0,
-    context: '',
-    discoveredDate: new Date().toISOString().split('T')[0],
-    notes: '',
-    catalogNumber: '',
-    dimensions: {
-      length: 0,
-      width: 0,
-      height: 0
-    },
+    dimensions: {},
     weight: 0,
-    condition: 'excellent' as const,
-    culturalPeriod: '',
-    excavationUnit: '',
-    stratigraphicLayer: '',
-    associatedFeatures: '',
-    preservationNotes: ''
+    condition: '',
+    catalogNumber: '',
+    context: '',
+    associations: [''],
+    photos: [''],
+    drawings: [''],
+    fieldworkSessionId: '',
+    siteId: '',
+    areaId: '',
+    projectId: '',
+    conservationTreatment: '',
+    analyses: [],
+    currentLocation: '',
+    conservationNotes: '',
+    associatedDocuments: []
   });
 
   // Datos simulados de hallazgos
@@ -194,11 +168,16 @@ const FindingsPage: React.FC = () => {
 
   useEffect(() => {
     // Simular carga de datos
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setFindings(mockFindings);
       setLoading(false);
     }, 1000);
-  }, []);
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []); // Array de dependencias vacío para que solo se ejecute una vez
 
   const filteredFindings = findings.filter(finding => 
     filter === 'all' ? true : finding.status === filter
@@ -263,50 +242,58 @@ const FindingsPage: React.FC = () => {
   // Funciones para manejar el formulario de nuevo hallazgo
   const handleSaveFinding = async () => {
     try {
-      const findingData = {
-        ...newFinding,
+      const newFindingData: Finding = {
         id: `finding-${Date.now()}`,
-        siteId: context.site_id || '1',
-        siteName: context.site_name || 'Sitio Actual',
-        projectId: context.project_id || '1',
-        projectName: context.project_name || 'Proyecto Actual',
-        discoveredBy: user?.full_name || 'Usuario Actual',
-        status: 'new' as const
+        name: newFinding.name,
+        type: newFinding.type,
+        material: newFinding.material,
+        description: newFinding.description,
+        coordinates: newFinding.coordinates,
+        depth: newFinding.depth,
+        context: newFinding.context,
+        siteId: context?.site_id || '',
+        siteName: context?.site_name || '',
+        projectId: context?.project_id || '',
+        projectName: context?.project_name || '',
+        discoveredBy: user?.full_name || 'Usuario',
+        discoveredDate: new Date().toISOString().split('T')[0],
+        status: 'new',
+        notes: newFinding.description
       };
 
-      // Aquí se guardaría en la base de datos
-      console.log('Guardando hallazgo:', findingData);
-      
-      // Agregar a la lista local
-      setFindings(prev => [...prev, findingData]);
-      
-      // Cerrar modal y limpiar formulario
+      setFindings(prev => [...prev, newFindingData]);
       setShowNewFindingModal(false);
+      
+      // Reset form
       setNewFinding({
         name: '',
-        type: 'lithic',
+        type: 'artifact' as const,
         material: '',
         description: '',
-        coordinates: [0, 0],
+        coordinates: [0, 0] as [number, number],
         depth: 0,
-        context: '',
-        discoveredDate: new Date().toISOString().split('T')[0],
-        notes: '',
-        catalogNumber: '',
-        dimensions: { length: 0, width: 0, height: 0 },
+        dimensions: {},
         weight: 0,
-        condition: 'excellent',
-        culturalPeriod: '',
-        excavationUnit: '',
-        stratigraphicLayer: '',
-        associatedFeatures: '',
-        preservationNotes: ''
+        condition: '',
+        catalogNumber: '',
+        context: '',
+        associations: [''],
+        photos: [''],
+        drawings: [''],
+        fieldworkSessionId: '',
+        siteId: '',
+        areaId: '',
+        projectId: '',
+        conservationTreatment: '',
+        analyses: [],
+        currentLocation: '',
+        conservationNotes: '',
+        associatedDocuments: []
       });
       
-      alert('Hallazgo guardado exitosamente');
+      console.log('✅ Hallazgo guardado exitosamente');
     } catch (error) {
-      console.error('Error guardando hallazgo:', error);
-      alert('Error al guardar el hallazgo');
+      console.error('❌ Error al guardar hallazgo:', error);
     }
   };
 
@@ -314,46 +301,47 @@ const FindingsPage: React.FC = () => {
     setShowNewFindingModal(false);
     setNewFinding({
       name: '',
-      type: 'lithic',
+      type: 'artifact',
       material: '',
       description: '',
       coordinates: [0, 0],
       depth: 0,
-      context: '',
-      discoveredDate: new Date().toISOString().split('T')[0],
-      notes: '',
-      catalogNumber: '',
-      dimensions: { length: 0, width: 0, height: 0 },
+      dimensions: {},
       weight: 0,
-      condition: 'excellent',
-      culturalPeriod: '',
-      excavationUnit: '',
-      stratigraphicLayer: '',
-      associatedFeatures: '',
-      preservationNotes: ''
+      condition: '',
+      catalogNumber: '',
+      context: '',
+      associations: [''],
+      photos: [''],
+      drawings: [''],
+      fieldworkSessionId: '',
+      siteId: '',
+      areaId: '',
+      projectId: '',
+      conservationTreatment: '',
+      analyses: [],
+      currentLocation: '',
+      conservationNotes: '',
+      associatedDocuments: []
     });
   };
 
   // Función para abrir el modal con información de contexto pre-cargada
   const handleOpenNewFindingModal = () => {
-    // Cargar información de contexto si está disponible
-    const contextInfo = [];
-    if (context.project_name) contextInfo.push(`Proyecto: ${context.project_name}`);
-    if (context.area_name) contextInfo.push(`Área: ${context.area_name}`);
-    if (context.site_name) contextInfo.push(`Sitio: ${context.site_name}`);
+    console.log('🔍 handleOpenNewFindingModal llamado');
+    console.log('🔍 Contexto actual:', context);
     
-    const contextString = contextInfo.join(', ') || 'Contexto no especificado';
+    if (!context || !context.project_id || !context.area_id || !context.site_id) {
+      console.log('❌ Contexto incompleto, mostrando alerta');
+      alert('⚠️ Debe seleccionar un contexto arqueológico completo (Proyecto, Área y Sitio) antes de crear un nuevo hallazgo.');
+      return;
+    }
     
-    console.log('🔧 Abriendo modal con contexto:', contextString);
-    
-    setNewFinding(prev => ({
-      ...prev,
-      context: contextString
-    }));
-    
+    console.log('✅ Contexto válido, abriendo modal');
     setShowNewFindingModal(true);
+    console.log('🔍 showNewFindingModal establecido a true');
   };
-
+  
   // Funciones para manejar tipos personalizados
   const handleAddCustomType = () => {
     if (customTypeName.trim()) {
@@ -423,20 +411,51 @@ const FindingsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">🔍 Hallazgos Recientes</h1>
             <p className="mt-2 text-gray-600">Explora los hallazgos arqueológicos más recientes</p>
             
-            {/* Debug del contexto */}
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug - Estado del Contexto:</h3>
-              <div className="text-xs text-yellow-700 space-y-1">
-                <div><strong>Proyecto:</strong> {context.project_name || 'No establecido'}</div>
-                <div><strong>Área:</strong> {context.area_name || 'No establecida'}</div>
-                <div><strong>Sitio:</strong> {context.site_name || 'No establecido'}</div>
-                <div><strong>Has Context:</strong> {hasContext ? 'SÍ' : 'NO'}</div>
-                <div><strong>Is Loading:</strong> {isLoading ? 'SÍ' : 'NO'}</div>
+            {/* Estado del Contexto */}
+            <div className={`mt-4 p-3 border rounded-lg ${
+              hasContext && context && context.project_id && context.area_id && context.site_id 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <h3 className={`text-sm font-semibold mb-2 ${
+                hasContext && context && context.project_id && context.area_id && context.site_id 
+                  ? 'text-green-800' 
+                  : 'text-red-800'
+              }`}>
+                {hasContext && context && context.project_id && context.area_id && context.site_id 
+                  ? '✅ Contexto Arqueológico Establecido' 
+                  : '⚠️ Contexto Arqueológico Requerido'
+                }
+              </h3>
+              <div className={`text-xs space-y-1 ${
+                hasContext && context && context.project_id && context.area_id && context.site_id 
+                  ? 'text-green-700' 
+                  : 'text-red-700'
+              }`}>
+                <div><strong>Proyecto:</strong> {context?.project_name || 'No establecido'}</div>
+                <div><strong>Área:</strong> {context?.area_name || 'No establecida'}</div>
+                <div><strong>Sitio:</strong> {context?.site_name || 'No establecido'}</div>
+                {(!hasContext || !context || !context.project_id || !context.area_id || !context.site_id) && (
+                  <div className="mt-2 p-2 bg-red-100 rounded text-red-800">
+                    <strong>Para crear hallazgos:</strong> Selecciona un contexto completo usando el selector de contexto.
+                  </div>
+                )}
               </div>
             </div>
           </div>
                       <div className="flex space-x-2">
-              <Button onClick={handleOpenNewFindingModal}>
+              <Button 
+                onClick={handleOpenNewFindingModal}
+                disabled={!hasContext || !context || !context.project_id || !context.area_id || !context.site_id}
+                className={!hasContext || !context || !context.project_id || !context.area_id || !context.site_id ? 
+                  'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : 
+                  'bg-blue-600 hover:bg-blue-700'
+                }
+                title={!hasContext || !context || !context.project_id || !context.area_id || !context.site_id ? 
+                  'Selecciona un contexto arqueológico primero' : 
+                  'Crear nuevo hallazgo'
+                }
+              >
                 ➕ Nuevo Hallazgo
               </Button>
               
@@ -610,9 +629,26 @@ const FindingsPage: React.FC = () => {
                   : `No hay hallazgos en estado "${getStatusText(filter)}".`
                 }
               </p>
-              <Button onClick={() => router.push('/dashboard/researcher/surface-mapping')}>
-                Registrar Primer Hallazgo
-              </Button>
+              {!hasContext || !context || !context.project_id || !context.area_id || !context.site_id ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-red-600 font-medium">
+                    ⚠️ Para crear hallazgos, primero selecciona un contexto arqueológico
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Aquí podrías abrir el selector de contexto
+                      alert('Por favor, usa el selector de contexto en la parte superior de la página para seleccionar un proyecto, área y sitio.');
+                    }}
+                  >
+                    📍 Seleccionar Contexto
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={handleOpenNewFindingModal}>
+                  ➕ Registrar Primer Hallazgo
+                </Button>
+              )}
             </div>
           </Card>
         )}
@@ -688,355 +724,14 @@ const FindingsPage: React.FC = () => {
 
         {/* Modal de Nuevo Hallazgo */}
         {showNewFindingModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">📋 Nuevo Hallazgo Arqueológico</h2>
-                <p className="text-gray-600 mt-1">Registro siguiendo estándares internacionales de arqueología</p>
-              </div>
-
-              <div className="p-6">
-                <form onSubmit={(e) => { e.preventDefault(); handleSaveFinding(); }}>
-                  {/* Información de Contexto (Pre-llenada) */}
-                  <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-3">📍 Información de Contexto</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-blue-800 mb-1">Proyecto</label>
-                        <input 
-                          type="text" 
-                          className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.project_name || 'No especificado'} 
-                          disabled 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-blue-800 mb-1">Área</label>
-                        <input 
-                          type="text" 
-                          className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.area_name || 'No especificado'} 
-                          disabled 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-blue-800 mb-1">Sitio</label>
-                        <input 
-                          type="text" 
-                          className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                          value={context.site_name || 'No especificado'} 
-                          disabled 
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <label className="block text-sm font-medium text-blue-800 mb-1">Contexto Completo</label>
-                      <input 
-                        type="text" 
-                        className="w-full border border-blue-200 rounded p-2 bg-blue-100" 
-                        value={newFinding.context} 
-                        disabled 
-                      />
-                    </div>
-                  </div>
-
-                  {/* Información Básica del Hallazgo */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Información Básica</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">* Nombre/Descripción</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.name}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, name: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">* Tipo de Hallazgo</label>
-                        <div className="flex space-x-2">
-                          <select 
-                            className="flex-1 border rounded p-2"
-                            value={newFinding.type}
-                            onChange={(e) => setNewFinding(prev => ({ ...prev, type: e.target.value }))}
-                            required
-                          >
-                            {getAllTypes().map(type => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowCustomTypeModal(true)}
-                            className="whitespace-nowrap"
-                          >
-                            ➕ Nuevo
-                          </Button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">* Material</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.material}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, material: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">* Fecha de Descubrimiento</label>
-                        <input 
-                          type="date" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.discoveredDate}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, discoveredDate: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ubicación y Contexto */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🗺️ Ubicación y Contexto</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Coordenadas (Latitud)</label>
-                        <input 
-                          type="number" 
-                          step="any"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.coordinates[0]}
-                          onChange={(e) => setNewFinding(prev => ({ 
-                            ...prev, 
-                            coordinates: [parseFloat(e.target.value), prev.coordinates[1]] 
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Coordenadas (Longitud)</label>
-                        <input 
-                          type="number" 
-                          step="any"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.coordinates[1]}
-                          onChange={(e) => setNewFinding(prev => ({ 
-                            ...prev, 
-                            coordinates: [prev.coordinates[0], parseFloat(e.target.value)] 
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Profundidad (metros)</label>
-                        <input 
-                          type="number" 
-                          step="0.01"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.depth}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, depth: parseFloat(e.target.value) }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Unidad de Excavación</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.excavationUnit}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, excavationUnit: e.target.value }))}
-                          placeholder="Ej: Cuadrícula A1"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Capa Estratigráfica</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.stratigraphicLayer}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, stratigraphicLayer: e.target.value }))}
-                          placeholder="Ej: Nivel 2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Contexto Específico</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.context}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, context: e.target.value }))}
-                          placeholder="Ej: Fosa de basura, hogar, etc."
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Características Físicas */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">📏 Características Físicas</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitud (cm)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.dimensions.length}
-                          onChange={(e) => setNewFinding(prev => ({ 
-                            ...prev, 
-                            dimensions: { ...prev.dimensions, length: parseFloat(e.target.value) }
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ancho (cm)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.dimensions.width}
-                          onChange={(e) => setNewFinding(prev => ({ 
-                            ...prev, 
-                            dimensions: { ...prev.dimensions, width: parseFloat(e.target.value) }
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Alto (cm)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.dimensions.height}
-                          onChange={(e) => setNewFinding(prev => ({ 
-                            ...prev, 
-                            dimensions: { ...prev.dimensions, height: parseFloat(e.target.value) }
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Peso (g)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          className="w-full border rounded p-2" 
-                          value={newFinding.weight}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, weight: parseFloat(e.target.value) }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Información Cultural */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🏛️ Información Cultural</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Período Cultural</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.culturalPeriod}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, culturalPeriod: e.target.value }))}
-                          placeholder="Ej: Período Tardío, Horizonte Temprano"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Conservación</label>
-                        <select 
-                          className="w-full border rounded p-2"
-                          value={newFinding.condition}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, condition: e.target.value as any }))}
-                        >
-                          <option value="excellent">Excelente</option>
-                          <option value="good">Bueno</option>
-                          <option value="fair">Regular</option>
-                          <option value="poor">Pobre</option>
-                          <option value="fragmentary">Fragmentario</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Información Adicional */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">📝 Información Adicional</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción Detallada</label>
-                        <textarea 
-                          className="w-full border rounded p-2 h-20" 
-                          value={newFinding.description}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Descripción detallada del hallazgo, características técnicas, etc."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Número de Catálogo</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.catalogNumber}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, catalogNumber: e.target.value }))}
-                          placeholder="Ej: LAG-2024-001"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Características Asociadas</label>
-                        <input 
-                          type="text" 
-                          className="w-full border rounded p-2" 
-                          value={newFinding.associatedFeatures}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, associatedFeatures: e.target.value }))}
-                          placeholder="Ej: Fuego, enterramiento, estructura"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notas de Preservación</label>
-                        <textarea 
-                          className="w-full border rounded p-2 h-16" 
-                          value={newFinding.preservationNotes}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, preservationNotes: e.target.value }))}
-                          placeholder="Notas sobre conservación, tratamiento necesario, etc."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notas Adicionales</label>
-                        <textarea 
-                          className="w-full border rounded p-2 h-16" 
-                          value={newFinding.notes}
-                          onChange={(e) => setNewFinding(prev => ({ ...prev, notes: e.target.value }))}
-                          placeholder="Observaciones adicionales, hipótesis, etc."
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Botones */}
-                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancelFinding}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                    >
-                      💾 Guardar Hallazgo
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+          <>
+            {console.log('🔍 Renderizando FindingForm con showNewFindingModal:', showNewFindingModal)}
+            <FindingForm
+              isOpen={showNewFindingModal}
+              onClose={() => setShowNewFindingModal(false)}
+              onSubmit={handleSaveFinding}
+            />
+          </>
         )}
       </div>
     </div>

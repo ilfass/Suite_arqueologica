@@ -44,10 +44,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
 
   const { data: projects, error } = await supabase
     .from('projects')
-    .select(`
-      *,
-      milestones (*)
-    `)
+    .select('*')
     .eq('created_by', userId)
     .order('created_at', { ascending: false });
 
@@ -72,10 +69,7 @@ export const getProject = catchAsync(async (req: Request, res: Response, next: N
 
   const { data: project, error } = await supabase
     .from('projects')
-    .select(`
-      *,
-      milestones (*)
-    `)
+    .select('*')
     .eq('id', id)
     .eq('created_by', userId)
     .single();
