@@ -412,4 +412,163 @@ export const authController = {
       throw new AppError('Error logging in development mode', 500);
     }
   }),
+
+  // Obtener perfil público por ID de usuario (para páginas públicas)
+  getPublicProfileById: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+    if (!id) {
+      return next(new AppError('ID de usuario requerido', 400));
+    }
+
+    try {
+      // Buscar configuración del perfil público
+      const { data: publicProfile, error } = await supabase
+        .from('public_profiles')
+        .select('*')
+        .eq('user_id', id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw new AppError('Error retrieving public profile', 500);
+      }
+
+      // Si no existe configuración o no es público, devolver error
+      if (!publicProfile || !publicProfile.is_public) {
+        return next(new AppError('Perfil público no encontrado o no disponible', 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        data: publicProfile
+      });
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error retrieving public profile', 500);
+    }
+  }),
+
+  // Obtener configuración del perfil público
+  getPublicProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as any).user.id;
+
+    try {
+      // Buscar configuración del perfil público
+      const { data: publicProfile, error } = await supabase
+        .from('public_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw new AppError('Error retrieving public profile', 500);
+      }
+
+      // Si no existe configuración, devolver configuración por defecto
+      if (!publicProfile) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        const defaultProfile = {
+          user_id: userId,
+          is_public: false,
+          display_name: user?.full_name || user?.email || '',
+          bio: 'Investigador arqueológico especializado en...',
+          specialization: user?.specialization || 'Arqueología, Antropología, Historia',
+          institution: user?.institution || 'Universidad Nacional',
+          location: 'Buenos Aires, Argentina',
+          email: user?.email || '',
+          website: '',
+          social_media: {},
+          custom_message: 'Bienvenidos a mi espacio de investigación arqueológica.',
+          public_projects: [],
+          public_findings: [],
+          public_reports: [],
+          public_publications: []
+        };
+
+        res.status(200).json({
+          success: true,
+          data: defaultProfile
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          data: publicProfile
+        });
+      }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error retrieving public profile', 500);
+    }
+  }),
+
+  // Actualizar configuración del perfil público
+  updatePublicProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as any).user.id;
+    const {
+      isPublic,
+      displayName,
+      bio,
+      specialization,
+      institution,
+      location,
+      email,
+      website,
+      socialMedia,
+      customMessage,
+      publicProjects,
+      publicFindings,
+      publicReports,
+      publicPublications
+    } = req.body;
+
+    try {
+      const profileData = {
+        user_id: userId,
+        is_public: isPublic || false,
+        display_name: displayName,
+        bio,
+        specialization,
+        institution,
+        location,
+        email,
+        website,
+        social_media: socialMedia || {},
+        custom_message: customMessage,
+        public_projects: publicProjects || [],
+        public_findings: publicFindings || [],
+        public_reports: publicReports || [],
+        public_publications: publicPublications || []
+      };
+
+      // Usar upsert para manejar tanto inserción como actualización
+      const { data, error } = await supabase
+        .from('public_profiles')
+        .upsert([profileData], {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error en upsert:', error);
+        throw new AppError(`Error updating public profile: ${error.message}`, 400);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: data,
+        message: 'Perfil público actualizado exitosamente'
+      });
+    } catch (error) {
+      console.error('❌ Error en updatePublicProfile:', error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error updating public profile', 500);
+    }
+  }),
 }; 

@@ -22,9 +22,23 @@ const registerValidation = [
   body('institutionId').optional().isUUID().withMessage('ID de institución inválido')
 ];
 
+// Validación de perfil público
+const publicProfileValidation = [
+  body('isPublic').optional().isBoolean().withMessage('isPublic debe ser un booleano'),
+  body('displayName').optional().isString().withMessage('Nombre para mostrar debe ser texto'),
+  body('bio').optional().isString().withMessage('Biografía debe ser texto'),
+  body('specialization').optional().isString().withMessage('Especialización debe ser texto'),
+  body('institution').optional().isString().withMessage('Institución debe ser texto'),
+  body('location').optional().isString().withMessage('Ubicación debe ser texto'),
+  body('email').optional().isEmail().withMessage('Email válido requerido'),
+  body('website').optional().isURL().withMessage('URL válida requerida'),
+  body('customMessage').optional().isString().withMessage('Mensaje personal debe ser texto')
+];
+
 // Rutas públicas
 router.post('/register', registerValidation, validateRequest, authController.register);
 router.post('/login', loginValidation, validateRequest, authController.login);
+router.post('/login-dev', loginValidation, validateRequest, authController.loginDev);
 router.post('/refresh', authController.refreshToken);
 router.post('/logout', authController.logout);
 router.post('/forgot-password', authController.forgotPassword);
@@ -35,5 +49,9 @@ router.get('/profile', authMiddleware, authController.getProfile);
 router.put('/profile', authMiddleware, authController.updateProfile);
 router.post('/verify-token', authController.verifyToken);
 router.post('/change-password', authMiddleware, authController.changePassword);
+
+// Rutas para perfil público
+router.get('/public-profile', authMiddleware, authController.getPublicProfile);
+router.put('/public-profile', authMiddleware, publicProfileValidation, validateRequest, authController.updatePublicProfile);
 
 export { router as authRoutes }; 

@@ -5,7 +5,7 @@ export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   logger.error('❌ Error no manejado:', {
     error: error.message,
@@ -57,7 +57,7 @@ export const errorHandler = (
     return res.status(500).json({
       success: false,
       message: 'Error de base de datos',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
+      error: process.env['NODE_ENV'] === 'development' ? error.message : 'Error interno'
     });
   }
 
@@ -65,6 +65,6 @@ export const errorHandler = (
   return res.status(500).json({
     success: false,
     message: 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
+    error: process.env['NODE_ENV'] === 'development' ? error.message : 'Error interno'
   });
 }; 

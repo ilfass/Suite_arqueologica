@@ -10,14 +10,17 @@ import { logger } from './utils/logger';
 
 // Cargar variables de entorno
 dotenv.config();
+console.log('🔧 Variables de entorno cargadas:');
+console.log('SUPABASE_URL:', process.env['SUPABASE_URL']);
+console.log('PORT:', process.env['PORT']);
 
 const app = express();
-const PORT = process.env.PORT || 4001;
+const PORT = process.env['PORT'] || 4001;
 
 // Middleware de seguridad
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  origin: process.env['CORS_ORIGIN']?.split(',') || ['http://localhost:3000'],
   credentials: true
 }));
 
@@ -37,7 +40,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'auth-service',

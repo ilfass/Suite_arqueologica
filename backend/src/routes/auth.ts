@@ -45,6 +45,19 @@ const updateProfileValidation = [
   validateRequest,
 ];
 
+const publicProfileValidation = [
+  body('isPublic').optional().isBoolean().withMessage('isPublic debe ser un booleano'),
+  body('displayName').optional().notEmpty().withMessage('Nombre para mostrar no puede estar vacío'),
+  body('bio').optional().notEmpty().withMessage('Biografía no puede estar vacía'),
+  body('specialization').optional().notEmpty().withMessage('Especialización no puede estar vacía'),
+  body('institution').optional().notEmpty().withMessage('Institución no puede estar vacía'),
+  body('location').optional().notEmpty().withMessage('Ubicación no puede estar vacía'),
+  body('email').optional().isEmail().withMessage('Email válido requerido'),
+  body('website').optional().isURL().withMessage('URL válida requerida'),
+  body('customMessage').optional().notEmpty().withMessage('Mensaje personal no puede estar vacío'),
+  validateRequest,
+];
+
 const changePasswordValidation = [
   body('currentPassword').notEmpty().withMessage('Contraseña actual requerida'),
   body('newPassword').isLength({ min: 8 }).withMessage('Nueva contraseña debe tener al menos 8 caracteres'),
@@ -70,5 +83,10 @@ router.get('/me', AuthMiddleware.authenticate, authController.getCurrentUser);
 router.get('/profile', AuthMiddleware.authenticate, authController.getCurrentUser);
 router.put('/profile', AuthMiddleware.authenticate, updateProfileValidation, authController.updateProfile);
 router.put('/change-password', AuthMiddleware.authenticate, changePasswordValidation, authController.changePassword);
+
+// Rutas para perfil público
+router.get('/public-profile', AuthMiddleware.authenticate, authController.getPublicProfile);
+router.put('/public-profile', AuthMiddleware.authenticate, publicProfileValidation, authController.updatePublicProfile);
+router.get('/public-profile/:id', authController.getPublicProfileById);
 
 export default router; 

@@ -12,7 +12,7 @@ const LOG_LEVELS: LogLevel = {
   DEBUG: 3
 };
 
-const currentLogLevel = LOG_LEVELS[process.env.LOG_LEVEL as keyof LogLevel] || LOG_LEVELS.INFO;
+const currentLogLevel = LOG_LEVELS[process.env['LOG_LEVEL'] as keyof LogLevel] || LOG_LEVELS.INFO;
 
 class Logger {
   private formatMessage(level: string, message: string, data?: any): string {

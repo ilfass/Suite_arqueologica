@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import Card from '../../../../components/ui/Card';
 import Button from '../../../../components/ui/Button';
+import { useRouter } from 'next/navigation';
 
 interface PublicProfileConfig {
   isPublic: boolean;
@@ -32,6 +33,7 @@ interface PublicProfileConfig {
 
 const PublicProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
   const [config, setConfig] = useState<PublicProfileConfig>({
     isPublic: false,
     displayName: '',
@@ -61,59 +63,121 @@ const PublicProfilePage: React.FC = () => {
       try {
         setLoading(true);
         
-        // Obtener datos del usuario
-        const userResponse = await fetch('http://localhost:4000/api/auth/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUserData(userData);
+        // Usar datos del contexto de autenticación si están disponibles
+        if (user) {
+          setUserData(user);
           
-          // Configuración inicial basada en datos reales
-          const initialConfig: PublicProfileConfig = {
-            isPublic: false,
-            displayName: userData.full_name || userData.email || '',
-            bio: 'Investigador arqueológico especializado en...',
-            specialization: 'Arqueología, Antropología, Historia',
-            institution: 'Universidad Nacional',
-            location: 'Buenos Aires, Argentina',
-            email: userData.email || '',
-            website: '',
-            socialMedia: {},
-            publicProjects: [],
-            publicFindings: [],
-            publicReports: [],
-            publicPublications: [],
-            customMessage: 'Bienvenidos a mi espacio de investigación arqueológica.'
-          };
-          
-          setConfig(initialConfig);
-          if (userData.id && userData.id !== 'undefined' && userData.id !== null) {
-            setPreviewUrl(`/public/investigator/${userData.id}`);
-            console.log('🔧 URL de vista previa establecida:', `/public/investigator/${userData.id}`);
-          } else {
-            console.error('ID de usuario no válido:', userData.id);
-            setPreviewUrl('');
-          }
-        }
+          // Cargar configuración del perfil público desde el backend
+          const token = localStorage.getItem('auth_token');
+          if (token) {
+            const profileResponse = await fetch('http://localhost:4000/api/auth/public-profile', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
 
-        // Obtener proyectos del usuario
-        const projectsResponse = await fetch('http://localhost:4000/api/projects', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        });
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              const profile = profileData.data;
+              
+              // Configuración inicial basada en datos del backend
+              const initialConfig: PublicProfileConfig = {
+                isPublic: profile.is_public || false,
+                displayName: profile.display_name || user.full_name || user.email || '',
+                bio: profile.bio || 'Investigador arqueológico especializado en...',
+                specialization: profile.specialization || 'Arqueología, Antropología, Historia',
+                institution: profile.institution || 'Universidad Nacional',
+                location: profile.location || 'Buenos Aires, Argentina',
+                email: profile.email || user.email || '',
+                website: profile.website || '',
+                socialMedia: profile.social_media || {},
+                publicProjects: profile.public_projects || [],
+                publicFindings: profile.public_findings || [],
+                publicReports: profile.public_reports || [],
+                publicPublications: profile.public_publications || [],
+                customMessage: profile.custom_message || 'Bienvenidos a mi espacio de investigación arqueológica.'
+              };
+              
+              setConfig(initialConfig);
+              console.log('✅ Configuración cargada desde el backend');
 
-        if (projectsResponse.ok) {
-          const projectsData = await projectsResponse.json();
-          setProjects(projectsData);
-          console.log('📋 Proyectos cargados:', projectsData.length);
+              // Generar URL de vista previa
+              if (user.id) {
+                const previewUrl = `http://localhost:3000/public/investigator/${user.id}`;
+                setPreviewUrl(previewUrl);
+                console.log('🔧 URL final de vista previa:', previewUrl);
+              }
+            }
+
+            // Obtener proyectos reales del usuario desde la API
+            try {
+              const projectsResponse = await fetch('http://localhost:4000/api/projects', {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+
+              if (projectsResponse.ok) {
+                const projectsData = await projectsResponse.json();
+                if (projectsData.success && projectsData.data) {
+                  setProjects(projectsData.data);
+                  console.log('📋 Proyectos reales cargados:', projectsData.data.length);
+                } else {
+                  console.log('⚠️ No se pudieron cargar proyectos reales, usando lista vacía');
+                  setProjects([]);
+                }
+              } else {
+                console.log('⚠️ Error cargando proyectos, usando lista vacía');
+                setProjects([]);
+              }
+            } catch (error) {
+              console.error('❌ Error obteniendo proyectos:', error);
+              setProjects([]);
+            }
+          }
         } else {
-          console.log('No se pudieron cargar los proyectos');
-          setProjects([]);
+          // Si no hay usuario en el contexto, intentar cargar desde la API
+          const token = localStorage.getItem('auth_token');
+          if (token) {
+            const userResponse = await fetch('http://localhost:4000/api/auth/profile', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setUserData(userData);
+              
+              // Configuración inicial basada en datos reales
+              const initialConfig: PublicProfileConfig = {
+                isPublic: userData.is_public_researcher || false,
+                displayName: userData.full_name || userData.email || '',
+                bio: userData.bio || 'Investigador arqueológico especializado en...',
+                specialization: userData.specialization || 'Arqueología, Antropología, Historia',
+                institution: userData.institution || 'Universidad Nacional',
+                location: 'Buenos Aires, Argentina',
+                email: userData.email || '',
+                website: '',
+                socialMedia: {},
+                publicProjects: [],
+                publicFindings: [],
+                publicReports: [],
+                publicPublications: [],
+                customMessage: 'Bienvenidos a mi espacio de investigación arqueológica.'
+              };
+              
+              setConfig(initialConfig);
+              
+              // Establecer URL de vista previa
+              let previewUrl = '/public/investigator/demo'; // URL por defecto
+              
+              if (userData && userData.id && userData.id !== 'undefined' && userData.id !== null) {
+                previewUrl = `/public/investigator/${userData.id}`;
+              }
+              setPreviewUrl(previewUrl);
+            }
+          }
         }
 
         setLoading(false);
@@ -124,18 +188,55 @@ const PublicProfilePage: React.FC = () => {
     };
 
     loadUserData();
-  }, []);
+  }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Aquí se guardaría la configuración en el backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('✅ Configuración guardada:', config);
-      alert('Configuración guardada exitosamente');
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+
+      // Preparar datos para enviar al backend
+      const profileData = {
+        isPublic: config.isPublic,
+        displayName: config.displayName,
+        bio: config.bio,
+        specialization: config.specialization,
+        institution: config.institution,
+        location: config.location,
+        email: config.email,
+        website: config.website,
+        socialMedia: config.socialMedia,
+        customMessage: config.customMessage,
+        publicProjects: config.publicProjects,
+        publicFindings: config.publicFindings,
+        publicReports: config.publicReports,
+        publicPublications: config.publicPublications
+      };
+
+      // Enviar datos al backend
+      const response = await fetch('http://localhost:4000/api/auth/public-profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Configuración guardada:', result);
+        alert('Configuración guardada exitosamente');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al guardar la configuración');
+      }
     } catch (error) {
       console.error('❌ Error guardando configuración:', error);
-      alert('Error al guardar la configuración');
+      alert(`Error al guardar la configuración: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setSaving(false);
     }
@@ -143,6 +244,11 @@ const PublicProfilePage: React.FC = () => {
 
   const handleTogglePublic = () => {
     setConfig(prev => ({ ...prev, isPublic: !prev.isPublic }));
+  };
+
+  const handleBack = () => {
+    // Redirigir al dashboard del investigador en lugar de usar history.back()
+    router.push('/dashboard/researcher');
   };
 
   if (loading) {
@@ -161,10 +267,20 @@ const PublicProfilePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">🌐 Configurar Mi Vidriera Pública</h1>
-          <p className="text-gray-600">
-            Personaliza la información que se muestra en tu página pública para que otros investigadores y el público puedan conocer tu trabajo.
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">🌐 Configurar Mi Vidriera Pública</h1>
+              <p className="text-gray-600">
+                Personaliza la información que se muestra en tu página pública para que otros investigadores y el público puedan conocer tu trabajo.
+              </p>
+            </div>
+            <Button
+              onClick={handleBack}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            >
+              ← Volver
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -396,14 +512,75 @@ const PublicProfilePage: React.FC = () => {
                     )}
                   </select>
                 </div>
+
+                {/* Hallazgos Públicos */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Hallazgos públicos (uno por línea)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={config.publicFindings.join('\n')}
+                    onChange={(e) => setConfig(prev => ({ 
+                      ...prev, 
+                      publicFindings: e.target.value.split('\n').filter(item => item.trim() !== '')
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: Descubrimiento de alfarería prehispánica en Tafí del Valle&#10;Identificación de patrones de asentamiento en el período tardío&#10;Análisis de materiales líticos en contextos domésticos"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Agrega un hallazgo por línea</p>
+                </div>
+
+                {/* Reportes Públicos */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reportes públicos (uno por línea)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={config.publicReports.join('\n')}
+                    onChange={(e) => setConfig(prev => ({ 
+                      ...prev, 
+                      publicReports: e.target.value.split('\n').filter(item => item.trim() !== '')
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: Informe de Excavación 2022 - Sitio Tafí 1&#10;Análisis de Materiales Cerámicos - Temporada 2021&#10;Estudio de Distribución Espacial - Valle de Tafí"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Agrega un reporte por línea</p>
+                </div>
+
+                {/* Publicaciones Públicas */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Publicaciones públicas (una por línea)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={config.publicPublications.join('\n')}
+                    onChange={(e) => setConfig(prev => ({ 
+                      ...prev, 
+                      publicPublications: e.target.value.split('\n').filter(item => item.trim() !== '')
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: De Haro, F. (2023). 'Patrones de Asentamiento en el Valle de Tafí'. Revista Arqueológica Argentina.&#10;De Haro, F. et al. (2022). 'Análisis de Cerámica Prehispánica del Noroeste'. Arqueología del NOA."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Agrega una publicación por línea</p>
+                </div>
               </div>
             </Card>
 
             {/* Botones de Acción */}
             <div className="flex justify-end space-x-4">
               <Button
-                onClick={() => window.open(previewUrl, '_blank')}
-                className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600"
+                onClick={() => {
+                  if (previewUrl && previewUrl.trim() !== '') {
+                    window.open(previewUrl, '_blank');
+                  } else {
+                    alert('No se puede generar la vista previa. Asegúrate de que tu perfil esté configurado correctamente.');
+                  }
+                }}
+                disabled={!previewUrl || previewUrl.trim() === ''}
+                className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 👁️ Vista Previa
               </Button>
@@ -454,8 +631,15 @@ const PublicProfilePage: React.FC = () => {
                   </div>
                   
                   <Button
-                    onClick={() => window.open(previewUrl, '_blank')}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    onClick={() => {
+                      if (previewUrl && previewUrl.trim() !== '') {
+                        window.open(previewUrl, '_blank');
+                      } else {
+                        alert('No se puede generar la vista previa. Asegúrate de que tu perfil esté configurado correctamente.');
+                      }
+                    }}
+                    disabled={!previewUrl || previewUrl.trim() === ''}
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     🔍 Ver Vidriera Completa
                   </Button>

@@ -1,13 +1,16 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService';
 import { logger } from '../utils/logger';
-import { LoginRequest, RegisterRequest, AuthResponse } from '../../../../shared/types/auth';
+import { LoginRequest, RegisterRequest } from '../types/auth';
 
 class AuthController {
-  private authService: AuthService;
+  private authService: AuthService | null = null;
 
-  constructor() {
-    this.authService = new AuthService();
+  private getAuthService(): AuthService {
+    if (!this.authService) {
+      this.authService = new AuthService();
+    }
+    return this.authService;
   }
 
   register = async (req: Request, res: Response) => {
@@ -15,7 +18,7 @@ class AuthController {
       const registerData: RegisterRequest = req.body;
       logger.info(`📝 Registro de usuario: ${registerData.email}`);
 
-      const result = await this.authService.register(registerData);
+      const result = await this.getAuthService().register(registerData);
       
       logger.info(`✅ Usuario registrado exitosamente: ${registerData.email}`);
       res.status(201).json({
@@ -28,7 +31,7 @@ class AuthController {
       res.status(400).json({
         success: false,
         message: error instanceof Error ? error.message : 'Error en el registro',
-        error: process.env.NODE_ENV === 'development' ? error : undefined
+        error: process.env['NODE_ENV'] === 'development' ? error : undefined
       });
     }
   };
@@ -38,7 +41,7 @@ class AuthController {
       const loginData: LoginRequest = req.body;
       logger.info(`🔐 Login intento: ${loginData.email}`);
 
-      const result = await this.authService.login(loginData);
+      const result = await this.getAuthService().login(loginData);
       
       logger.info(`✅ Login exitoso: ${loginData.email}`);
       res.status(200).json({
@@ -51,7 +54,7 @@ class AuthController {
       res.status(401).json({
         success: false,
         message: error instanceof Error ? error.message : 'Credenciales inválidas',
-        error: process.env.NODE_ENV === 'development' ? error : undefined
+        error: process.env['NODE_ENV'] === 'development' ? error : undefined
       });
     }
   };
@@ -61,7 +64,7 @@ class AuthController {
       const { refreshToken } = req.body;
       logger.info('🚪 Logout solicitado');
 
-      await this.authService.logout(refreshToken);
+      await this.getAuthService().logout(refreshToken);
       
       logger.info('✅ Logout exitoso');
       res.status(200).json({
@@ -77,12 +80,36 @@ class AuthController {
     }
   };
 
+  loginDev = async (req: Request, res: Response) => {
+    try {
+      const loginData: LoginRequest = req.body;
+      logger.info(`🔧 Login de desarrollo: ${loginData.email}`);
+
+      // En desarrollo, usar el mismo método de login pero con validación simplificada
+      const result = await this.getAuthService().loginDev(loginData);
+      
+      logger.info(`✅ Login de desarrollo exitoso: ${loginData.email}`);
+      res.status(200).json({
+        success: true,
+        message: 'Login de desarrollo exitoso',
+        data: result
+      });
+    } catch (error) {
+      logger.error('❌ Error en login de desarrollo:', error);
+      res.status(401).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Credenciales inválidas',
+        error: process.env['NODE_ENV'] === 'development' ? error : undefined
+      });
+    }
+  };
+
   refreshToken = async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
       logger.info('🔄 Refresh token solicitado');
 
-      const result = await this.authService.refreshToken(refreshToken);
+      const result = await this.getAuthService().refreshToken(refreshToken);
       
       logger.info('✅ Token refrescado exitosamente');
       res.status(200).json({
@@ -99,18 +126,19 @@ class AuthController {
     }
   };
 
-  getProfile = async (req: Request, res: Response) => {
+  getProfile = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Usuario no autenticado'
         });
+        return;
       }
 
       logger.info(`👤 Obteniendo perfil: ${userId}`);
-      const profile = await this.authService.getProfile(userId);
+      const profile = await this.getAuthService().getProfile(userId);
       
       res.status(200).json({
         success: true,
@@ -125,18 +153,19 @@ class AuthController {
     }
   };
 
-  updateProfile = async (req: Request, res: Response) => {
+  updateProfile = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Usuario no autenticado'
         });
+        return;
       }
 
       logger.info(`✏️ Actualizando perfil: ${userId}`);
-      const result = await this.authService.updateProfile(userId, req.body);
+      const result = await this.getAuthService().updateProfile(userId, req.body);
       
       res.status(200).json({
         success: true,
@@ -157,7 +186,7 @@ class AuthController {
       const { token } = req.body;
       logger.info('🔍 Verificando token');
 
-      const result = await this.authService.verifyToken(token);
+      const result = await this.getAuthService().verifyToken(token);
       
       res.status(200).json({
         success: true,
@@ -177,7 +206,7 @@ class AuthController {
       const { email } = req.body;
       logger.info(`📧 Solicitud de reset de contraseña: ${email}`);
 
-      await this.authService.forgotPassword(email);
+      await this.getAuthService().forgotPassword(email);
       
       res.status(200).json({
         success: true,
@@ -197,7 +226,7 @@ class AuthController {
       const { token, newPassword } = req.body;
       logger.info('🔑 Reset de contraseña solicitado');
 
-      await this.authService.resetPassword(token, newPassword);
+      await this.getAuthService().resetPassword(token, newPassword);
       
       res.status(200).json({
         success: true,
@@ -212,20 +241,21 @@ class AuthController {
     }
   };
 
-  changePassword = async (req: Request, res: Response) => {
+  changePassword = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Usuario no autenticado'
         });
+        return;
       }
 
       const { currentPassword, newPassword } = req.body;
       logger.info(`🔑 Cambio de contraseña: ${userId}`);
 
-      await this.authService.changePassword(userId, currentPassword, newPassword);
+      await this.getAuthService().changePassword(userId, currentPassword, newPassword);
       
       res.status(200).json({
         success: true,
@@ -236,6 +266,64 @@ class AuthController {
       res.status(400).json({
         success: false,
         message: error instanceof Error ? error.message : 'Error cambiando contraseña'
+      });
+    }
+  };
+
+  getPublicProfile = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      logger.info(`🌐 Obteniendo perfil público: ${userId}`);
+
+      const result = await this.getAuthService().getPublicProfile(userId);
+      
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      logger.error('❌ Error obteniendo perfil público:', error);
+      res.status(400).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Error obteniendo perfil público'
+      });
+    }
+  };
+
+  updatePublicProfile = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      const profileData = req.body;
+      logger.info(`🌐 Actualizando perfil público: ${userId}`);
+
+      const result = await this.getAuthService().updatePublicProfile(userId, profileData);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Perfil público actualizado exitosamente',
+        data: result
+      });
+    } catch (error) {
+      logger.error('❌ Error actualizando perfil público:', error);
+      res.status(400).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Error actualizando perfil público'
       });
     }
   };

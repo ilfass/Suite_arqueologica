@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { TokenPayload } from '../../../../shared/types/auth';
+import { TokenPayload } from '../types/auth';
 import { logger } from '../utils/logger';
 
 // Extender la interfaz Request para incluir el usuario
@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction): any => {
   try {
     const authHeader = req.headers.authorization;
     
@@ -35,7 +35,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     // Verificar token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
+    const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as TokenPayload;
     
     // Verificar que el token no haya expirado
     if (decoded.exp < Math.floor(Date.now() / 1000)) {
@@ -61,7 +61,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
 // Middleware para verificar roles específicos
 export const requireRole = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): any => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -82,7 +82,7 @@ export const requireRole = (roles: string[]) => {
 
 // Middleware para verificar que el usuario es el propietario o admin
 export const requireOwnership = (paramName: string = 'id') => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): any => {
     if (!req.user) {
       return res.status(401).json({
         success: false,

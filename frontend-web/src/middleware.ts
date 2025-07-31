@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Rutas públicas que no requieren autenticación
-  const publicRoutes = ['/', '/login', '/register', '/api', '/test-mapping'];
+  const publicRoutes = ['/', '/login', '/register', '/api', '/test-mapping', '/public'];
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -84,8 +84,11 @@ export function middleware(request: NextRequest) {
       }
 
     } catch (error) {
-      // Si hay error al decodificar el token, redirigir a login
+      // Si hay error al decodificar el token, en desarrollo permitir acceso
       console.error('Error decoding token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        return NextResponse.next();
+      }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
