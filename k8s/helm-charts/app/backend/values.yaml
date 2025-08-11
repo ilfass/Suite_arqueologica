@@ -9,9 +9,47 @@ service:
 
 env:
   - name: ENVIRONMENT
-    value: production
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: ENVIRONMENT
   - name: DATABASE_URL
     valueFrom:
       secretKeyRef:
         name: suite-backend
         key: DATABASE_URL
+  - name: MINIO_ENDPOINT
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: MINIO_ENDPOINT
+  - name: MINIO_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: MINIO_ACCESS_KEY
+  - name: MINIO_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: MINIO_SECRET_KEY
+  - name: MINIO_BUCKET
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: MINIO_BUCKET
+  - name: MINIO_SECURE
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: MINIO_SECURE
+  - name: KEYCLOAK_ISSUER
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: KEYCLOAK_ISSUER
+  - name: KEYCLOAK_AUDIENCE
+    valueFrom:
+      secretKeyRef:
+        name: suite-backend
+        key: KEYCLOAK_AUDIENCE
