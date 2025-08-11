@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: suite-arqueologica-backend-simple
+  namespace: suite-arqueologica
+  labels:
+    app: suite-arqueologica-backend-simple
+    version: v1.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: suite-arqueologica-backend-simple
+  template:
+    metadata:
+      labels:
+        app: suite-arqueologica-backend-simple
+        version: v1.0.0
+    spec:
+      containers:
+      - name: backend
+        image: suite-arqueologica-backend-minimal:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "4000"
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: suite-arqueologica-secrets
+              key: SUPABASE_URL
+        - name: SUPABASE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: suite-arqueologica-secrets
+              key: SUPABASE_ANON_KEY
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: suite-arqueologica-secrets
+              key: SUPABASE_ANON_KEY
+        - name: SUPABASE_SERVICE_ROLE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: suite-arqueologica-secrets
+              key: SUPABASE_SERVICE_ROLE_KEY
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: suite-arqueologica-secrets
+              key: JWT_SECRET
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10 

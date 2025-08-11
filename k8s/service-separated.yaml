@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: suite-arqueologica-frontend-service
+  namespace: suite-arqueologica
+  labels:
+    app: suite-arqueologica-frontend
+spec:
+  selector:
+    app: suite-arqueologica-frontend
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: suite-arqueologica-backend-service
+  namespace: suite-arqueologica
+  labels:
+    app: suite-arqueologica-backend
+spec:
+  selector:
+    app: suite-arqueologica
+  ports:
+  - name: http
+    port: 4000
+    targetPort: 4000
+    protocol: TCP
+  type: ClusterIP 

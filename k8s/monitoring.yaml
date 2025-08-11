@@ -1,0 +1,62 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: suite-arqueologica-monitor
+  namespace: suite-arqueologica
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: suite-arqueologica
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: suite-arqueologica-alerts
+  namespace: suite-arqueologica
+  labels:
+    release: prometheus
+spec:
+  groups:
+  - name: suite-arqueologica
+    rules:
+    - alert: SuiteArqueologicaHighCPU
+      expr: container_cpu_usage_seconds_total{container="suite-arqueologica"} > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage detected"
+        description: "Suite Arqueológica pod {{ $labels.pod }} has high CPU usage"
+    
+    - alert: SuiteArqueologicaHighMemory
+      expr: container_memory_usage_bytes{container="suite-arqueologica"} > 800000000
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage detected"
+        description: "Suite Arqueológica pod {{ $labels.pod }} has high memory usage"
+    
+    - alert: SuiteArqueologicaDown
+      expr: up{app="suite-arqueologica"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Suite Arqueológica is down"
+        description: "Suite Arqueológica pod {{ $labels.pod }} is not responding"
+    
+    - alert: SuiteArqueologicaHighLatency
+      expr: http_request_duration_seconds{app="suite-arqueologica"} > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High latency detected"
+        description: "Suite Arqueológica API has high latency" 
