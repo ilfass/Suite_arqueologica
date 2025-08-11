@@ -107,7 +107,7 @@ export const createProject = catchAsync(async (req: Request, res: Response, next
   } = req.body;
 
   // Validate required fields
-  if (!name || !description || !methodology || !start_date || !end_date || !budget || !team_size || !director || !site_id) {
+  if (!name || !description || !methodology || !start_date || !end_date || !budget || !team_size || !director) {
     return next(new AppError('Todos los campos son requeridos', 400));
   }
 
@@ -136,7 +136,9 @@ export const createProject = catchAsync(async (req: Request, res: Response, next
     .single();
 
   if (error) {
-    return next(new AppError('Error al crear proyecto', 500));
+    console.error('❌ Error creando proyecto:', error);
+    console.error('📝 Datos enviados:', projectData);
+    return next(new AppError(`Error al crear proyecto: ${error.message}`, 500));
   }
 
   res.status(201).json({

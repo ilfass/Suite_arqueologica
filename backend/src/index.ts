@@ -5,34 +5,84 @@ import morgan from 'morgan';
 import { errorHandler } from './middleware/errorHandler';
 import { AuthMiddleware } from './middleware/authMiddleware';
 import authRoutes from './routes/auth';
-import archaeologicalSiteRoutes from './routes/archaeologicalSites';
+import siteRoutes from './routes/sites';
+import areaRoutes from './routes/areas';
 import objectRoutes from './routes/objects';
 import excavationRoutes from './routes/excavations';
 import projectRoutes from './routes/projects';
 import researcherRoutes from './routes/researchers';
 import contextRoutes from './routes/context';
-import areaRoutes from './routes/areas';
 import investigatorRoutes from './routes/investigators';
 import findingsRoutes from './routes/findings';
 
 const app = express();
 
-// Middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+// Middleware de seguridad para producción
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https://avpaiyyjixtdopbciedr.supabase.co"],
+        fontSrc: ["'self'", "https:", "data:"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
+  }));
+} else {
+  app.use(helmet());
+}
+
+// CORS configurado para producción
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.CORS_ORIGIN?.split(',') || ['https://tu-dominio.com']
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true,
-}));
-app.use(morgan('dev'));
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Logging configurado para producción
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined', {
+    stream: {
+      write: (message: string) => {
+        console.log(message.trim());
+      }
+    }
+  }));
+} else {
+  app.use(morgan('dev'));
+}
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting global - más permisivo para desarrollo
-app.use(AuthMiddleware.rateLimit(1000, 60000)); // 1000 requests per minute
+// Rate limiting configurado para producción
+const rateLimitMax = process.env.NODE_ENV === 'production' 
+  ? parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
+  : 5000;
+const rateLimitWindow = process.env.NODE_ENV === 'production'
+  ? parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000')
+  : 60000;
+
+app.use(AuthMiddleware.rateLimit(rateLimitMax, rateLimitWindow));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/sites', archaeologicalSiteRoutes);
+app.use('/api/sites', siteRoutes);
 app.use('/api/areas', areaRoutes);
 app.use('/api/objects', objectRoutes);
 app.use('/api/artifacts', objectRoutes); // Alias para compatibilidad con frontend
@@ -51,6 +101,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
   });
 });
 
@@ -60,6 +112,7 @@ app.get('/api', (req, res) => {
     success: true,
     message: 'Suite Arqueológica API',
     version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       auth: '/api/auth',
       sites: '/api/sites',
@@ -112,6 +165,16 @@ app.listen(PORT, () => {
     console.log('   • Configurar variables de entorno de producción');
     console.log('   • Habilitar HTTPS');
     console.log('   • Configurar logs y monitoreo');
+    console.log('='.repeat(80) + '\n');
+  } else {
+    console.log('\n' + '='.repeat(80));
+    console.log('🚀 MODO PRODUCCIÓN ACTIVO');
+    console.log('='.repeat(80));
+    console.log('✅ Configuraciones aplicadas:');
+    console.log('   • Rate limiting: ' + rateLimitMax + ' requests per ' + (rateLimitWindow / 1000) + 's');
+    console.log('   • CORS: ' + corsOptions.origin);
+    console.log('   • Helmet: Habilitado');
+    console.log('   • Logging: Combined format');
     console.log('='.repeat(80) + '\n');
   }
 }); 

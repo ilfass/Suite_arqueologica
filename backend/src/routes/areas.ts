@@ -1,11 +1,25 @@
-import { Router } from 'express';
-import { AreaController } from '../controllers/areaController';
+import express from 'express';
 import { AuthMiddleware } from '../middleware/authMiddleware';
+import {
+  getAreas,
+  getArea,
+  createArea,
+  updateArea,
+  deleteArea,
+  getAreaStats
+} from '../controllers/areaController';
 
-const router = Router();
+const router = express.Router();
 
-router.get('/', AuthMiddleware.authenticate, AreaController.getAllAreas);
-router.get('/:id', AuthMiddleware.authenticate, AreaController.getAreaById);
-router.post('/', AuthMiddleware.authenticate, AreaController.createArea);
+// Apply authentication middleware to all routes
+router.use(AuthMiddleware.authenticate);
+
+// Area routes
+router.get('/', getAreas);
+router.get('/stats', getAreaStats);
+router.get('/:id', getArea);
+router.post('/', createArea);
+router.put('/:id', updateArea);
+router.delete('/:id', deleteArea);
 
 export default router; 

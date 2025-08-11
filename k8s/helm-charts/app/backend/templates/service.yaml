@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: suite-backend
+  labels:
+    app.kubernetes.io/name: suite-backend
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: suite-backend
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: 4000
