@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: suite-arqueologica
-  labels:
-    name: suite-arqueologica
-    environment: production 
