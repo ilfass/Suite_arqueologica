@@ -34,3 +34,4 @@ async def create_site(data: SiteIn, session: AsyncSession = Depends(get_session)
     await session.commit()
     await session.refresh(site)
     return site
+

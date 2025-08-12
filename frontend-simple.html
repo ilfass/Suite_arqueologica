@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suite Arqueológica - Plataforma de Gestión Arqueológica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online {
+            background-color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-offline {
+            background-color: #f44336;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .api-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .endpoint h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .endpoint p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+
+        .response {
+            background: #f1f3f4;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .roles-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .role-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .role-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .role-card p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .credentials {
+            background: #e3f2fd;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Suite Arqueológica</h1>
+            <p>Plataforma Integral de Gestión Arqueológica</p>
+        </div>
+
+        <div class="status-card">
+            <h2>📊 Estado del Sistema</h2>
+            <div id="api-status">
+                <span class="status-indicator status-offline"></span>
+                <span>Verificando estado de la API...</span>
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h2>🔧 Endpoints de la API</h2>
+            <div class="endpoint">
+                <h3>GET /api/health</h3>
+                <p>Estado del backend y información del sistema</p>
+                <button class="test-button" onclick="testHealth()">Probar Health Check</button>
+                <div id="health-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/sites</h3>
+                <p>Lista de sitios arqueológicos</p>
+                <button class="test-button" onclick="testSites()">Probar Sitios</button>
+                <div id="sites-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/objects</h3>
+                <p>Lista de artefactos y objetos</p>
+                <button class="test-button" onclick="testObjects()">Probar Objetos</button>
+                <div id="objects-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/excavations</h3>
+                <p>Lista de excavaciones</p>
+                <button class="test-button" onclick="testExcavations()">Probar Excavaciones</button>
+                <div id="excavations-response" class="response" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="roles-section">
+            <h2>👥 Sistema de Roles</h2>
+            <p>La plataforma incluye 6 roles diferenciados para diferentes tipos de usuarios:</p>
+            
+            <div class="role-card">
+                <h3>🔐 ADMIN</h3>
+                <p>Administrador del sistema completo</p>
+                <div class="credentials">
+                    Email: fa07fa@gmail.com<br>
+                    Contraseña: 3por39
+                </div>
+            </div>
+
+            <div class="role-card">
+                <h3>🔬 RESEARCHER</h3>
+                <p>Investigador arqueológico</p>
+                <div class="credentials">
+                    Email: dr.perez@unam.mx<br>
+                    Contraseña: investigador123
+                </div>
+            </div>
+
+            <div class="role-card">
+                <h3>👨‍💼 DIRECTOR</h3>
+                <p>Director de proyecto/institución</p>
+                <div class="credentials">
+                    Email: director@inah.gob.mx<br>
+                    Contraseña: director123
+                </div>
+            </div>
+
+            <div class="role-card">
+                <h3>🎓 STUDENT</h3>
+                <p>Estudiante en formación</p>
+                <div class="credentials">
+                    Email: estudiante@universidad.edu<br>
+                    Contraseña: estudiante123
+                </div>
+            </div>
+
+            <div class="role-card">
+                <h3>🏢 INSTITUTION</h3>
+                <p>Representante institucional</p>
+                <div class="credentials">
+                    Email: admin@inah.gob.mx<br>
+                    Contraseña: institucion123
+                </div>
+            </div>
+
+            <div class="role-card">
+                <h3>👤 GUEST</h3>
+                <p>Usuario público</p>
+                <div class="credentials">
+                    Email: invitado@example.com<br>
+                    Contraseña: invitado123
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 Suite Arqueológica - Plataforma de Gestión Arqueológica</p>
+            <p>Conectando el ecosistema arqueológico global</p>
+        </div>
+    </div>
+
+    <script>
+        // Verificar estado de la API al cargar la página
+        window.onload = function() {
+            checkApiStatus();
+        };
+
+        async function checkApiStatus() {
+            const statusElement = document.getElementById('api-status');
+            try {
+                const response = await fetch('https://habilispro.com/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusElement.innerHTML = `
+                        <span class="status-indicator status-online"></span>
+                        <span>✅ API funcionando correctamente</span>
+                        <br><small>Versión: ${data.version} | Entorno: ${data.environment}</small>
+                    `;
+                } else {
+                    throw new Error('API no responde');
+                }
+            } catch (error) {
+                statusElement.innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    <span>❌ API no disponible</span>
+                    <br><small>Error: ${error.message}</small>
+                `;
+            }
+        }
+
+        async function testHealth() {
+            const responseDiv = document.getElementById('health-response');
+            responseDiv.style.display = 'block';
+            responseDiv.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch('https://habilispro.com/api/health');
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testSites() {
+            const responseDiv = document.getElementById('sites-response');
+            responseDiv.style.display = 'block';
+            responseDiv.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch('https://habilispro.com/api/sites');
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testObjects() {
+            const responseDiv = document.getElementById('objects-response');
+            responseDiv.style.display = 'block';
+            responseDiv.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch('https://habilispro.com/api/objects');
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testExcavations() {
+            const responseDiv = document.getElementById('excavations-response');
+            responseDiv.style.display = 'block';
+            responseDiv.textContent = 'Probando...';
+            
+            try {
+                const response = await fetch('https://habilispro.com/api/excavations');
+                const data = await response.json();
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

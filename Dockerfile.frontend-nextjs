@@ -1,0 +1,61 @@
+# ============================================================================
+# DOCKERFILE PARA FRONTEND NEXT.JS EN PRODUCCIÓN
+# ============================================================================
+
+# Etapa de construcción
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY frontend-web/package*.json ./
+COPY frontend-web/next.config.js ./
+COPY frontend-web/tsconfig.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar código fuente
+COPY frontend-web/src ./src
+COPY frontend-web/public ./public
+
+# Variables de entorno para producción
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_SUPABASE_URL=https://avpaiyyjixtdopbciedr.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2cGFpeXlqaXh0ZG9wYmNpZWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NjAzMjMsImV4cCI6MjA2NDIzNjMyM30.1rreoeSBexWbEKdRtIbSwQcWwD3i53RAqFWt5qe820A
+ENV NEXT_PUBLIC_API_URL=https://habilispro.com/api
+
+# Construir la aplicación
+RUN npm run build
+
+# Etapa de producción
+FROM node:18-alpine AS runner
+
+WORKDIR /app
+
+# Crear usuario no-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar archivos necesarios
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# Cambiar al usuario no-root
+USER nextjs
+
+# Exponer puerto
+EXPOSE 3000
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV NEXT_PUBLIC_SUPABASE_URL=https://avpaiyyjixtdopbciedr.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2cGFpeXlqaXh0ZG9wYmNpZWRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NjAzMjMsImV4cCI6MjA2NDIzNjMyM30.1rreoeSBexWbEKdRtIbSwQcWwD3i53RAqFWt5qe820A
+ENV NEXT_PUBLIC_API_URL=https://habilispro.com/api
+
+# Comando de inicio
+CMD ["node", "server.js"] 

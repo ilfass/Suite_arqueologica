@@ -12,3 +12,4 @@ spec:
     - name: http
       port: {{ .Values.service.port }}
       targetPort: 4000
+

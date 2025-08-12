@@ -70,7 +70,7 @@ const PublicProfilePage: React.FC = () => {
           // Cargar configuración del perfil público desde el backend
           const token = localStorage.getItem('auth_token');
           if (token) {
-            const profileResponse = await fetch('http://localhost:4000/api/auth/public-profile', {
+            const profileResponse = await fetch('/api/auth/public-profile', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -111,7 +111,7 @@ const PublicProfilePage: React.FC = () => {
 
             // Obtener proyectos reales del usuario desde la API
             try {
-              const projectsResponse = await fetch('http://localhost:4000/api/projects', {
+              const projectsResponse = await fetch('/api/projects', {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
@@ -139,7 +139,7 @@ const PublicProfilePage: React.FC = () => {
           // Si no hay usuario en el contexto, intentar cargar desde la API
           const token = localStorage.getItem('auth_token');
           if (token) {
-            const userResponse = await fetch('http://localhost:4000/api/auth/profile', {
+            const userResponse = await fetch('/api/auth/profile', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -217,7 +217,7 @@ const PublicProfilePage: React.FC = () => {
       };
 
       // Enviar datos al backend
-      const response = await fetch('http://localhost:4000/api/auth/public-profile', {
+      const response = await fetch('/api/auth/public-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

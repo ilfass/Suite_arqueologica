@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: suite-arqueologica-fixed
+  namespace: suite-arqueologica
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: suite-arqueologica-fixed
+  template:
+    metadata:
+      labels:
+        app: suite-arqueologica-fixed
+    spec:
+      containers:
+      - name: suite-arqueologica
+        image: suite-arqueologica:latest
+        ports:
+        - containerPort: 4000
+        - containerPort: 3000
+        - containerPort: 9090
+        envFrom:
+        - configMapRef:
+            name: suite-arqueologica-config
+        - secretRef:
+            name: suite-arqueologica-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/suite-arqueologica
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: suite-arqueologica-fixed-service
+  namespace: suite-arqueologica
+spec:
+  selector:
+    app: suite-arqueologica-fixed
+  ports:
+  - name: frontend
+    port: 80
+    targetPort: 3000
+  - name: backend
+    port: 4000
+    targetPort: 4000
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP 

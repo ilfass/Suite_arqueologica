@@ -40,19 +40,19 @@ export default function DashboardPage() {
       
       // Fetch stats from API con autenticación
       const [sitesRes, objectsRes, excavationsRes] = await Promise.all([
-        fetch('http://localhost:4000/api/sites', {
+        fetch('/api/sites', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:4000/api/objects', {
+        fetch('/api/objects', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:4000/api/excavations', {
+        fetch('/api/excavations', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

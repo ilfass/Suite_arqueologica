@@ -12,13 +12,13 @@ interface Site {
   name: string;
   description: string;
   coordinates?: [number, number];
-  areaId: string;
-  projectId: string;
+  area_id: string;
+  project_id: string;
   status: 'active' | 'completed' | 'planning';
   type: 'excavation' | 'survey' | 'monitoring';
-  findings: number;
-  artifacts: number;
-  samples: number;
+  findings_count: number;
+  artifacts_count: number;
+  samples_count: number;
 }
 
 const SitesPage: React.FC = () => {
@@ -30,69 +30,47 @@ const SitesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'planning'>('all');
 
-  // Datos simulados de sitios
-  const mockSites: Site[] = [
-    {
-      id: '1',
-      name: 'Sitio Laguna La Brava Norte',
-      description: 'Concentración de artefactos líticos en superficie',
-      coordinates: [-38.1234, -61.5678],
-      areaId: '1',
-      projectId: '1',
-      status: 'active',
-      type: 'excavation',
-      findings: 45,
-      artifacts: 23,
-      samples: 12
-    },
-    {
-      id: '2',
-      name: 'Excavación Arroyo Seco 2',
-      description: 'Sondeo estratigráfico en cauce antiguo',
-      coordinates: [-38.2345, -61.6789],
-      areaId: '2',
-      projectId: '1',
-      status: 'completed',
-      type: 'excavation',
-      findings: 67,
-      artifacts: 34,
-      samples: 18
-    },
-    {
-      id: '3',
-      name: 'Monte Hermoso Playa',
-      description: 'Sitio costero con ocupaciones del Holoceno',
-      coordinates: [-38.3456, -61.7890],
-      areaId: '3',
-      projectId: '2',
-      status: 'active',
-      type: 'survey',
-      findings: 23,
-      artifacts: 15,
-      samples: 8
-    },
-    {
-      id: '4',
-      name: 'Sitio Río Salado',
-      description: 'Prospección en valle fluvial',
-      coordinates: [-38.4567, -61.8901],
-      areaId: '1',
-      projectId: '1',
-      status: 'planning',
-      type: 'survey',
-      findings: 0,
-      artifacts: 0,
-      samples: 0
-    }
-  ];
-
+  // Cargar sitios desde la API
   useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setSites(mockSites);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const loadSites = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('auth_token');
+        
+        if (!token) {
+          console.error('No hay token de autenticación');
+          return;
+        }
+
+        const response = await fetch('/api/sites', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setSites(data.data || []);
+            console.log('✅ Sitios cargados desde la API:', data.data?.length || 0);
+          } else {
+            console.error('❌ Error en respuesta de API:', data);
+          }
+        } else {
+          console.error('❌ Error cargando sitios:', response.status);
+        }
+      } catch (error) {
+        console.error('❌ Error cargando sitios:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!authLoading && user) {
+      loadSites();
+    }
+  }, [authLoading, user]);
 
   const filteredSites = sites.filter(site => 
     filter === 'all' ? true : site.status === filter
@@ -101,8 +79,8 @@ const SitesPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
-      case 'planning': return 'bg-yellow-100 text-yellow-800';
       case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'planning': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -110,8 +88,8 @@ const SitesPage: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active': return 'Activo';
-      case 'planning': return 'Planificación';
       case 'completed': return 'Completado';
+      case 'planning': return 'Planificación';
       default: return 'Desconocido';
     }
   };
@@ -119,9 +97,9 @@ const SitesPage: React.FC = () => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'excavation': return '⛏️';
-      case 'survey': return '🔍';
+      case 'survey': return '🗺️';
       case 'monitoring': return '📊';
-      default: return '📍';
+      default: return '🏛️';
     }
   };
 
@@ -130,7 +108,7 @@ const SitesPage: React.FC = () => {
       case 'excavation': return 'Excavación';
       case 'survey': return 'Prospección';
       case 'monitoring': return 'Monitoreo';
-      default: return 'Sitio';
+      default: return type;
     }
   };
 
@@ -147,6 +125,17 @@ const SitesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Banner de contexto */}
+      {hasContext && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Contexto actual:</span> {context?.project} › {context?.area} › {context?.site}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
@@ -157,16 +146,16 @@ const SitesPage: React.FC = () => {
             Dashboard
           </button>
           <span>›</span>
-          <span className="text-gray-900 font-medium">Sitios Arqueológicos</span>
+          <span className="text-gray-900 font-medium">Sitios</span>
         </nav>
 
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">📍 Sitios Arqueológicos</h1>
-            <p className="mt-2 text-gray-600">Gestiona todos los sitios de excavación y prospección</p>
+            <h1 className="text-3xl font-bold text-gray-900">🏛️ Sitios Arqueológicos</h1>
+            <p className="mt-2 text-gray-600">Gestiona todos tus sitios de excavación</p>
           </div>
-          <Button onClick={() => router.push('/dashboard/researcher')}>
+          <Button onClick={() => router.push('/dashboard/researcher/sites/new')}>
             ➕ Nuevo Sitio
           </Button>
         </div>
@@ -189,86 +178,78 @@ const SitesPage: React.FC = () => {
               Activos ({sites.filter(s => s.status === 'active').length})
             </Button>
             <Button
-              variant={filter === 'planning' ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('planning')}
-            >
-              Planificación ({sites.filter(s => s.status === 'planning').length})
-            </Button>
-            <Button
               variant={filter === 'completed' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setFilter('completed')}
             >
               Completados ({sites.filter(s => s.status === 'completed').length})
             </Button>
+            <Button
+              variant={filter === 'planning' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('planning')}
+            >
+              Planificación ({sites.filter(s => s.status === 'planning').length})
+            </Button>
           </div>
         </div>
 
-        {/* Lista de Sitios */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Grid de sitios */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSites.map((site) => (
             <Card key={site.id} className="hover:shadow-lg transition-shadow">
               <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <span className="text-xl mr-2">{getTypeIcon(site.type)}</span>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {site.name}
-                      </h3>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{getTypeIcon(site.type)}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{site.name}</h3>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(site.status)}`}>
+                        {getStatusText(site.status)}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
-                      {site.description}
-                    </p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(site.status)}`}>
-                    {getStatusText(site.status)}
-                  </span>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium mr-2">🔍 Tipo:</span>
-                    {getTypeText(site.type)}
-                  </div>
+                <div className="space-y-2 text-sm text-gray-600 mb-4">
+                  <p className="line-clamp-2">{site.description}</p>
                   {site.coordinates && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <span className="font-medium mr-2">📍 Coordenadas:</span>
-                      {site.coordinates[0].toFixed(4)}, {site.coordinates[1].toFixed(4)}
-                    </div>
+                    <p><span className="font-medium">Coordenadas:</span> {site.coordinates[0]}, {site.coordinates[1]}</p>
                   )}
-                  <div className="grid grid-cols-3 gap-4 mt-3">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-blue-600">{site.findings}</div>
-                      <div className="text-xs text-gray-600">Hallazgos</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-orange-600">{site.artifacts}</div>
-                      <div className="text-xs text-gray-600">Artefactos</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-600">{site.samples}</div>
-                      <div className="text-xs text-gray-600">Muestras</div>
-                    </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                  <div>
+                    <div className="font-semibold text-blue-600">{site.findings_count}</div>
+                    <div className="text-gray-500">Hallazgos</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-green-600">{site.artifacts_count}</div>
+                    <div className="text-gray-500">Artefactos</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-purple-600">{site.samples_count}</div>
+                    <div className="text-gray-500">Muestras</div>
                   </div>
                 </div>
 
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/dashboard/researcher/sites/${site.id}`)}
-                  >
-                    👁️ Ver Detalles
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/dashboard/researcher/surface-mapping`)}
-                  >
-                    🗺️ Mapeo
-                  </Button>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/dashboard/researcher/sites/${site.id}`)}
+                    >
+                      Ver Detalles
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/dashboard/researcher/sites/${site.id}/edit`)}
+                    >
+                      Editar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -276,21 +257,21 @@ const SitesPage: React.FC = () => {
         </div>
 
         {filteredSites.length === 0 && (
-          <Card>
-            <div className="p-8 text-center">
-              <div className="text-4xl mb-4">📍</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay sitios</h3>
-              <p className="text-gray-600 mb-4">
-                {filter === 'all' 
-                  ? 'Aún no tienes sitios registrados.'
-                  : `No hay sitios en estado "${getStatusText(filter)}".`
-                }
-              </p>
-              <Button onClick={() => router.push('/dashboard/researcher')}>
-                Crear Primer Sitio
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏛️</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay sitios</h3>
+            <p className="text-gray-600 mb-6">
+              {filter === 'all' 
+                ? 'Aún no has registrado ningún sitio arqueológico. ¡Comienza explorando!'
+                : `No hay sitios con estado "${getStatusText(filter)}"`
+              }
+            </p>
+            {filter === 'all' && (
+              <Button onClick={() => router.push('/dashboard/researcher/sites/new')}>
+                ➕ Crear Primer Sitio
               </Button>
-            </div>
-          </Card>
+            )}
+          </div>
         )}
       </div>
     </div>

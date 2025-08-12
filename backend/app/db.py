@@ -11,3 +11,4 @@ Base = declarative_base()
 async def get_session():
     async with AsyncSessionLocal() as session:
         yield session
+

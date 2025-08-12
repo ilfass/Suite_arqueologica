@@ -29,3 +29,4 @@ PY
       - name: Build image
         run: |
           docker build -t suite-backend:ci -f backend/Dockerfile .
+

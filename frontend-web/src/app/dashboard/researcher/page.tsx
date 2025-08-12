@@ -240,19 +240,19 @@ const ResearcherDashboard: React.FC = () => {
         if (!token) return;
 
         const [projectsRes, areasRes, sitesRes] = await Promise.all([
-          fetch('http://localhost:4000/api/projects', {
+          fetch('/api/projects', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          fetch('http://localhost:4000/api/areas', {
+          fetch('/api/areas', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          fetch('http://localhost:4000/api/sites', {
+          fetch('/api/sites', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

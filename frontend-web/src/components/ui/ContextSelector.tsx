@@ -55,7 +55,7 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({ className = '' }) => 
         throw new Error('No hay token de autenticación');
       }
 
-      const response = await fetch('http://localhost:4000/api/projects', {
+     const response = await fetch('/api/projects', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -91,7 +91,7 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({ className = '' }) => 
         throw new Error('No hay token de autenticación');
       }
 
-      const response = await fetch('http://localhost:4000/api/areas', {
+     const response = await fetch('/api/areas', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -130,7 +130,7 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({ className = '' }) => 
         throw new Error('No hay token de autenticación');
       }
 
-      const response = await fetch('http://localhost:4000/api/sites', {
+     const response = await fetch('/api/sites', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

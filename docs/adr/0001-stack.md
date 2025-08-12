@@ -9,3 +9,4 @@
 - K8s: NGINX Ingress, cert-manager
 
 Razonamiento: stack libre, maduro, con soporte async y ecosistema robusto.
+

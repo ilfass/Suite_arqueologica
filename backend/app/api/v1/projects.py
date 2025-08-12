@@ -32,3 +32,4 @@ async def create_project(data: ProjectIn, session: AsyncSession = Depends(get_se
     await session.commit()
     await session.refresh(project)
     return project
+

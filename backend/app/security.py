@@ -19,3 +19,4 @@ async def get_current_user(request: Request) -> User:
     return User(sub="user", email=None, role="investigador")
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+

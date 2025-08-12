@@ -132,7 +132,7 @@ const GridEditor: React.FC<GridEditorProps> = ({
       
       if (editingUnit?.id && editingUnit.id.startsWith('grid-')) {
         // Es una nueva unidad, crear en el backend
-        response = await fetch('http://localhost:4000/api/excavations/grid-units', {
+        response = await fetch('/api/excavations/grid-units', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -149,7 +149,7 @@ const GridEditor: React.FC<GridEditorProps> = ({
         });
       } else {
         // Actualizar unidad existente
-        response = await fetch(`http://localhost:4000/api/excavations/grid-units/${unit.id}`, {
+        response = await fetch(`/api/excavations/grid-units/${unit.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

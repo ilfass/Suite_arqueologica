@@ -47,7 +47,7 @@ const PublicInvestigatorPage: React.FC<PublicInvestigatorPageProps> = ({ params 
         setLoading(true);
         
         // Obtener datos reales de la base de datos
-        const response = await fetch(`http://localhost:4000/api/auth/public-profile/${params.id}`, {
+        const response = await fetch(`/api/auth/public-profile/${params.id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'

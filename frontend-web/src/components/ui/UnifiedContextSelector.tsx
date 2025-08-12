@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useInvestigatorContext from '../../hooks/useInvestigatorContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApiCache } from '../../hooks/useApiCache';
 import Card from './Card';
 
 interface UnifiedContextSelectorProps {
@@ -41,13 +42,12 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
     clearContext
   } = useInvestigatorContext();
   const { user } = useAuth();
+  const { fetchWithCache, loading: apiLoading, error: apiError, clearCache } = useApiCache();
 
   // Estados para los datos del backend
   const [projects, setProjects] = useState<Project[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
 
   // Funciones auxiliares para compatibilidad
@@ -74,123 +74,115 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   const [selectedSite, setSelectedSite] = useState('');
 
   // ============================================================================
-  // FUNCIONES PARA CARGAR DATOS DEL BACKEND
+  // FUNCIONES PARA CARGAR DATOS DEL BACKEND (OPTIMIZADAS)
   // ============================================================================
 
   // Cargar proyectos del usuario autenticado
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     if (!user) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await fetch('http://localhost:4000/api/projects', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const data = await fetchWithCache('projects', async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('No hay token de autenticación');
         }
+
+        const response = await fetch('/api/projects', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar proyectos: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('📋 Proyectos cargados (Unified):', result.data);
+        return result.data || [];
       });
 
-      if (!response.ok) {
-        throw new Error(`Error al cargar proyectos: ${response.status}`);
-      }
-
-              const data = await response.json();
-        console.log('📋 Proyectos cargados (Unified):', data.data);
-        setProjects(data.data || []);
-        setHasLoadedProjects(true);
-      } catch (err) {
-        console.error('❌ Error cargando proyectos (Unified):', err);
-        setError(err instanceof Error ? err.message : 'Error desconocido');
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-  };
+      setProjects(data);
+      setHasLoadedProjects(true);
+    } catch (err) {
+      console.error('❌ Error cargando proyectos (Unified):', err);
+      setProjects([]);
+    }
+  }, [user, fetchWithCache]);
 
   // Cargar áreas del proyecto seleccionado
-  const loadAreas = async (projectId: string) => {
+  const loadAreas = useCallback(async (projectId: string) => {
     if (!user || !projectId) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await fetch('http://localhost:4000/api/areas', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const data = await fetchWithCache('areas', async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('No hay token de autenticación');
         }
+
+        const response = await fetch('/api/areas', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar áreas: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('🗺️ Áreas cargadas (Unified):', result.data);
+        return result.data || [];
       });
 
-      if (!response.ok) {
-        throw new Error(`Error al cargar áreas: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('🗺️ Áreas cargadas (Unified):', data.data);
-      
       // Filtrar áreas por proyecto
-      const projectAreas = data.data.filter((area: Area) => area.project_id === projectId);
+      const projectAreas = data.filter((area: Area) => area.project_id === projectId);
       setAreas(projectAreas);
     } catch (err) {
       console.error('❌ Error cargando áreas (Unified):', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
       setAreas([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user, fetchWithCache]);
 
   // Cargar sitios del área seleccionada
-  const loadSites = async (areaId: string) => {
+  const loadSites = useCallback(async (areaId: string) => {
     if (!user || !areaId) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await fetch('http://localhost:4000/api/sites', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const data = await fetchWithCache('sites', async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('No hay token de autenticación');
         }
+
+        const response = await fetch('/api/sites', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al cargar sitios: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('🏛️ Sitios cargados (Unified):', result.data);
+        return result.data || [];
       });
 
-      if (!response.ok) {
-        throw new Error(`Error al cargar sitios: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('🏛️ Sitios cargados (Unified):', data.data);
-      
       // Filtrar sitios por área
-      const areaSites = data.data.filter((site: Site) => site.area_id === areaId);
+      const areaSites = data.filter((site: Site) => site.area_id === areaId);
       setSites(areaSites);
     } catch (err) {
       console.error('❌ Error cargando sitios (Unified):', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
       setSites([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user, fetchWithCache]);
 
   // ============================================================================
   // FUNCIONES UTILITARIAS
@@ -210,24 +202,24 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
 
   // Cargar datos iniciales cuando se abre el selector
   useEffect(() => {
-    if (isOpen && user && !loading && !hasLoadedProjects) {
+    if (isOpen && user && !apiLoading && !hasLoadedProjects) {
       loadProjects();
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, apiLoading, hasLoadedProjects, loadProjects]);
 
   // Cargar áreas cuando se selecciona un proyecto
   useEffect(() => {
     if (selectedProject && user) {
       loadAreas(selectedProject);
     }
-  }, [selectedProject, user]);
+  }, [selectedProject, user, loadAreas]);
 
   // Cargar sitios cuando se selecciona un área
   useEffect(() => {
     if (selectedArea && user) {
       loadSites(selectedArea);
     }
-  }, [selectedArea, user]);
+  }, [selectedArea, user, loadSites]);
 
   // Inicializar selecciones cuando se carga el contexto
   useEffect(() => {
@@ -358,6 +350,12 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
     }
   };
 
+  const handleRefresh = () => {
+    clearCache();
+    setHasLoadedProjects(false);
+    loadProjects();
+  };
+
   // ============================================================================
   // RENDERIZADO
   // ============================================================================
@@ -381,15 +379,12 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
   }
 
   // Si hay error, mostrar mensaje
-  if (error) {
+  if (apiError) {
     return (
       <div className={`text-center p-4 ${className}`}>
-        <p className="text-red-500">Error: {error}</p>
+        <p className="text-red-500">Error: {apiError}</p>
         <button 
-          onClick={() => {
-            setError(null);
-            if (isOpen) loadProjects();
-          }}
+          onClick={handleRefresh}
           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Reintentar
@@ -434,19 +429,15 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                   Seleccionar Contexto
                 </h3>
                 <button
-                  onClick={() => {
-                    setHasLoadedProjects(false);
-                    setError(null);
-                    loadProjects();
-                  }}
+                  onClick={handleRefresh}
                   className="text-sm text-blue-600 hover:text-blue-800"
-                  disabled={loading}
+                  disabled={apiLoading}
                 >
-                  {loading ? '🔄' : '🔄 Recargar'}
+                  {apiLoading ? '🔄' : '🔄 Recargar'}
                 </button>
               </div>
 
-              {loading && (
+              {apiLoading && (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                   <p className="text-sm text-gray-500 mt-2">Cargando datos...</p>
@@ -461,9 +452,9 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                 <select
                   value={selectedProject}
                   onChange={(e) => handleProjectChange(e.target.value)}
-                  disabled={loading}
+                  disabled={apiLoading}
                   className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                    apiLoading ? 'bg-gray-100 cursor-not-allowed' : ''
                   }`}
                 >
                   <option value="">Seleccionar proyecto...</option>
@@ -473,7 +464,7 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                     </option>
                   ))}
                 </select>
-                {projects.length === 0 && !loading && (
+                {projects.length === 0 && !apiLoading && (
                   <p className="text-sm text-gray-500 mt-1">No hay proyectos disponibles</p>
                 )}
               </div>
@@ -487,9 +478,9 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                   <select
                     value={selectedArea}
                     onChange={(e) => handleAreaChange(e.target.value)}
-                    disabled={loading}
+                    disabled={apiLoading}
                     className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                      apiLoading ? 'bg-gray-100 cursor-not-allowed' : ''
                     }`}
                   >
                     <option value="">Seleccionar área...</option>
@@ -499,7 +490,7 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                       </option>
                     ))}
                   </select>
-                  {getAreasForProject(selectedProject).length === 0 && !loading && (
+                  {getAreasForProject(selectedProject).length === 0 && !apiLoading && (
                     <p className="text-sm text-gray-500 mt-1">No hay áreas disponibles para este proyecto</p>
                   )}
                 </div>
@@ -514,9 +505,9 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                   <select
                     value={selectedSite}
                     onChange={(e) => handleSiteChange(e.target.value)}
-                    disabled={loading}
+                    disabled={apiLoading}
                     className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      loading ? 'bg-gray-100 cursor-not-allowed' : ''
+                      apiLoading ? 'bg-gray-100 cursor-not-allowed' : ''
                     }`}
                   >
                     <option value="">Seleccionar sitio (opcional)...</option>
@@ -526,7 +517,7 @@ const UnifiedContextSelector: React.FC<UnifiedContextSelectorProps> = ({
                       </option>
                     ))}
                   </select>
-                  {getSitesForArea(selectedArea).length === 0 && !loading && (
+                  {getSitesForArea(selectedArea).length === 0 && !apiLoading && (
                     <p className="text-sm text-gray-500 mt-1">No hay sitios disponibles para esta área</p>
                   )}
                 </div>

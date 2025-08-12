@@ -32,3 +32,4 @@ async def presign_upload(req: MediaRequest):
 
     url = client.presigned_put_object(bucket, req.filename, expires=timedelta(hours=1))
     return MediaResponse(url=url, headers={"Content-Type": req.content_type})
+

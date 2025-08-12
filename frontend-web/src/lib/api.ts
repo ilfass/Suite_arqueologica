@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Normaliza la base para que siempre incluya el sufijo "/api"
+const rawApiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = rawApiBase.endsWith('/api')
+  ? rawApiBase
+  : `${rawApiBase.replace(/\/$/, '')}/api`;
 
 export interface User {
   id: string;

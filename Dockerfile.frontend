@@ -1,0 +1,63 @@
+# ============================================================================
+# DOCKERFILE PARA FRONTEND - SUITE ARQUEOLÓGICA
+# ============================================================================
+
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copiar archivos del frontend
+COPY frontend-web/package*.json ./frontend-web/
+COPY frontend-web/next.config.js ./frontend-web/
+COPY frontend-web/tsconfig.json ./frontend-web/
+
+# Instalar dependencias
+RUN cd frontend-web && npm install
+
+# Copiar código fuente
+COPY frontend-web/src ./frontend-web/src
+COPY frontend-web/public ./frontend-web/public
+
+# Construir frontend
+RUN cd frontend-web && npm run build
+
+# Etapa de producción
+FROM node:18-alpine AS production
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache dumb-init
+
+# Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+WORKDIR /app
+
+# Copiar archivos del frontend
+COPY --from=builder --chown=nextjs:nodejs /app/frontend-web/.next ./frontend-web/.next
+COPY --from=builder --chown=nextjs:nodejs /app/frontend-web/public ./frontend-web/public
+COPY --from=builder --chown=nextjs:nodejs /app/frontend-web/package*.json ./frontend-web/
+
+# Instalar dependencias de producción
+RUN cd frontend-web && npm install --omit=dev
+
+# Script de inicio para frontend
+COPY docker-entrypoint-frontend.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Cambiar al usuario no-root
+USER nextjs
+
+# Exponer puerto
+EXPOSE 3000
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=/api
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Comando de inicio
+ENTRYPOINT ["docker-entrypoint.sh"] 

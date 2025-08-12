@@ -37,7 +37,7 @@ export default function DirectorProjectsPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/projects', {
+     const response = await fetch('/api/projects', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

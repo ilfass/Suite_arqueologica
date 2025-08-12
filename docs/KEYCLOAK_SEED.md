@@ -10,3 +10,4 @@
 ## Export/Import
 - Usar Keycloak operator/Helm con `realm.json` exportado.
 - Mantener secretos fuera de Git.
+

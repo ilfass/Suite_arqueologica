@@ -8,3 +8,4 @@ class Settings(BaseModel):
     keycloak_audience: str | None = os.getenv("KEYCLOAK_AUDIENCE")
 
 settings = Settings()
+

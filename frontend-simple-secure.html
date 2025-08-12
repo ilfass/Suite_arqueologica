@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suite Arqueológica - Plataforma de Gestión Arqueológica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .status-section {
+            margin-bottom: 30px;
+        }
+
+        .status-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .api-endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .endpoint-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .endpoint-card h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .endpoint-card p {
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+
+        .roles-section {
+            margin-top: 40px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .role-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .role-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .role-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .role-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .login-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .login-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .login-button:hover {
+            background: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ok {
+            background: #28a745;
+        }
+
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Suite Arqueológica</h1>
+            <p>Plataforma Integral de Gestión Arqueológica</p>
+        </div>
+
+        <div class="main-content">
+            <div class="status-section">
+                <h2>📊 Estado del Sistema</h2>
+                <p><span class="status-indicator status-loading"></span>Verificando estado de la API...</p>
+            </div>
+
+            <div class="status-section">
+                <h2>🔧 Endpoints de la API</h2>
+                <div class="api-endpoints">
+                    <div class="endpoint-card">
+                        <h3>GET /api/health</h3>
+                        <p>Estado del backend y información del sistema</p>
+                        <button class="test-button" onclick="testEndpoint('/api/health')">Probar Health Check</button>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>GET /api/sites</h3>
+                        <p>Lista de sitios arqueológicos</p>
+                        <button class="test-button" onclick="testEndpoint('/api/sites')">Probar Sitios</button>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>GET /api/objects</h3>
+                        <p>Lista de artefactos y objetos</p>
+                        <button class="test-button" onclick="testEndpoint('/api/objects')">Probar Objetos</button>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>GET /api/excavations</h3>
+                        <p>Lista de excavaciones</p>
+                        <button class="test-button" onclick="testEndpoint('/api/excavations')">Probar Excavaciones</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="roles-section">
+                <h2>👥 Sistema de Roles</h2>
+                <p>La plataforma incluye 6 roles diferenciados para diferentes tipos de usuarios:</p>
+                <div class="roles-grid">
+                    <div class="role-card">
+                        <h3>🔐 ADMIN</h3>
+                        <p>Administrador del sistema completo</p>
+                    </div>
+                    <div class="role-card">
+                        <h3>🔬 RESEARCHER</h3>
+                        <p>Investigador arqueológico</p>
+                    </div>
+                    <div class="role-card">
+                        <h3>👨‍💼 DIRECTOR</h3>
+                        <p>Director de proyecto/institución</p>
+                    </div>
+                    <div class="role-card">
+                        <h3>🎓 STUDENT</h3>
+                        <p>Estudiante en formación</p>
+                    </div>
+                    <div class="role-card">
+                        <h3>🏢 INSTITUTION</h3>
+                        <p>Representante institucional</p>
+                    </div>
+                    <div class="role-card">
+                        <h3>👤 GUEST</h3>
+                        <p>Usuario público</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="login-section">
+                <h2>🚀 Acceso al Sistema</h2>
+                <p>Para acceder a la plataforma completa, utiliza el sistema de autenticación:</p>
+                <a href="/login" class="login-button">🔐 Iniciar Sesión</a>
+                <a href="/register" class="login-button">📝 Registrarse</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 Suite Arqueológica - Plataforma de Gestión Arqueológica</p>
+            <p>Conectando el ecosistema arqueológico global</p>
+        </div>
+    </div>
+
+    <script>
+        // Verificar estado de la API al cargar la página
+        window.addEventListener('load', function() {
+            checkApiStatus();
+        });
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                const statusElement = document.querySelector('.status-section p');
+                statusElement.innerHTML = '<span class="status-indicator status-ok"></span>Sistema funcionando correctamente';
+                
+                console.log('API Status:', data);
+            } catch (error) {
+                console.error('Error checking API status:', error);
+                const statusElement = document.querySelector('.status-section p');
+                statusElement.innerHTML = '<span class="status-indicator status-loading"></span>Error al conectar con la API';
+            }
+        }
+
+        async function testEndpoint(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                alert(`✅ ${endpoint} - Respuesta exitosa\n\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                alert(`❌ Error al probar ${endpoint}\n\n${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -5,3 +5,4 @@
 - Investigador: crea/edita contextos, hallazgos, medios
 - Estudiante: crea/edita asistido (sin aprobar ni borrar críticos)
 - Visitante: solo lectura de vidriera pública
+

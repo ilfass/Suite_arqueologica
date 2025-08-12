@@ -52,3 +52,4 @@ def downgrade() -> None:
     op.drop_table('sites')
     op.drop_table('areas')
     op.drop_table('projects')
+

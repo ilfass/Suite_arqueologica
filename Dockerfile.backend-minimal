@@ -1,0 +1,29 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar package.json y package-lock.json
+COPY backend/package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar código fuente
+COPY backend/src ./src
+COPY backend/tsconfig.json ./
+
+# Instalar TypeScript globalmente
+RUN npm install -g typescript
+
+# Compilar TypeScript
+RUN npx tsc
+
+# Exponer puerto
+EXPOSE 4000
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Comando de inicio
+CMD ["node", "dist/index.js"] 

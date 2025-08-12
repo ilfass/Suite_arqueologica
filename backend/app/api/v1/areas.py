@@ -34,3 +34,4 @@ async def create_area(data: AreaIn, session: AsyncSession = Depends(get_session)
     await session.commit()
     await session.refresh(area)
     return area
+

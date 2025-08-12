@@ -20,3 +20,4 @@ helm upgrade --install suite-backend k8s/helm-charts/app/backend \
 
 ## Infra recomendada
 Usar operadores oficiales (CloudNativePG, MinIO Operator, Keycloak Helm) y parametrizar valores en `values.yaml`.
+
